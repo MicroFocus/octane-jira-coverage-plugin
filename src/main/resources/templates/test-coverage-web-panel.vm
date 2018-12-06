@@ -1,0 +1,10 @@
+
+<table style="width:50%; margin-top: 10px;">
+
+    #foreach( $group in $groups )
+        <tr style="color: $group.get("color");">
+            <td>$group.get("name"):</td>
+            <td>$group.get("count")</td>
+        </tr>
+    #end
+</table>
