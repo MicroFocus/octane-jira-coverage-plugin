@@ -28,4 +28,13 @@
     <label key="test-coverage-web-panel.title"/>
   </web-panel>
 
+  <servlet key="admin-servlet" class="com.microfocus.octane.plugins.admin.AdminServlet">
+    <url-pattern>/admin/octane</url-pattern>
+  </servlet>
+  <web-item key="jira-menu-item" name="ALM Octane Configuration0" section="system.admin/globalsettings" weight="10" application="jira">
+    <description>Link to xproduct-admin page.</description>
+    <label key="ALM Octane Configuration" />
+    <link linkId="alm-octane-config-link">/plugins/servlet/admin/octane</link>
+  </web-item>
+
 </atlassian-plugin>
