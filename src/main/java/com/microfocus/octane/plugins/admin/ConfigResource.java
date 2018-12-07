@@ -15,116 +15,86 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @Path("/")
 @Scanned
-public class ConfigResource
-{
-    String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
-    String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
-    String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
-    String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
+public class ConfigResource {
+	String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
+	String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
+	String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
+	String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
 
-    @ComponentImport
-    private final UserManager userManager;
-    @ComponentImport
-    private final PluginSettingsFactory pluginSettingsFactory;
-    @ComponentImport
-    private final TransactionTemplate transactionTemplate;
+	@ComponentImport
+	private final UserManager userManager;
+	@ComponentImport
+	private final PluginSettingsFactory pluginSettingsFactory;
+	@ComponentImport
+	private final TransactionTemplate transactionTemplate;
 
-    @Inject
-    public ConfigResource(UserManager userManager, PluginSettingsFactory pluginSettingsFactory,
-						  TransactionTemplate transactionTemplate)
-    {
-        this.userManager = userManager;
-        this.pluginSettingsFactory = pluginSettingsFactory;
-        this.transactionTemplate = transactionTemplate;
-    }
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@Context HttpServletRequest request)
-    {
-        String username = userManager.getRemoteUsername(request);
-        if (username == null || !userManager.isSystemAdmin(username))
-        {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
-
-        return Response.ok(transactionTemplate.execute(new TransactionCallback()
-        {
-            public Object doInTransaction()
-            {
-                PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-                Config config = new Config();
-                config.setLocation((String) settings.get(OCTANE_LOCATION_KEY));
-                config.setClientId((String) settings.get(CLIENT_ID_KEY));
-                config.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
-
-                return config;
-            }
-        })).build();
-    }
+	@Inject
+	public ConfigResource(UserManager userManager, PluginSettingsFactory pluginSettingsFactory,
+						  TransactionTemplate transactionTemplate) {
+		this.userManager = userManager;
+		this.pluginSettingsFactory = pluginSettingsFactory;
+		this.transactionTemplate = transactionTemplate;
+	}
 
 
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response put(final Config config, @Context HttpServletRequest request)
-    {
-        String username = userManager.getRemoteUsername(request);
-        if (username == null || !userManager.isSystemAdmin(username))
-        {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get(@Context HttpServletRequest request) {
+		String username = userManager.getRemoteUsername(request);
+		if (username == null || !userManager.isSystemAdmin(username)) {
+			return Response.status(Status.UNAUTHORIZED).build();
+		}
 
-        transactionTemplate.execute(new TransactionCallback()
-        {
-            public Object doInTransaction()
-            {
-                PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
-                pluginSettings.put(OCTANE_LOCATION_KEY, config.getLocation());
-                pluginSettings.put(CLIENT_ID_KEY, config.getClientId());
-                pluginSettings.put(CLIENT_SECRET_KEY, config.getClientSecret());
-                return null;
-            }
-        });
-        return Response.noContent().build();
-    }
+		return Response.ok(transactionTemplate.execute(new TransactionCallback() {
+			public Object doInTransaction() {
+				PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+				Config config = new Config();
+				config.location = (String) settings.get(OCTANE_LOCATION_KEY);
+				config.client_id = (String) settings.get(CLIENT_ID_KEY);
+				config.client_secret = (String) settings.get(CLIENT_SECRET_KEY);
 
-    @XmlRootElement
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static final class Config
-    {
-        @XmlElement private String location;
-        @XmlElement private String clientId;
-        @XmlElement private String clientSecret;
+				return config;
+			}
+		})).build();
+	}
+
+	@Path("/test-connection")
+	@PUT
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response testConnection(final Config data, @Context HttpServletRequest request) {
+		return Response.ok().entity(System.currentTimeMillis()).build();
+	}
 
 
-        public String getLocation() {
-            return location;
-        }
+	@PUT
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response put(final Config config, @Context HttpServletRequest request) {
+		String username = userManager.getRemoteUsername(request);
+		if (username == null || !userManager.isSystemAdmin(username)) {
+			return Response.status(Status.UNAUTHORIZED).build();
+		}
 
-        public void setLocation(String location) {
-            this.location = location;
-        }
+		transactionTemplate.execute(new TransactionCallback() {
+			public Object doInTransaction() {
+				PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
+				pluginSettings.put(OCTANE_LOCATION_KEY, config.location);
+				pluginSettings.put(CLIENT_ID_KEY, config.client_id);
+				pluginSettings.put(CLIENT_SECRET_KEY, config.client_secret);
+				return null;
+			}
+		});
+		return Response.noContent().build();
+	}
 
-        public String getClientId() {
-            return clientId;
-        }
 
-        public void setClientId(String clientId) {
-            this.clientId = clientId;
-        }
-
-        public String getClientSecret() {
-            return clientSecret;
-        }
-
-        public void setClientSecret(String clientSecret) {
-            this.clientSecret = clientSecret;
-        }
-    }
+	public static final class Config {
+		public String location;
+		public String client_id;
+		public String client_secret;
+	}
 }
