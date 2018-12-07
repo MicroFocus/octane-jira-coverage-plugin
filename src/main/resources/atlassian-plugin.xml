@@ -37,4 +37,8 @@
     <link linkId="alm-octane-config-link">/plugins/servlet/admin/octane</link>
   </web-item>
 
+  <rest key="octane-admin-rest" path="/octane-admin" version="1.0">
+    <!--http://localhost:2990/jira/rest/octane-admin/1.0/-->
+    <description>Provides REST resources for the admin UI.</description>
+  </rest>
 </atlassian-plugin>
