@@ -7,20 +7,26 @@
 <body>
 <h2>ALM Octane Configuration</h2>
 <form id="admin" class="aui">
-    <div class="field-group">
-        <label for="name">Server Location</label>
-        <input type="text" id="location" name="location">
-    </div>
-    <div class="field-group">
-        <label for="time">Client ID</label>
-        <input type="text" id="client_id" name="client_id">
-    </div>
-    <div class="field-group">
-        <label for="time">Client Secret</label>
-        <input type="password" id="client_secret" name="client_secret">
-    </div>
-    <div class="field-group">
-        <input type="submit" value="Save">
+    <div class="form-body">
+        <div class="field-group">
+            <label for="name">Location:</label>
+            <input type="text" id="location" name="location" class="text">
+            <div class="description">Location of the ALM Octane application</div>
+        </div>
+        <div class="field-group">
+            <label for="time">Client ID:</label>
+            <input type="text" id="client_id" name="client_id" class="text">
+            <div class="description">Client ID used for logging into the ALM Octane server</div>
+        </div>
+        <div class="field-group">
+            <label for="time">Client secret:</label>
+            <input type="password" id="client_secret" name="client_secret" class="text">
+            <div class="description">Client secret used for logging into the ALM Octane server</div>
+        </div>
+        <div class="field-group">
+            <input type="button" class="aui-button" id="test_connection" value="Test Connection" style="float: left;">
+            <input type="submit" class="aui-button"  id="save" value="Save">
+        </div>
     </div>
 </form>
 </body>
