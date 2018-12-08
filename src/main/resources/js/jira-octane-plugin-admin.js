@@ -21,8 +21,7 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
                 testConnection();
             });
 
-            $("#save").submit(function(e) {
-                e.preventDefault();
+            $("#save").click(function() {
                 updateConfig();
             });
         });
@@ -37,6 +36,7 @@ function getData(){
 
 function updateConfig() {
 
+    $("#status").val("request is preparing");
     var request = $.ajax({
         url: baseUrl,
         type: "PUT",
@@ -45,6 +45,7 @@ function updateConfig() {
         contentType: "application/json"
     });
 
+    $("#status").val("request is sent");
     request.done(function( msg ) {
         $("#status").val("done");
     });
@@ -55,18 +56,6 @@ function updateConfig() {
 }
 
 function testConnection() {
-    /*$("#location").val("a1_" + data);
-    $.ajax({
-        url: baseUrl +"test-connection",
-        type: "PUT",
-        contentType: "application/json",
-        dataType: "json",
-        data: data ,
-        processData: false
-    }).done(function(config) { // when the configuration is returned...
-        $("#location").val("a2_" + data);
-    });*/
-
     var request = $.ajax({
         url: baseUrl +"test-connection",
         type: "PUT",

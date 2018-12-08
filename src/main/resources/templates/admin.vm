@@ -11,7 +11,9 @@
         <div class="field-group">
             <label for="name">Location:</label>
             <input type="text" id="location" name="location" class="text">
-            <div class="description">Location of the ALM Octane application</div>
+            <div class="description">Location of the ALM Octane application, for example : http://myServer.myCompany.com:8081/ui/?p=1001/1002
+                <br/><b>Tip</b>: You can copy the URL from the address bar of the browser in which you opened ALM Octane
+            </div>
         </div>
         <div class="field-group">
             <label for="time">Client ID:</label>
