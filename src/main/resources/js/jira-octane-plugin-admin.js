@@ -45,8 +45,7 @@ function updateConfig() {
         contentType: "application/json"
     });
 
-    $("#status").val("request is sent");
-    request.done(function( msg ) {
+    request.success(function( msg ) {
         $("#status").val("done");
     });
 
@@ -56,6 +55,9 @@ function updateConfig() {
 }
 
 function testConnection() {
+    $("#status").removeClass("statusValid");
+    $("#status").removeClass("statusFailed");
+
     var request = $.ajax({
         url: baseUrl +"test-connection",
         type: "PUT",
@@ -64,11 +66,13 @@ function testConnection() {
         contentType: "application/json"
     });
 
-    request.done(function( msg ) {
-        $("#status").text("done");
+    request.success(function( msg ) {
+        $("#status").addClass("statusValid");
+        $("#status").text("Connection is validate successfully");
     });
 
-    request.fail(function( jqXHR, textStatus ) {
-        $("#status").text( "Request failed: " + textStatus );
+    request.fail(function( request, status, error ) {
+        $("#status").addClass("statusFailed");
+        $("#status").text( request.responseText );
     });
 }

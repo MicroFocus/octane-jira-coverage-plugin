@@ -1,0 +1,11 @@
+.statusValid {
+    color: green;
+}
+
+.statusFailed {
+    color: red;
+}
+
+.noStatus {
+    color: black;
+}

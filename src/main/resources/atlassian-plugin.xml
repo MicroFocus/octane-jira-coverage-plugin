@@ -24,6 +24,7 @@
   <web-resource key="jira-octane-plugin-resources-admin" name="jira-octane-plugin Web Resources">
     <dependency>com.atlassian.auiplugin:ajs</dependency>
     <resource type="download" name="jira-octane-plugin.js" location="/js/jira-octane-plugin-admin.js"/>
+    <resource type="download" name="jira-octane-plugin.css" location="/css/jira-octane-plugin.css"/>
     <context>jira-octane-plugin-admin</context>
   </web-resource>
   <web-panel name="TestCoverageWebPanel" i18n-name-key="test-coverage-web-panel.name" key="test-coverage-web-panel" location="atl.jira.view.issue.right.context" weight="1">
