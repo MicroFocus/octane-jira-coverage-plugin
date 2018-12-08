@@ -12,7 +12,7 @@ import com.atlassian.sal.api.user.UserManager;
 import com.microfocus.octane.plugins.components.api.Constants;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
-import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import org.apache.commons.lang.StringUtils;
 
 import javax.inject.Inject;
@@ -109,17 +109,17 @@ public class ConfigResource {
 					if (!isConnected) {
 						errorMsg = "Failed to authenticate";
 					} else {
-						String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES + "?limit=1",
-								octaneDetail.getSharedspaceId(), octaneDetail.getWorkspaceId(), "tests");
+						String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
+								octaneDetail.getSharedspaceId(), octaneDetail.getWorkspaceId(), "");
 
 						Map<String, String> headers = new HashMap<>();
 						headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-						String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, null, headers).getResponseData();
-
 						try {
+							String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, null, headers).getResponseData();
+
 							JSONObject jsonObj = new JSONObject(entitiesCollectionStr);
-							OctaneEntityCollection col = OctaneEntityParser.parseCollection(jsonObj);
+							OctaneEntity workspaceEntity = OctaneEntityParser.parseEntity(jsonObj);
 						} catch (JSONException e) {
 							errorMsg = "Incorrect sharedspace id or workspace id";
 						}
@@ -132,7 +132,7 @@ public class ConfigResource {
 		if (errorMsg != null) {
 			return Response.status(Status.CONFLICT).entity(errorMsg).build();
 		} else {
-			return Response.ok(errorMsg).build();
+			return Response.ok().build();
 		}
 	}
 
@@ -193,7 +193,7 @@ public class ConfigResource {
 				return null;
 			}
 		});
-		return Response.noContent().build();
+		return Response.ok().build();
 	}
 
 	public static final class Config {

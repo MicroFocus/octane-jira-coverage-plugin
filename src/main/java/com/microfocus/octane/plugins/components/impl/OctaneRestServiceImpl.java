@@ -28,18 +28,18 @@ public class OctaneRestServiceImpl implements OctaneRestService {
 	@ComponentImport
 	private final ApplicationProperties applicationProperties;
 
-	@ComponentImport
-	private final RequestFactory requestFactory;
-
 	private OctaneConfiguration octaneConfiguration;
 	private RestConnector restConnector = new RestConnector();
 
 	@Inject
-	public OctaneRestServiceImpl(final ApplicationProperties applicationProperties, RequestFactory requestFactory) {
+	public OctaneRestServiceImpl(final ApplicationProperties applicationProperties) {
 		this.applicationProperties = applicationProperties;
-		this.requestFactory = requestFactory;
-		octaneConfiguration = new OctaneConfiguration().setBaseUrl("http://localhost:8080").setUserName("sa@nga").setPassword("Welcome1").setSharedspaceId(1001).setWorkspaceId(1002);
 
+		//login();
+	}
+
+	private void login() {
+		octaneConfiguration = new OctaneConfiguration().setBaseUrl("http://localhost:8080").setUserName("sa@nga").setPassword("Welcome1").setSharedspaceId(1001).setWorkspaceId(1002);
 		restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
 		restConnector.setCredentials(octaneConfiguration.getUserName(), octaneConfiguration.getPassword());
 		restConnector.login();

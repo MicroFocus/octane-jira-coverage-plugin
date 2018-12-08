@@ -5,23 +5,22 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 
     // wait for the DOM (i.e., document "skeleton") to load. This likely isn't necessary for the current case,
     // but may be helpful for AJAX that provides secondary content.
-    $(document).ready(function() {
-
+    $(document).ready(function () {
         // request the config information from the server
         $.ajax({
             url: baseUrl,
             dataType: "json"
-        }).done(function(config) { // when the configuration is returned...
+        }).done(function (config) { // when the configuration is returned...
             // ...populate the form.
             $("#client_id").val(config.client_id);
             $("#client_secret").val(config.client_secret);
             $("#location").val(config.location);
 
-            $( "#test_connection" ).click(function() {
+            $("#test_connection").click(function () {
                 testConnection();
             });
 
-            $("#save").click(function() {
+            $("#save").click(function () {
                 updateConfig();
             });
         });
@@ -29,14 +28,13 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 
 })(AJS.$ || jQuery);
 
-function getData(){
-    var data = '{"location":"'+  $("#location").attr("value")+'","client_id":"'+  $("#client_id").attr("value")+'","client_secret":"'+$("#client_secret").attr("value")  +'"}';
+function getData() {
+    var data = '{"location":"' + $("#location").attr("value") + '","client_id":"' + $("#client_id").attr("value") + '","client_secret":"' + $("#client_secret").attr("value") + '"}';
     return data;
 }
 
 function updateConfig() {
-
-    $("#status").val("request is preparing");
+    setStatusText("Saving ...");
     var request = $.ajax({
         url: baseUrl,
         type: "PUT",
@@ -45,34 +43,39 @@ function updateConfig() {
         contentType: "application/json"
     });
 
-    request.success(function( msg ) {
-        $("#status").val("done");
+    request.success(function (msg) {
+        setStatusText("Configuration is saved successfully", "statusValid");
     });
 
-    request.fail(function( jqXHR, textStatus ) {
-        $("#status").val( "Request failed: " + textStatus );
+    request.fail(function (request, status, error) {
+        setStatusText(request.responseText, "statusFailed");
     });
 }
 
 function testConnection() {
-    $("#status").removeClass("statusValid");
-    $("#status").removeClass("statusFailed");
-
+    setStatusText("Test connection ...");
     var request = $.ajax({
-        url: baseUrl +"test-connection",
+        url: baseUrl + "test-connection",
         type: "PUT",
         data: getData(),
         dataType: "json",
         contentType: "application/json"
     });
 
-    request.success(function( msg ) {
-        $("#status").addClass("statusValid");
-        $("#status").text("Connection is validate successfully");
+    request.success(function (msg) {
+        setStatusText("Configuration is validated successfully", "statusValid");
     });
 
-    request.fail(function( request, status, error ) {
-        $("#status").addClass("statusFailed");
-        $("#status").text( request.responseText );
+    request.fail(function (request, status, error) {
+        setStatusText(request.responseText, "statusFailed");
     });
+}
+
+function setStatusText(statusText, statusClass) {
+    $("#status").removeClass("statusValid");
+    $("#status").removeClass("statusFailed");
+    $("#status").text(statusText);
+    if (statusClass) {
+        $("#status").addClass(statusClass);
+    }
 }
