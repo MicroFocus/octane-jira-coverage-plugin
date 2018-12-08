@@ -6,7 +6,7 @@
 </head>
 <body>
 <h2>ALM Octane Configuration</h2>
-<form id="admin" class="aui">
+<form id="octane-admin" class="aui">
     <div class="form-body">
         <div class="field-group">
             <label for="name">Location:</label>

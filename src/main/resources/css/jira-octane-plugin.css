@@ -9,3 +9,7 @@
 .noStatus {
     color: black;
 }
+
+#octane-admin .text{
+    max-width: 400px;
+}
