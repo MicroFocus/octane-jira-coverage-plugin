@@ -27,8 +27,8 @@
         </div>
         <div class="field-group">
             <div  id="button-group">
-                <input type="button" class="aui-button aui-button-primary" id="test_connection" value="Test Connection" style="float: left;">
-                <input type="button" class="aui-button aui-button-primary"  id="save" value="Save"  style="float: right;">
+                <input type="button" class="aui-button aui-button-primary"  id="save" value="Save"  style="float: left;">
+                <input type="button" class="aui-button aui-button-primary" id="test_connection" value="Test Connection" style="float: right;">
             </div>
         </div>
         <div class="field-group">

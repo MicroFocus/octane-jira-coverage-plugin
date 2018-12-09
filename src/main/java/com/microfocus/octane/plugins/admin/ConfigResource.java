@@ -129,29 +129,56 @@ public class ConfigResource {
 					}
 				} catch (Exception exc) {
 					if (exc.getMessage().contains("platform.not_authorized")) {
-						errorMsg = "Failed to connect : Validate credentials";
+						errorMsg = "Validate credentials";
+					} else if (exc.getMessage().contains("type workspace does not exist")) {
+						errorMsg = "Workspace '" + octaneDetail.getWorkspaceId() + "' is not available";
+					} else if (exc.getMessage().contains("type shared_space does not exist")) {
+						errorMsg = "Sharedspace '" + octaneDetail.getSharedspaceId() + "' is not available";
 					} else {
-						errorMsg = "Failed to connect : " + exc.getMessage();
+						errorMsg = "Validate that location is correct.";
 					}
+
 				}
 			}
 		}
 		if (errorMsg != null) {
-			return Response.status(Status.CONFLICT).entity(errorMsg).build();
+			return Response.status(Status.CONFLICT).entity("Failed to connect : " + errorMsg).build();
 		} else {
 			return Response.ok().build();
 		}
 	}
 
+	@PUT
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response put(final Config config, @Context HttpServletRequest request) {
+		String username = userManager.getRemoteUsername(request);
+		if (username == null || !userManager.isSystemAdmin(username)) {
+			return Response.status(Status.UNAUTHORIZED).build();
+		}
+
+		replacePassword(config);
+
+		transactionTemplate.execute(new TransactionCallback() {
+			public Object doInTransaction() {
+				PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
+				pluginSettings.put(OCTANE_LOCATION_KEY, config.location);
+				pluginSettings.put(CLIENT_ID_KEY, config.client_id);
+				pluginSettings.put(CLIENT_SECRET_KEY, config.client_secret);
+				return null;
+			}
+		});
+		return Response.ok().build();
+	}
+
 	private void replacePassword(Config config) {
-		//update client secret
 		if (PASSWORD_REPLACE.equals(config.client_secret)) {
 			PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
 			config.client_secret = (String) settings.get(CLIENT_SECRET_KEY);
 		}
 	}
 
-	public static OctaneDetails parseUiLocation(String uiLocation) {
+	private static OctaneDetails parseUiLocation(String uiLocation) {
 		OctaneDetails details = new OctaneDetails();
 		String errorMsg = null;
 		try {
@@ -190,27 +217,20 @@ public class ConfigResource {
 		return details;
 	}
 
-	@PUT
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response put(final Config config, @Context HttpServletRequest request) {
-		String username = userManager.getRemoteUsername(request);
-		if (username == null || !userManager.isSystemAdmin(username)) {
-			return Response.status(Status.UNAUTHORIZED).build();
-		}
 
-		replacePassword(config);
-
-		transactionTemplate.execute(new TransactionCallback() {
-			public Object doInTransaction() {
-				PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
-				pluginSettings.put(OCTANE_LOCATION_KEY, config.location);
-				pluginSettings.put(CLIENT_ID_KEY, config.client_id);
-				pluginSettings.put(CLIENT_SECRET_KEY, config.client_secret);
-				return null;
+	private static Map<String, List<String>> splitQuery(URL url) throws UnsupportedEncodingException {
+		final Map<String, List<String>> query_pairs = new LinkedHashMap<String, List<String>>();
+		final String[] pairs = url.getQuery().split("&");
+		for (String pair : pairs) {
+			final int idx = pair.indexOf("=");
+			final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
+			if (!query_pairs.containsKey(key)) {
+				query_pairs.put(key, new LinkedList<String>());
 			}
-		});
-		return Response.ok().build();
+			final String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : null;
+			query_pairs.get(key).add(value);
+		}
+		return query_pairs;
 	}
 
 	public static final class Config {
@@ -249,18 +269,4 @@ public class ConfigResource {
 		}
 	}
 
-	private static Map<String, List<String>> splitQuery(URL url) throws UnsupportedEncodingException {
-		final Map<String, List<String>> query_pairs = new LinkedHashMap<String, List<String>>();
-		final String[] pairs = url.getQuery().split("&");
-		for (String pair : pairs) {
-			final int idx = pair.indexOf("=");
-			final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
-			if (!query_pairs.containsKey(key)) {
-				query_pairs.put(key, new LinkedList<String>());
-			}
-			final String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : null;
-			query_pairs.get(key).add(value);
-		}
-		return query_pairs;
-	}
 }

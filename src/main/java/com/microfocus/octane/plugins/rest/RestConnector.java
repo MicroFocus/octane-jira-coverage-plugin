@@ -50,10 +50,6 @@ public class RestConnector {
 	private String csrfCookieName;
 
 	public boolean login(){
-		return login(false);
-	}
-
-	private boolean login(boolean relogin) {
 		boolean ret = false;
 		clearAll();
 		ObjectMapper mapper = new ObjectMapper();
@@ -70,7 +66,7 @@ public class RestConnector {
 		//Get LWSSO COOKIE
 		Map<String, String> headers = new HashMap<>();
 		headers.put(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON);
-		Response authResponse = doHttp("POST", Constants.URL_AUTHENTICATION,null, jsonString, headers, relogin);
+		Response authResponse = doHttp("POST", Constants.URL_AUTHENTICATION,null, jsonString, headers, true);
 		if (authResponse.getStatusCode() == HttpStatus.SC_OK) {
 			ret = true;
 		}
@@ -151,7 +147,7 @@ public class RestConnector {
 	 * @param queryParams
 	 * @param data         to write, if a writable operation
 	 * @param headers      to use in the request
-	 * @param afterRelogin if equal to false and received 401 and supportRelogin is exist - trial to relogin will be done
+	 * @param relogin if equal to false and received 401 and supportRelogin is exist - trial to relogin will be done
 	 * @return http response
 	 */
 	private Response doHttp(
@@ -214,7 +210,7 @@ public class RestConnector {
 				if (!relogin) {
 					boolean reloginResult = false;
 					try {
-						reloginResult = login(true);
+						reloginResult = login();
 						String msg = String.format("Received status %s. Relogin succeeded.", e.getResponse().getStatusCode());
 						logger.warn(msg);
 					} catch (Exception ex) {
