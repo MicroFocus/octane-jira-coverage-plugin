@@ -8,10 +8,10 @@ import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.components.api.Constants;
-import com.microfocus.octane.plugins.components.api.OctaneConfiguration;
+import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
-import com.microfocus.octane.plugins.rest.OctaneHttpHelper;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import org.apache.commons.lang.StringUtils;
@@ -35,8 +35,10 @@ public class ConfigResource {
 
 	@ComponentImport
 	private final UserManager userManager;
+
 	@ComponentImport
 	private final PluginSettingsFactory pluginSettingsFactory;
+
 	@ComponentImport
 	private final TransactionTemplate transactionTemplate;
 
@@ -57,7 +59,7 @@ public class ConfigResource {
 			return Response.status(Status.UNAUTHORIZED).build();
 		}
 
-		OctaneConfiguration config = OctaneConfiguration.loadDetailsFromGlobalSettings(pluginSettingsFactory);
+		OctaneConfiguration config = OctaneConfigurationManager.loadDetailsFromGlobalSettings(pluginSettingsFactory);
 		config.setClientSecret(PASSWORD_REPLACE);
 		return Response.ok(config).build();
 	}
@@ -82,9 +84,9 @@ public class ConfigResource {
 		} else {
 			replacePassword(config);
 
-			OctaneHttpHelper.OctaneDetails octaneDetail = null;
+			OctaneConfiguration.OctaneDetails octaneDetail = null;
 			try {
-				octaneDetail = OctaneHttpHelper.parseUiLocation(config.getLocation());
+				octaneDetail = OctaneConfigurationManager.parseUiLocation(config.getLocation());
 			} catch (IllegalArgumentException ex) {
 				errorMsg = ex.getMessage();
 			}
@@ -147,16 +149,17 @@ public class ConfigResource {
 
 		transactionTemplate.execute(new TransactionCallback() {
 			public Object doInTransaction() {
-				OctaneConfiguration.saveConfigurationInGlobalSettings(pluginSettingsFactory, config);
+				OctaneConfigurationManager.saveConfigurationInGlobalSettings(pluginSettingsFactory, config);
 				return null;
 			}
 		});
+
 		return Response.ok().build();
 	}
 
 	private void replacePassword(OctaneConfiguration config) {
 		if (PASSWORD_REPLACE.equals(config.getClientSecret())) {
-			OctaneConfiguration tempConfig = OctaneConfiguration.loadDetailsFromGlobalSettings(pluginSettingsFactory);
+			OctaneConfiguration tempConfig = OctaneConfigurationManager.loadDetailsFromGlobalSettings(pluginSettingsFactory);
 			config.setClientSecret(tempConfig.getClientSecret());
 		}
 	}

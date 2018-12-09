@@ -1,20 +1,16 @@
 package com.microfocus.octane.plugins.components.impl;
 
-import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.ApplicationProperties;
-import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.microfocus.octane.plugins.admin.ConfigResource;
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.components.api.Constants;
-import com.microfocus.octane.plugins.components.api.OctaneConfiguration;
+import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
-import com.microfocus.octane.plugins.rest.OctaneHttpHelper;
 import com.microfocus.octane.plugins.rest.RestConnector;
-import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 
 import javax.inject.Inject;
@@ -35,6 +31,7 @@ public class OctaneRestServiceImpl implements OctaneRestService {
 	private final PluginSettingsFactory pluginSettingsFactory;
 
 	private OctaneConfiguration octaneConfiguration;
+
 	private RestConnector restConnector = new RestConnector();
 
 	@Inject
@@ -47,7 +44,7 @@ public class OctaneRestServiceImpl implements OctaneRestService {
 	@Override
 	public void reloadConfiguration() {
 		restConnector.clearAll();
-		octaneConfiguration = OctaneConfiguration.loadDetailsFromGlobalSettings(pluginSettingsFactory);
+		octaneConfiguration = OctaneConfigurationManager.loadDetailsFromGlobalSettings(pluginSettingsFactory);
 		if(octaneConfiguration.parseLocation()){
 			restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
 			restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());

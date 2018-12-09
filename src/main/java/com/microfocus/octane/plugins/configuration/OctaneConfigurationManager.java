@@ -1,5 +1,7 @@
-package com.microfocus.octane.plugins.rest;
+package com.microfocus.octane.plugins.configuration;
 
+import com.atlassian.sal.api.pluginsettings.PluginSettings;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -9,12 +11,34 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class OctaneHttpHelper {
+public class OctaneConfigurationManager {
+
+	private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
+	private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
+	private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
+	private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
 
 	private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
 
-	public static OctaneDetails parseUiLocation(String uiLocation) {
-		OctaneDetails details = new OctaneDetails();
+	public static OctaneConfiguration loadDetailsFromGlobalSettings(PluginSettingsFactory pluginSettingsFactory) {
+		PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+		OctaneConfiguration config = new OctaneConfiguration();
+		config.setLocation((String) settings.get(OCTANE_LOCATION_KEY));
+		config.setClientId((String) settings.get(CLIENT_ID_KEY));
+		config.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
+		return config;
+	}
+
+
+	public static void saveConfigurationInGlobalSettings(PluginSettingsFactory pluginSettingsFactory, OctaneConfiguration config) {
+		PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
+		pluginSettings.put(OCTANE_LOCATION_KEY, config.getLocation());
+		pluginSettings.put(CLIENT_ID_KEY, config.getClientId());
+		pluginSettings.put(CLIENT_SECRET_KEY, config.getClientSecret());
+	}
+
+	public static OctaneConfiguration.OctaneDetails parseUiLocation(String uiLocation) {
+		OctaneConfiguration.OctaneDetails details = new OctaneConfiguration.OctaneDetails();
 		String errorMsg = null;
 		try {
 			URL url = new URL(uiLocation);
@@ -65,36 +89,6 @@ public class OctaneHttpHelper {
 			query_pairs.get(key).add(value);
 		}
 		return query_pairs;
-	}
-
-	public static final class OctaneDetails {
-		private String baseUrl;
-		private String sharedspaceId;
-		private String workspaceId;
-
-		public String getBaseUrl() {
-			return baseUrl;
-		}
-
-		public void setBaseUrl(String baseUrl) {
-			this.baseUrl = baseUrl;
-		}
-
-		public String getSharedspaceId() {
-			return sharedspaceId;
-		}
-
-		public void setSharedspaceId(String sharedspaceId) {
-			this.sharedspaceId = sharedspaceId;
-		}
-
-		public String getWorkspaceId() {
-			return workspaceId;
-		}
-
-		public void setWorkspaceId(String workspaceId) {
-			this.workspaceId = workspaceId;
-		}
 	}
 
 }
