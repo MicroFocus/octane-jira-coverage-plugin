@@ -49,7 +49,11 @@ public class RestConnector {
 	private String csrfHeaderName;
 	private String csrfCookieName;
 
-	public boolean login() {
+	public boolean login(){
+		return login(false);
+	}
+
+	private boolean login(boolean relogin) {
 		boolean ret = false;
 		clearAll();
 		ObjectMapper mapper = new ObjectMapper();
@@ -66,7 +70,7 @@ public class RestConnector {
 		//Get LWSSO COOKIE
 		Map<String, String> headers = new HashMap<>();
 		headers.put(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON);
-		Response authResponse = httpPost(Constants.URL_AUTHENTICATION, jsonString, headers);
+		Response authResponse = doHttp("POST", Constants.URL_AUTHENTICATION,null, jsonString, headers, relogin);
 		if (authResponse.getStatusCode() == HttpStatus.SC_OK) {
 			ret = true;
 		}
@@ -156,7 +160,7 @@ public class RestConnector {
 			Collection<String> queryParams,
 			String data,
 			Map<String, String> headers,
-			boolean afterRelogin) {
+			boolean relogin) {
 
 
 		//add query params
@@ -207,10 +211,10 @@ public class RestConnector {
 		} catch (RestStatusException e) {
 			if ((e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) ||
 					(e.getResponse().getStatusCode() == 0 && e.getResponse().getResponseData().equals("Error writing to server"))) {
-				if (!afterRelogin) {
+				if (!relogin) {
 					boolean reloginResult = false;
 					try {
-						reloginResult = login();
+						reloginResult = login(true);
 						String msg = String.format("Received status %s. Relogin succeeded.", e.getResponse().getStatusCode());
 						logger.warn(msg);
 					} catch (Exception ex) {

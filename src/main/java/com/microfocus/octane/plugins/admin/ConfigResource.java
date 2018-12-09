@@ -36,6 +36,7 @@ public class ConfigResource {
 	private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
 
 	private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
+	private static final String PASSWORD_REPLACE = "__secret__password__"; // NON-NLS
 
 
 	@ComponentImport
@@ -68,7 +69,7 @@ public class ConfigResource {
 				Config config = new Config();
 				config.location = (String) settings.get(OCTANE_LOCATION_KEY);
 				config.client_id = (String) settings.get(CLIENT_ID_KEY);
-				config.client_secret = (String) settings.get(CLIENT_SECRET_KEY);
+				config.client_secret = PASSWORD_REPLACE;
 
 				return config;
 			}
@@ -79,23 +80,25 @@ public class ConfigResource {
 	@PUT
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response testConnection(final Config data, @Context HttpServletRequest request) {
+	public Response testConnection(final Config config, @Context HttpServletRequest request) {
 		String username = userManager.getRemoteUsername(request);
 		if (username == null || !userManager.isSystemAdmin(username)) {
 			return Response.status(Status.UNAUTHORIZED).build();
 		}
 
 		String errorMsg = null;
-		if (StringUtils.isEmpty(data.location)) {
+		if (StringUtils.isEmpty(config.location)) {
 			errorMsg = "Location URL is required";
-		} else if (StringUtils.isEmpty(data.client_id)) {
+		} else if (StringUtils.isEmpty(config.client_id)) {
 			errorMsg = "Client ID is required";
-		} else if (StringUtils.isEmpty(data.client_secret)) {
+		} else if (StringUtils.isEmpty(config.client_secret)) {
 			errorMsg = "Client secret is required";
 		} else {
+			replacePassword(config);
+
 			OctaneDetails octaneDetail = null;
 			try {
-				octaneDetail = parseUiLocation(data.location);
+				octaneDetail = parseUiLocation(config.location);
 			} catch (IllegalArgumentException ex) {
 				errorMsg = ex.getMessage();
 			}
@@ -104,7 +107,7 @@ public class ConfigResource {
 				try {
 					RestConnector restConnector = new RestConnector();
 					restConnector.setBaseUrl(octaneDetail.getBaseUrl());
-					restConnector.setCredentials(data.client_id, data.client_secret);
+					restConnector.setCredentials(config.client_id, config.client_secret);
 					boolean isConnected = restConnector.login();
 					if (!isConnected) {
 						errorMsg = "Failed to authenticate";
@@ -125,7 +128,11 @@ public class ConfigResource {
 						}
 					}
 				} catch (Exception exc) {
-					errorMsg = "Failed to connect : " + exc.getMessage();
+					if (exc.getMessage().contains("platform.not_authorized")) {
+						errorMsg = "Failed to connect : Validate credentials";
+					} else {
+						errorMsg = "Failed to connect : " + exc.getMessage();
+					}
 				}
 			}
 		}
@@ -133,6 +140,14 @@ public class ConfigResource {
 			return Response.status(Status.CONFLICT).entity(errorMsg).build();
 		} else {
 			return Response.ok().build();
+		}
+	}
+
+	private void replacePassword(Config config) {
+		//update client secret
+		if (PASSWORD_REPLACE.equals(config.client_secret)) {
+			PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+			config.client_secret = (String) settings.get(CLIENT_SECRET_KEY);
 		}
 	}
 
@@ -183,6 +198,8 @@ public class ConfigResource {
 		if (username == null || !userManager.isSystemAdmin(username)) {
 			return Response.status(Status.UNAUTHORIZED).build();
 		}
+
+		replacePassword(config);
 
 		transactionTemplate.execute(new TransactionCallback() {
 			public Object doInTransaction() {

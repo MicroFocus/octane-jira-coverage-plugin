@@ -26,8 +26,10 @@
             <div class="description">Client secret used for logging into the ALM Octane server</div>
         </div>
         <div class="field-group">
-            <input type="button" class="aui-button" id="test_connection" value="Test Connection" style="float: left;">
-            <input type="button" class="aui-button"  id="save" value="Save">
+            <div  id="button-group">
+                <input type="button" class="aui-button aui-button-primary" id="test_connection" value="Test Connection" style="float: left;">
+                <input type="button" class="aui-button aui-button-primary"  id="save" value="Save"  style="float: right;">
+            </div>
         </div>
         <div class="field-group">
             <div id="status"></div>

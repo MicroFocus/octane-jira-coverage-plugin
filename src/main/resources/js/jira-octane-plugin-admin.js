@@ -34,7 +34,7 @@ function getData() {
 }
 
 function updateConfig() {
-    setStatusText("Saving ...");
+    setStatusText("Configuration is saving ...");
     var request = $.ajax({
         url: baseUrl,
         type: "PUT",
@@ -53,7 +53,7 @@ function updateConfig() {
 }
 
 function testConnection() {
-    setStatusText("Test connection ...");
+    setStatusText("Configuration is validating ...");
     var request = $.ajax({
         url: baseUrl + "test-connection",
         type: "PUT",
