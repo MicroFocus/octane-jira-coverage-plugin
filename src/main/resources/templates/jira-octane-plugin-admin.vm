@@ -17,12 +17,12 @@
         </div>
         <div class="field-group">
             <label for="time">Client ID:</label>
-            <input type="text" id="client_id" name="client_id" class="text">
+            <input type="text" id="clientId" name="clientId" class="text">
             <div class="description">Client ID used for logging into the ALM Octane server</div>
         </div>
         <div class="field-group">
             <label for="time">Client secret:</label>
-            <input type="password" id="client_secret" name="client_secret" class="text">
+            <input type="password" id="clientSecret" name="clientSecret" class="text">
             <div class="description">Client secret used for logging into the ALM Octane server</div>
         </div>
         <div class="field-group">

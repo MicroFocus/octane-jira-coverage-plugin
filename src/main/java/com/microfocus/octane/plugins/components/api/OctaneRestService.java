@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface OctaneRestService {
+
 	GroupEntityCollection getCoverage(int applicationModuleId);
 
-	void getTests();
+	void reloadConfiguration();
 }

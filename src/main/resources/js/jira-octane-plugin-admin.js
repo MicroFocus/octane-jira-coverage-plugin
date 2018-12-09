@@ -12,8 +12,8 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
             dataType: "json"
         }).done(function (config) { // when the configuration is returned...
             // ...populate the form.
-            $("#client_id").val(config.client_id);
-            $("#client_secret").val(config.client_secret);
+            $("#clientId").val(config.clientId);
+            $("#clientSecret").val(config.clientSecret);
             $("#location").val(config.location);
 
             $("#test_connection").click(function () {
@@ -29,16 +29,17 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 })(AJS.$ || jQuery);
 
 function getData() {
-    var data = '{"location":"' + $("#location").attr("value") + '","client_id":"' + $("#client_id").attr("value") + '","client_secret":"' + $("#client_secret").attr("value") + '"}';
+    var data = '{"location":"' + $("#location").attr("value") + '","clientId":"' + $("#clientId").attr("value") + '","clientSecret":"' + $("#clientSecret").attr("value") + '"}';
     return data;
 }
 
 function updateConfig() {
     setStatusText("Configuration is saving ...");
+    var data = getData();
     var request = $.ajax({
         url: baseUrl,
         type: "PUT",
-        data: getData(),
+        data: data,
         dataType: "json",
         contentType: "application/json"
     });
