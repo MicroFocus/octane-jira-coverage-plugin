@@ -5,6 +5,7 @@ import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedListener;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.components.api.Constants;
 import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
@@ -22,7 +23,7 @@ import java.util.Set;
 
 @ExportAsService({OctaneRestService.class})
 @Named("octaneRestService")
-public class OctaneRestServiceImpl implements OctaneRestService {
+public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigurationChangedListener {
 
 	@ComponentImport
 	private final ApplicationProperties applicationProperties;
@@ -38,6 +39,8 @@ public class OctaneRestServiceImpl implements OctaneRestService {
 	public OctaneRestServiceImpl(final PluginSettingsFactory pluginSettingsFactory, final ApplicationProperties applicationProperties) {
 		this.applicationProperties = applicationProperties;
 		this.pluginSettingsFactory = pluginSettingsFactory;
+
+		OctaneConfigurationManager.addListener(this);
 		reloadConfiguration();
 	}
 
@@ -60,15 +63,20 @@ public class OctaneRestServiceImpl implements OctaneRestService {
 
 		Set<String> queryParams = new HashSet<>();
 		queryParams.add("group_by=status");
-		queryParams.add(RestConnector.encodeParam(String.format("test_of_last_run={product_areas={(id IN '%s')}}", applicationModuleId)));
+		queryParams.add(RestConnector.encodeParam(String.format("query=\"test_of_last_run={product_areas={(id IN '%s')}}\"", applicationModuleId)));
+		//https://center.almoctane.com/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '89009')}}"&group_by=status
 
-		String responseStr = restConnector.httpGet(url, queryParams, headers).getResponseData();
 		try {
+			String responseStr = restConnector.httpGet(url, queryParams, headers).getResponseData();
 			GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(new JSONObject(responseStr));
 			return col;
-
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to getCoverage : " + e.getMessage(), e);
 		}
 	}
+
+	@Override
+	public void onOctaneConfigurationChanged() {
+		reloadConfiguration();
 	}
+}

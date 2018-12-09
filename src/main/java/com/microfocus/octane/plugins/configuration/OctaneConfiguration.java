@@ -57,7 +57,7 @@ public class OctaneConfiguration {
 
 	public String getWorkspaceId() {
 		if (details != null) {
-			return details.getSharedspaceId();
+			return details.getWorkspaceId();
 		}
 		return null;
 	}

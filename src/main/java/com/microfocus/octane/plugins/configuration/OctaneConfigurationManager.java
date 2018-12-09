@@ -6,10 +6,7 @@ import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OctaneConfigurationManager {
 
@@ -19,6 +16,12 @@ public class OctaneConfigurationManager {
 	private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
 
 	private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
+
+	private static List<OctaneConfigurationChangedListener> listeners = new ArrayList<OctaneConfigurationChangedListener>();
+
+	public static  void addListener(OctaneConfigurationChangedListener toAdd) {
+		listeners.add(toAdd);
+	}
 
 	public static OctaneConfiguration loadDetailsFromGlobalSettings(PluginSettingsFactory pluginSettingsFactory) {
 		PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
@@ -35,6 +38,16 @@ public class OctaneConfigurationManager {
 		pluginSettings.put(OCTANE_LOCATION_KEY, config.getLocation());
 		pluginSettings.put(CLIENT_ID_KEY, config.getClientId());
 		pluginSettings.put(CLIENT_SECRET_KEY, config.getClientSecret());
+
+		//update listeners
+		for (OctaneConfigurationChangedListener hl : listeners) {
+			try {
+				hl.onOctaneConfigurationChanged();
+			}catch (Exception e){
+				//TODO add log
+			}
+
+		}
 	}
 
 	public static OctaneConfiguration.OctaneDetails parseUiLocation(String uiLocation) {

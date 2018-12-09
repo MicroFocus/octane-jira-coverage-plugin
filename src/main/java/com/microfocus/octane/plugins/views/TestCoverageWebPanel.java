@@ -34,7 +34,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 		//Long issueId = currentIssue.getId(); //TODO USE id for retrieving information from octane
 
 		List<OctaneEntity> groups = new ArrayList<>();
-		GroupEntityCollection coverage = octaneRestService.getCoverage(2001);
+		GroupEntityCollection coverage = octaneRestService.getCoverage(1002);
 		Map<String, GroupEntity> id2entity = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(gr -> gr.getValue().getId(), Function.identity()));
 
 		extractAndEnrichEntity(groups, id2entity, "green", "list_node.run_status.passed");
