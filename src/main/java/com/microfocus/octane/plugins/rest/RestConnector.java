@@ -31,7 +31,6 @@ import java.util.Map.Entry;
 
 public class RestConnector {
 
-	public static String UTF8 = "UTF-8";
 	public static String HEADER_ACCEPT = "Accept";
 	public static String HEADER_APPLICATION_JSON = "application/json";
 	public static String HEADER_APPLICATION_XML = "application/xml";
@@ -398,17 +397,5 @@ public class RestConnector {
 	public void setCredentials(String user, String password) {
 		this.user = user;
 		this.password = password;
-	}
-
-	public static String encodeParam(String param) {
-		String ret;
-
-		try {
-			ret = URLEncoder.encode(param, UTF8);
-		} catch (UnsupportedEncodingException e) {
-			ret = "";
-		}
-
-		return ret;
 	}
 }

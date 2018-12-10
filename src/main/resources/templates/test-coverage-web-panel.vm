@@ -2,8 +2,13 @@
 <table style="width:50%; margin-top: 10px;">
 
     #foreach( $group in $groups )
-        <tr style="color: $group.get("color");">
-            <td>$group.get("name"):</td>
+        <tr">
+            <td>
+                <div>
+                    <div style="float: left; margin-left: -3px; width: 5px; height: 20px; background:$group.get("color")"></div>
+                    <div style="margin-left: 10px;">$group.get("name"):</div>
+                </div>
+            </td>
             <td>$group.get("count")</td>
         </tr>
     #end
