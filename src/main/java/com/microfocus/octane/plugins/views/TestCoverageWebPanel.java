@@ -5,10 +5,16 @@ import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContex
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
+import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
+import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
+import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,22 +27,25 @@ import java.util.stream.Collectors;
 public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
 	private OctaneRestService octaneRestService;
+	private PluginSettingsFactory pluginSettingsFactory;
 
-	public TestCoverageWebPanel(OctaneRestService octaneRestService) {
+	public TestCoverageWebPanel(OctaneRestService octaneRestService, PluginSettingsFactory pluginSettingsFactory) {
 
 		this.octaneRestService = octaneRestService;
+		this.pluginSettingsFactory = pluginSettingsFactory;
 	}
 
 	@Override
 	public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
+		OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.loadConfiguration(pluginSettingsFactory);
 		Map<String, Object> contextMap = new HashMap<>();
 		Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
-		//Long issueId = currentIssue.getId(); //TODO USE id for retrieving information from octane
 
 
-		OctaneEntity entity = octaneRestService.getEntityById("application_modules", "1002");
-		if (entity != null) {
-			String path = entity.getString("path");
+		QueryPhrase condition = new LogicalQueryPhrase(octaneConfiguration.getOctaneUdf(), currentIssue.getKey());
+		OctaneEntityCollection collection = octaneRestService.getEntitiesByCondition("application_modules", condition);
+		if (!collection.getData().isEmpty()) {
+			String path = collection.getData().get(0).getString("path");
 			List<OctaneEntity> groups = new ArrayList<>();
 
 			GroupEntityCollection coverage = octaneRestService.getCoverage(path);

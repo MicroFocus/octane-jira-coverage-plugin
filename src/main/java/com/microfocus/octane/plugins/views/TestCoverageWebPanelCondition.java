@@ -11,7 +11,7 @@ public class TestCoverageWebPanelCondition implements Condition {
 
 	@Override
 	public void init(Map<String, String> map) throws PluginParseException {
-		int t = 5;
+
 	}
 
 	@Override
@@ -20,6 +20,6 @@ public class TestCoverageWebPanelCondition implements Condition {
 		String issueType = issue.getIssueType().getName();
 		long id = issue.getId();
 		boolean isEven = (id % 2) == 0;
-		return isEven;
+		return true;
 	}
 }

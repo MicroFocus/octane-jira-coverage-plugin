@@ -14,40 +14,48 @@ public class OctaneConfigurationManager {
 	private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
 	private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
 	private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
+	private static final String OCTANE_UDF_FIELD_KEY = PLUGIN_PREFIX + "octaneUdf";
 
 	private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
 
 	private static List<OctaneConfigurationChangedListener> listeners = new ArrayList<OctaneConfigurationChangedListener>();
 
-	public static  void addListener(OctaneConfigurationChangedListener toAdd) {
+	public static void addListener(OctaneConfigurationChangedListener toAdd) {
 		listeners.add(toAdd);
 	}
 
-	public static OctaneConfiguration loadDetailsFromGlobalSettings(PluginSettingsFactory pluginSettingsFactory) {
-		PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-		OctaneConfiguration config = new OctaneConfiguration();
-		config.setLocation((String) settings.get(OCTANE_LOCATION_KEY));
-		config.setClientId((String) settings.get(CLIENT_ID_KEY));
-		config.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
-		return config;
+	private static OctaneConfiguration configuration;
+
+	public static OctaneConfiguration loadConfiguration(PluginSettingsFactory pluginSettingsFactory) {
+		if (configuration == null) {
+			PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+			configuration = new OctaneConfiguration();
+			configuration.setLocation((String) settings.get(OCTANE_LOCATION_KEY));
+			configuration.setClientId((String) settings.get(CLIENT_ID_KEY));
+			configuration.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
+			configuration.setOctaneUdf((String) settings.get(OCTANE_UDF_FIELD_KEY));
+		}
+		return configuration.clone();
 	}
 
 
-	public static void saveConfigurationInGlobalSettings(PluginSettingsFactory pluginSettingsFactory, OctaneConfiguration config) {
+	public static void saveConfiguration(PluginSettingsFactory pluginSettingsFactory, OctaneConfiguration config) {
 		PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
 		pluginSettings.put(OCTANE_LOCATION_KEY, config.getLocation());
 		pluginSettings.put(CLIENT_ID_KEY, config.getClientId());
 		pluginSettings.put(CLIENT_SECRET_KEY, config.getClientSecret());
+		pluginSettings.put(OCTANE_UDF_FIELD_KEY, config.getOctaneUdf());
 
 		//update listeners
 		for (OctaneConfigurationChangedListener hl : listeners) {
 			try {
 				hl.onOctaneConfigurationChanged();
-			}catch (Exception e){
+			} catch (Exception e) {
 				//TODO add log
 			}
 
 		}
+		configuration = config;
 	}
 
 	public static OctaneConfiguration.OctaneDetails parseUiLocation(String uiLocation) {

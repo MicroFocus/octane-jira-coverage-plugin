@@ -15,10 +15,7 @@ import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
-import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
-import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
-import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
-import com.microfocus.octane.plugins.rest.query.RawTextQueryPhrase;
+import com.microfocus.octane.plugins.rest.query.*;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -52,7 +49,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 	@Override
 	public void reloadConfiguration() {
 		restConnector.clearAll();
-		octaneConfiguration = OctaneConfigurationManager.loadDetailsFromGlobalSettings(pluginSettingsFactory);
+		octaneConfiguration = OctaneConfigurationManager.loadConfiguration(pluginSettingsFactory);
 		if (octaneConfiguration.parseLocation()) {
 			restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
 			restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
@@ -85,9 +82,9 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 	}
 
 	@Override
-	public OctaneEntity getEntityById(String collectionName, String entityId) {
+	public OctaneEntityCollection getEntitiesByCondition(String collectionName, QueryPhrase phrase) {
 
-		String queryCondition = OctaneQueryBuilder.create().addQueryCondition(new LogicalQueryPhrase("id", entityId)).build();
+		String queryCondition = OctaneQueryBuilder.create().addQueryCondition(phrase).build();
 		String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
 				octaneConfiguration.getSharespaceId(), octaneConfiguration.getWorkspaceId(), collectionName);
 
@@ -95,15 +92,10 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 		headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 		headers.put("HPECLIENTTYPE", "HPE_CI_CLIENT");
 
-
 		try {
 			String responseStr = restConnector.httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
 			OctaneEntityCollection col = OctaneEntityParser.parseCollection(new JSONObject(responseStr));
-			if (col.getData().size() == 1) {
-				return col.getData().get(0);
-			} else {
-				return null;
-			}
+			return  col;
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to getEntityById : " + e.getMessage(), e);
 		}

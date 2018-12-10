@@ -15,6 +15,7 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
             $("#clientId").val(config.clientId);
             $("#clientSecret").val(config.clientSecret);
             $("#location").val(config.location);
+            $("#octaneUdf").val(config.octaneUdf);
 
             $("#test_connection").click(function () {
                 testConnection();
@@ -29,8 +30,15 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 })(AJS.$ || jQuery);
 
 function getData() {
-    var data = '{"location":"' + $("#location").attr("value") + '","clientId":"' + $("#clientId").attr("value") + '","clientSecret":"' + $("#clientSecret").attr("value") + '"}';
-    return data;
+    var data = {
+        location : $("#location").attr("value"),
+        clientId : $("#clientId").attr("value"),
+        clientSecret : $("#clientSecret").attr("value"),
+        octaneUdf : $("#octaneUdf").attr("value")
+
+    }
+    var myJSON = JSON.stringify(data);
+    return myJSON;
 }
 
 function updateConfig() {

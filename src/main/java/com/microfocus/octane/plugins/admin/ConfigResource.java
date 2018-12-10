@@ -59,7 +59,7 @@ public class ConfigResource {
 			return Response.status(Status.UNAUTHORIZED).build();
 		}
 
-		OctaneConfiguration config = OctaneConfigurationManager.loadDetailsFromGlobalSettings(pluginSettingsFactory);
+		OctaneConfiguration config = OctaneConfigurationManager.loadConfiguration(pluginSettingsFactory);
 		config.setClientSecret(PASSWORD_REPLACE);
 		return Response.ok(config).build();
 	}
@@ -81,7 +81,10 @@ public class ConfigResource {
 			errorMsg = "Client ID is required";
 		} else if (StringUtils.isEmpty(config.getClientSecret())) {
 			errorMsg = "Client secret is required";
-		} else {
+		} else if (StringUtils.isEmpty(config.getOctaneUdf())) {
+			errorMsg = "Octane field is required";
+		}
+		else {
 			replacePassword(config);
 
 			OctaneConfiguration.OctaneDetails octaneDetail = null;
@@ -149,7 +152,7 @@ public class ConfigResource {
 
 		transactionTemplate.execute(new TransactionCallback() {
 			public Object doInTransaction() {
-				OctaneConfigurationManager.saveConfigurationInGlobalSettings(pluginSettingsFactory, config);
+				OctaneConfigurationManager.saveConfiguration(pluginSettingsFactory, config);
 				return null;
 			}
 		});
@@ -159,7 +162,7 @@ public class ConfigResource {
 
 	private void replacePassword(OctaneConfiguration config) {
 		if (PASSWORD_REPLACE.equals(config.getClientSecret())) {
-			OctaneConfiguration tempConfig = OctaneConfigurationManager.loadDetailsFromGlobalSettings(pluginSettingsFactory);
+			OctaneConfiguration tempConfig = OctaneConfigurationManager.loadConfiguration(pluginSettingsFactory);
 			config.setClientSecret(tempConfig.getClientSecret());
 		}
 	}

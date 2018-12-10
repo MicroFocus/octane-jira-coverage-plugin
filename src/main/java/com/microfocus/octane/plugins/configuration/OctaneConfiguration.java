@@ -3,11 +3,12 @@ package com.microfocus.octane.plugins.configuration;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 
-public class OctaneConfiguration {
+public class OctaneConfiguration implements Cloneable {
 
 	private String location;
 	private String clientId;
 	private String clientSecret;
+	private String octaneUdf = "jira_key_udf";
 
 	private OctaneDetails details;
 
@@ -41,6 +42,16 @@ public class OctaneConfiguration {
 		this.clientId = clientId;
 	}
 
+	@JsonProperty("octaneUdf")
+	public String getOctaneUdf() {
+		return octaneUdf;
+	}
+
+	@JsonProperty("octaneUdf")
+	public void setOctaneUdf(String octaneUdf) {
+		this.octaneUdf = octaneUdf;
+	}
+
 	public String getBaseUrl() {
 		if (details != null) {
 			return details.getBaseUrl();
@@ -70,6 +81,15 @@ public class OctaneConfiguration {
 			return false;
 		}
 	}
+
+	public OctaneConfiguration clone()  {
+		try {
+			return (OctaneConfiguration)super.clone();
+		} catch (CloneNotSupportedException e) {
+			return null;//not possible
+		}
+	}
+
 
 	public static final class OctaneDetails {
 		private String baseUrl;
