@@ -33,6 +33,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 		Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
 		//Long issueId = currentIssue.getId(); //TODO USE id for retrieving information from octane
 
+
 		OctaneEntity entity = octaneRestService.getEntityById("application_modules", "1002");
 		if (entity != null) {
 			String path = entity.getString("path");
@@ -49,7 +50,11 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
 
 			contextMap.put("groups", groups);
+			contextMap.put("hasData", true);
+		} else {
+			contextMap.put("hasData", false);
 		}
+
 
 		return contextMap;
 
