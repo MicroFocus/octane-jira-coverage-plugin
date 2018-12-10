@@ -31,6 +31,8 @@
     <context-provider class="com.microfocus.octane.plugins.views.TestCoverageWebPanel"/>
     <resource name="view" type="velocity" location="templates/test-coverage-web-panel.vm"/>
     <label key="test-coverage-web-panel.title"/>
+    <condition class="com.microfocus.octane.plugins.views.TestCoverageWebPanelCondition">
+    </condition>
   </web-panel>
 
   <servlet key="admin-servlet" class="com.microfocus.octane.plugins.admin.AdminServlet">

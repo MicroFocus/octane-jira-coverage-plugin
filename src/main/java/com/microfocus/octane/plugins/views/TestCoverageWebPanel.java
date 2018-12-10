@@ -33,16 +33,21 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 		Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
 		//Long issueId = currentIssue.getId(); //TODO USE id for retrieving information from octane
 
-		List<OctaneEntity> groups = new ArrayList<>();
-		GroupEntityCollection coverage = octaneRestService.getCoverage(1002);
-		Map<String, GroupEntity> id2entity = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(gr -> gr.getValue().getId(), Function.identity()));
+		OctaneEntity entity = octaneRestService.getEntityById("application_modules", "1002");
+		if (entity != null) {
+			String path = entity.getString("path");
+			List<OctaneEntity> groups = new ArrayList<>();
 
-		extractAndEnrichEntity(groups, id2entity, "green", "list_node.run_status.passed");
-		extractAndEnrichEntity(groups, id2entity, "red", "list_node.run_status.failed");
-		extractAndEnrichEntity(groups, id2entity, "blue", "list_node.run_status.planned");
-		extractAndEnrichEntity(groups, id2entity, "gray", "list_node.run_status.skipped");
+			GroupEntityCollection coverage = octaneRestService.getCoverage(path);
+			Map<String, GroupEntity> id2entity = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(gr -> gr.getValue().getId(), Function.identity()));
 
-		contextMap.put("groups", groups);
+			extractAndEnrichEntity(groups, id2entity, "green", "list_node.run_status.passed");
+			extractAndEnrichEntity(groups, id2entity, "red", "list_node.run_status.failed");
+			extractAndEnrichEntity(groups, id2entity, "blue", "list_node.run_status.planned");
+			extractAndEnrichEntity(groups, id2entity, "gray", "list_node.run_status.skipped");
+
+			contextMap.put("groups", groups);
+		}
 
 		return contextMap;
 
