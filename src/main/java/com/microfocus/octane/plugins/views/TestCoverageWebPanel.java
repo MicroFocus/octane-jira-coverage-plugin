@@ -45,7 +45,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 		QueryPhrase condition = new LogicalQueryPhrase(octaneConfiguration.getOctaneUdf(), currentIssue.getKey());
 		OctaneEntityCollection collection = octaneRestService.getEntitiesByCondition("application_modules", condition);
 		if (!collection.getData().isEmpty()) {
-			String path = collection.getData().get(0).getString("path");
+			OctaneEntity entity = collection.getData().get(0);
+			String path = entity.getString("path");
 			List<OctaneEntity> groups = new ArrayList<>();
 
 			GroupEntityCollection coverage = octaneRestService.getCoverage(path);
@@ -57,8 +58,13 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 			extractAndEnrichEntity(groups, id2entity, "rgb(82, 22, 172)", "list_node.run_status.skipped");
 			extractAndEnrichEntity(groups, id2entity, "rgb(252, 219, 31)", "list_node.run_status.requires_attention");
 
+			String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
+					octaneConfiguration.getBaseUrl(), octaneConfiguration.getSharespaceId(), octaneConfiguration.getWorkspaceId(),
+					"product_area", entity.getId());
 
+			contextMap.put("total", id2entity.values().stream().mapToInt(o -> o.getCount()).sum());
 			contextMap.put("groups", groups);
+			contextMap.put("octaneEntityUrl", octaneEntityUrl);
 			contextMap.put("hasData", true);
 		} else {
 			contextMap.put("hasData", false);

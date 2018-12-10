@@ -55,6 +55,8 @@ public class OctaneConfiguration implements Cloneable {
 	public String getBaseUrl() {
 		if (details != null) {
 			return details.getBaseUrl();
+		} else if (parseLocation()) {
+			return details.getBaseUrl();
 		}
 		return null;
 	}
@@ -62,6 +64,9 @@ public class OctaneConfiguration implements Cloneable {
 	public String getSharespaceId() {
 		if (details != null) {
 			return details.getSharedspaceId();
+		} else if (parseLocation()) {
+			return details.getSharedspaceId();
+
 		}
 		return null;
 	}
@@ -69,6 +74,9 @@ public class OctaneConfiguration implements Cloneable {
 	public String getWorkspaceId() {
 		if (details != null) {
 			return details.getWorkspaceId();
+		} else if (parseLocation()) {
+			return details.getWorkspaceId();
+
 		}
 		return null;
 	}
@@ -82,9 +90,9 @@ public class OctaneConfiguration implements Cloneable {
 		}
 	}
 
-	public OctaneConfiguration clone()  {
+	public OctaneConfiguration clone() {
 		try {
-			return (OctaneConfiguration)super.clone();
+			return (OctaneConfiguration) super.clone();
 		} catch (CloneNotSupportedException e) {
 			return null;//not possible
 		}

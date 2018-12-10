@@ -1,12 +1,12 @@
 #if($hasData==true)
-<ul class="item-details">
+<ul class="item-details" style="margin-top: 3px;">
     <li>
         #foreach( $group in $groups )
             <dl>
                 <dt>
                     <div>
                         <div style="float: left; margin-left: -3px; width: 5px; height: 20px; background:$group.get(
-                            "color")"></div>
+                            "color")"/>
                         <div style="margin-left: 6px;">$group.get("name"):</div>
                     </div>
                 </dt>
@@ -14,7 +14,13 @@
             </dl>
 
         #end
+        <dl>
+            <dt><b>Total :</b></dt>
+            <dd><b>$total</b></dd>
+        </dl>
     </li>
+
+    <div style="margin-top: 5px;">Open item in <a target="_blank" href="$octaneEntityUrl">ALM Octane</a></div>
 </ul>
 #{else}
 <div>No available data</div>
