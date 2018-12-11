@@ -1,13 +1,15 @@
 package com.microfocus.octane.plugins.components.api;
 
-import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
-
-import java.util.List;
-import java.util.Map;
+import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 
 public interface OctaneRestService {
-	GroupEntityCollection getCoverage(int applicationModuleId);
 
-	void getTests();
+	GroupEntityCollection getCoverage(String applicationModulePath);
+
+	OctaneEntityCollection getEntitiesByCondition(String collectionName, QueryPhrase phrase);
+
+	void reloadConfiguration();
 }

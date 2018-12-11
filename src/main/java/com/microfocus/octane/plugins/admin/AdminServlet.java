@@ -50,7 +50,7 @@ public class AdminServlet extends HttpServlet {
 		}
 
 		response.setContentType("text/html;charset=utf-8");
-		renderer.render("templates/admin.vm", response.getWriter());
+		renderer.render("templates/jira-octane-plugin-admin.vm", response.getWriter());
 	}
 
 	private void redirectToLogin(HttpServletRequest request, HttpServletResponse response) throws IOException

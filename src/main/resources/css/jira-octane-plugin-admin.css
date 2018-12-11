@@ -1,0 +1,20 @@
+.statusValid {
+    color: green;
+}
+
+.statusFailed {
+    color: red;
+}
+
+.noStatus {
+    color: black;
+}
+
+#octane-admin .text{
+    max-width: 400px;
+}
+
+#button-group{
+    max-width: 400px;
+    width: 400px;
+}

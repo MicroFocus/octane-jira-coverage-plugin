@@ -1,0 +1,46 @@
+<html>
+<head>
+    <title>ALM Octane Configuration</title>
+    <meta name="decorator" content="atl.admin">
+    $webResourceManager.requireResourcesForContext("jira-octane-plugin-admin-resource-context")
+</head>
+<body>
+<h2>ALM Octane Configuration</h2>
+<form id="octane-admin" class="aui">
+    <div class="form-body">
+        <div class="field-group">
+            <label for="location">Location:</label>
+            <input type="text" id="location" name="location" class="text">
+            <div class="description">Location of the ALM Octane application, for example : http://myServer.myCompany.com:8081/ui/?p=1001/1002
+                <br/><b>Tip</b>: You can copy the URL from the address bar of the browser in which you opened ALM Octane
+            </div>
+        </div>
+        <div class="field-group">
+            <label for="clientId">Client ID:</label>
+            <input type="text" id="clientId" name="clientId" class="text">
+            <div class="description">Client ID used for logging into the ALM Octane server</div>
+        </div>
+        <div class="field-group">
+            <label for="clientSecret">Client secret:</label>
+            <input type="password" id="clientSecret" name="clientSecret" class="text">
+            <div class="description">Client secret used for logging into the ALM Octane server</div>
+        </div>
+        <div class="field-group">
+            <label for="time">Octane field:</label>
+            <input type="text" id="octaneUdf" name="octaneUdf" class="text">
+            <div class="description">Octane user-defined field for mapping Jira issue (recommended 'jira_key_udf')</div>
+        </div>
+        <div class="field-group">
+            <div  id="button-group">
+                <input type="button" class="aui-button aui-button-primary"  id="save" value="Save"  style="float: left;">
+                <input type="button" class="aui-button aui-button-primary" id="test_connection" value="Test Connection" style="float: right;">
+            </div>
+        </div>
+        <div class="field-group">
+            <div id="status"></div>
+        </div>
+
+    </div>
+</form>
+</body>
+</html>

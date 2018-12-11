@@ -31,7 +31,6 @@ import java.util.Map.Entry;
 
 public class RestConnector {
 
-	public static String UTF8 = "UTF-8";
 	public static String HEADER_ACCEPT = "Accept";
 	public static String HEADER_APPLICATION_JSON = "application/json";
 	public static String HEADER_APPLICATION_XML = "application/xml";
@@ -66,7 +65,7 @@ public class RestConnector {
 		//Get LWSSO COOKIE
 		Map<String, String> headers = new HashMap<>();
 		headers.put(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON);
-		Response authResponse = httpPost(Constants.URL_AUTHENTICATION, jsonString, headers);
+		Response authResponse = doHttp("POST", Constants.URL_AUTHENTICATION, null, jsonString, headers, true);
 		if (authResponse.getStatusCode() == HttpStatus.SC_OK) {
 			ret = true;
 		}
@@ -142,12 +141,12 @@ public class RestConnector {
 	}
 
 	/**
-	 * @param type         of the http operation: get post put delete
-	 * @param url          to work on
+	 * @param type        of the http operation: get post put delete
+	 * @param url         to work on
 	 * @param queryParams
-	 * @param data         to write, if a writable operation
-	 * @param headers      to use in the request
-	 * @param afterRelogin if equal to false and received 401 and supportRelogin is exist - trial to relogin will be done
+	 * @param data        to write, if a writable operation
+	 * @param headers     to use in the request
+	 * @param relogin     if equal to false and received 401 and supportRelogin is exist - trial to relogin will be done
 	 * @return http response
 	 */
 	private Response doHttp(
@@ -156,7 +155,7 @@ public class RestConnector {
 			Collection<String> queryParams,
 			String data,
 			Map<String, String> headers,
-			boolean afterRelogin) {
+			boolean relogin) {
 
 
 		//add query params
@@ -207,7 +206,7 @@ public class RestConnector {
 		} catch (RestStatusException e) {
 			if ((e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) ||
 					(e.getResponse().getStatusCode() == 0 && e.getResponse().getResponseData().equals("Error writing to server"))) {
-				if (!afterRelogin) {
+				if (!relogin) {
 					boolean reloginResult = false;
 					try {
 						reloginResult = login();
@@ -398,17 +397,5 @@ public class RestConnector {
 	public void setCredentials(String user, String password) {
 		this.user = user;
 		this.password = password;
-	}
-
-	public static String encodeParam(String param) {
-		String ret;
-
-		try {
-			ret = URLEncoder.encode(param, UTF8);
-		} catch (UnsupportedEncodingException e) {
-			ret = "";
-		}
-
-		return ret;
 	}
 }
