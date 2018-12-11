@@ -14,18 +14,13 @@
 
 
   <!-- add our web resources -->
-  <web-resource key="jira-octane-plugin-resources" name="jira-octane-plugin Web Resources">
-    <dependency>com.atlassian.auiplugin:ajs</dependency>
-    <resource type="download" name="jira-octane-plugin.js" location="/js/jira-octane-plugin.js"/>
-    <resource type="download" name="images/" location="/images"/>
-    <context>jira-octane-plugin</context>
-  </web-resource>
-  <web-resource key="jira-octane-plugin-resources-admin" name="jira-octane-plugin Web Resources">
+  <web-resource key="jira-octane-plugin-admin-resource" name="jira-octane-plugin Web Resources">
     <dependency>com.atlassian.auiplugin:ajs</dependency>
     <resource type="download" name="jira-octane-plugin.js" location="/js/jira-octane-plugin-admin.js"/>
     <resource type="download" name="jira-octane-plugin.css" location="/css/jira-octane-plugin-admin.css"/>
-    <context>jira-octane-plugin-admin</context>
+    <context>jira-octane-plugin-admin-resource-context</context>
   </web-resource>
+
   <web-panel name="TestCoverageWebPanel" i18n-name-key="test-coverage-web-panel.name" key="test-coverage-web-panel" location="atl.jira.view.issue.right.context" weight="1">
     <description key="test-coverage-web-panel.description">The panel shows test coverage information in ALM Octane for current item</description>
     <context-provider class="com.microfocus.octane.plugins.views.TestCoverageWebPanel"/>

@@ -16,6 +16,7 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,63 +27,72 @@ import java.util.stream.Collectors;
 @Scanned
 public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
-	private OctaneRestService octaneRestService;
-	private PluginSettingsFactory pluginSettingsFactory;
+    private OctaneRestService octaneRestService;
+    private PluginSettingsFactory pluginSettingsFactory;
+    private NumberFormat countFormat = NumberFormat.getInstance();
+    private NumberFormat percentFormatter = NumberFormat.getPercentInstance();
 
-	public TestCoverageWebPanel(OctaneRestService octaneRestService, PluginSettingsFactory pluginSettingsFactory) {
+    public TestCoverageWebPanel(OctaneRestService octaneRestService, PluginSettingsFactory pluginSettingsFactory) {
 
-		this.octaneRestService = octaneRestService;
-		this.pluginSettingsFactory = pluginSettingsFactory;
-	}
+        this.octaneRestService = octaneRestService;
+        this.pluginSettingsFactory = pluginSettingsFactory;
 
-	@Override
-	public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
-		OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.loadConfiguration(pluginSettingsFactory);
-		Map<String, Object> contextMap = new HashMap<>();
-		Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
+        percentFormatter.setMinimumFractionDigits(1);
+        percentFormatter.setMinimumFractionDigits(1);
+    }
 
-
-		QueryPhrase condition = new LogicalQueryPhrase(octaneConfiguration.getOctaneUdf(), currentIssue.getKey());
-		OctaneEntityCollection collection = octaneRestService.getEntitiesByCondition("application_modules", condition);
-		if (!collection.getData().isEmpty()) {
-			OctaneEntity entity = collection.getData().get(0);
-			String path = entity.getString("path");
-			List<OctaneEntity> groups = new ArrayList<>();
-
-			GroupEntityCollection coverage = octaneRestService.getCoverage(path);
-			Map<String, GroupEntity> id2entity = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(gr -> gr.getValue().getId(), Function.identity()));
-
-			extractAndEnrichEntity(groups, id2entity, "rgb(26, 172, 96)", "list_node.run_status.passed");
-			extractAndEnrichEntity(groups, id2entity, "red", "list_node.run_status.failed");
-			extractAndEnrichEntity(groups, id2entity, "blue", "list_node.run_status.planned");
-			extractAndEnrichEntity(groups, id2entity, "rgb(82, 22, 172)", "list_node.run_status.skipped");
-			extractAndEnrichEntity(groups, id2entity, "rgb(252, 219, 31)", "list_node.run_status.requires_attention");
-
-			String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
-					octaneConfiguration.getBaseUrl(), octaneConfiguration.getSharespaceId(), octaneConfiguration.getWorkspaceId(),
-					"product_area", entity.getId());
-
-			contextMap.put("total", id2entity.values().stream().mapToInt(o -> o.getCount()).sum());
-			contextMap.put("groups", groups);
-			contextMap.put("octaneEntityUrl", octaneEntityUrl);
-			contextMap.put("hasData", true);
-		} else {
-			contextMap.put("hasData", false);
-		}
+    @Override
+    public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
+        OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.loadConfiguration(pluginSettingsFactory);
+        Map<String, Object> contextMap = new HashMap<>();
+        Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
 
 
-		return contextMap;
+        QueryPhrase condition = new LogicalQueryPhrase(octaneConfiguration.getOctaneUdf(), currentIssue.getKey());
+        OctaneEntityCollection collection = octaneRestService.getEntitiesByCondition("application_modules", condition);
+        if (!collection.getData().isEmpty()) {
+            OctaneEntity entity = collection.getData().get(0);
+            String path = entity.getString("path");
+            List<OctaneEntity> groups = new ArrayList<>();
 
-	}
+            GroupEntityCollection coverage = octaneRestService.getCoverage(path);
+            Map<String, GroupEntity> id2entity = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(gr -> gr.getValue().getId(), Function.identity()));
 
-	private void extractAndEnrichEntity(List<OctaneEntity> result, Map<String, GroupEntity> id2entity, String color, String id) {
-		GroupEntity groupEntity = id2entity.get(id);
+            int total = id2entity.values().stream().mapToInt(o -> o.getCount()).sum();
+            extractAndEnrichEntity(groups, id2entity.get("list_node.run_status.passed"), "rgb(26, 172, 96)", total);
+            extractAndEnrichEntity(groups, id2entity.get("list_node.run_status.failed"), "rgb(229, 0, 76)", total);
+            extractAndEnrichEntity(groups, id2entity.get("list_node.run_status.planned"), "rgb(47, 214, 195)", total);
+            extractAndEnrichEntity(groups, id2entity.get("list_node.run_status.skipped"), "rgb(82, 22, 172)", total);
+            extractAndEnrichEntity(groups, id2entity.get("list_node.run_status.requires_attention"), "rgb(252, 219, 31)", total);
 
-		if (groupEntity != null) {
-			OctaneEntity entity = groupEntity.getValue();
-			entity.put("color", color);
-			entity.put("count", groupEntity.getCount());
-			result.add(entity);
-		}
-	}
+            String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
+                    octaneConfiguration.getBaseUrl(), octaneConfiguration.getSharespaceId(), octaneConfiguration.getWorkspaceId(),
+                    "product_area", entity.getId());
+
+            contextMap.put("total", total);
+            contextMap.put("groups", groups);
+            contextMap.put("octaneEntityUrl", octaneEntityUrl);
+            contextMap.put("hasData", true);
+        } else {
+            contextMap.put("hasData", false);
+        }
+
+
+        return contextMap;
+
+    }
+
+    private void extractAndEnrichEntity(List<OctaneEntity> result, GroupEntity groupEntity, String color, int totalCount) {
+        if (groupEntity != null) {
+            OctaneEntity entity = groupEntity.getValue();
+            entity.put("color", color);
+
+            entity.put("count", countFormat.format(groupEntity.getCount()));
+
+            float percentage = 1f * groupEntity.getCount() / totalCount;
+            String percentageAsString = percentFormatter.format(percentage);//String.format("%.1f", percentage);
+            entity.put("percentage", percentageAsString);
+            result.add(entity);
+        }
+    }
 }

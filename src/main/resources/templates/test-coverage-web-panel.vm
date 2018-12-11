@@ -1,22 +1,28 @@
 #if($hasData==true)
 <ul class="item-details" style="margin-top: 3px;">
+
     <li>
         #foreach( $group in $groups )
             <dl>
                 <dt>
                     <div>
-                        <div style="float: left; margin-left: -3px; width: 5px; height: 20px; background:$group.get(
+                        <div style="float: left; margin-left: -3px; width: 5px; height: 18px; background:$group.get(
                             "color")"/>
                         <div style="margin-left: 6px;">$group.get("name"):</div>
                     </div>
                 </dt>
-                <dd>$group.get("count")</dd>
+                <dd>
+                    <span style="display: inline-block;width: 45px;text-align: right;">$group.get("count")</span>
+                    <span style="margin-left: 15px;font-size: x-small;">($group.get("percentage"))</span>
+                </dd>
+
             </dl>
 
         #end
         <dl>
             <dt><b>Total :</b></dt>
-            <dd><b>$total</b></dd>
+            <dd><span style="display: inline-block;width: 45px;text-align: right;"><b>$total</b></span>
+            </dd>
         </dl>
     </li>
 

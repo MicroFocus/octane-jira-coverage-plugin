@@ -2,7 +2,7 @@
 <head>
     <title>ALM Octane Configuration</title>
     <meta name="decorator" content="atl.admin">
-    $webResourceManager.requireResourcesForContext("jira-octane-plugin-admin")
+    $webResourceManager.requireResourcesForContext("jira-octane-plugin-admin-resource-context")
 </head>
 <body>
 <h2>ALM Octane Configuration</h2>
@@ -28,7 +28,7 @@
         <div class="field-group">
             <label for="time">Octane field:</label>
             <input type="text" id="octaneUdf" name="octaneUdf" class="text">
-            <div class="description">Octane user-defined field for mapping Jira issue (default 'jira_key_udf')</div>
+            <div class="description">Octane user-defined field for mapping Jira issue (recommended 'jira_key_udf')</div>
         </div>
         <div class="field-group">
             <div  id="button-group">
