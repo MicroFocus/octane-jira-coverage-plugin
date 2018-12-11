@@ -73,6 +73,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             contextMap.put("groups", groups);
             contextMap.put("octaneEntityUrl", octaneEntityUrl);
             contextMap.put("hasData", true);
+            contextMap.put("octaneEntityId", entity.getId());
+            contextMap.put("octaneEntityName", entity.getName());
         } else {
             contextMap.put("hasData", false);
         }

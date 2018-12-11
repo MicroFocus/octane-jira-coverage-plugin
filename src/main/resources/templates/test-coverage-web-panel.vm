@@ -1,14 +1,24 @@
 #if($hasData==true)
 <ul class="item-details" style="margin-top: 3px;">
+    <!-- octane  entity-->
+    <div style="margin-bottom: 10px;">
+        <span style="display: inline-block;position: relative; text-align: center;vertical-align: middle;height: 30px;
+        width: 30px;border-radius: 50%; background-color: #43e4ff;margin-top: -2px;">
+            <span style="display: inline-block;position: relative;font-size: 14px; color: #ffffff;top: 4px;">AM</span>
+        </span>
+        <span style="margin-left: 5px;"><a target="_blank" href="$octaneEntityUrl">$octaneEntityId</a></span>
+        <span style="color: #cccccc;font-size: 20px;line-height: 35px; margin: 0 5px;">|</span>
+        <span style="">$octaneEntityName</span>
+    </div>
 
+    <!-- test status-->
     <li>
         #foreach( $group in $groups )
             <dl>
                 <dt>
                     <div>
-                        <div style="float: left; margin-left: -3px; width: 5px; height: 18px; background:$group.get(
-                            "color")"/>
-                        <div style="margin-left: 6px;">$group.get("name"):</div>
+                        <div style="float: left; width: 5px; height: 18px; background:$group.get("color")"/>
+                        <div style="margin-left: 8px;min-width: 120px;">$group.get("name"):</div>
                     </div>
                 </dt>
                 <dd>
@@ -20,13 +30,11 @@
 
         #end
         <dl>
-            <dt><b>Total :</b></dt>
+            <dt><b>Total tests:</b></dt>
             <dd><span style="display: inline-block;width: 45px;text-align: right;"><b>$total</b></span>
             </dd>
         </dl>
     </li>
-
-    <div style="margin-top: 5px;">Open item in <a target="_blank" href="$octaneEntityUrl">ALM Octane</a></div>
 </ul>
 #{else}
 <div>No available data</div>
