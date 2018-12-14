@@ -3,12 +3,12 @@
     <!-- octane  entity-->
     <div style="margin-bottom: 10px;">
         <span style="display: inline-block;position: relative; text-align: center;vertical-align: middle;height: 30px;
-        width: 30px;border-radius: 50%; background-color: #43e4ff;margin-top: -2px;">
-            <span style="display: inline-block;position: relative;font-size: 14px; color: #ffffff;top: 4px;">AM</span>
+        width: 30px;border-radius: 50%; background-color: $octaneEntity.get("typeColor");margin-top: -2px;">
+            <span style="display: inline-block;position: relative;font-size: 14px; color: #ffffff;top: 4px;">$octaneEntity.get("typeKey")</span>
         </span>
-        <span style="margin-left: 5px;"><a target="_blank" href="$octaneEntityUrl">$octaneEntityId</a></span>
+        <span style="margin-left: 5px;"><a target="_blank" href="$octaneEntity.get("url")">$octaneEntity.getId()</a></span>
         <span style="color: #cccccc;font-size: 20px;line-height: 35px; margin: 0 5px;">|</span>
-        <span style="">$octaneEntityName</span>
+        <span style="">$octaneEntity.getName()</span>
     </div>
 
     <!-- test status-->

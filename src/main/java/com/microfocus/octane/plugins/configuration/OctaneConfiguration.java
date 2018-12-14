@@ -1,131 +1,80 @@
 package com.microfocus.octane.plugins.configuration;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import java.util.Set;
 
 
-public class OctaneConfiguration implements Cloneable {
+public class OctaneConfiguration {
 
-	private String location;
-	private String clientId;
-	private String clientSecret;
-	private String octaneUdf = "jira_key_udf";
+    private String baseUrl;
+    private String sharedspaceId;
+    private String workspaceId;
+    private String clientId;
+    private String clientSecret;
+    private String octaneUdf;
+    private Set<String> jiraIssueTypes;
+    private Set<String> jiraProjects;
 
-	private OctaneDetails details;
+    public String getClientSecret() {
+        return clientSecret;
+    }
 
-	@JsonProperty("location")
-	public String getLocation() {
-		return location;
-	}
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
 
-	@JsonProperty("location")
-	public void setLocation(String location) {
-		this.location = location;
-	}
+    public String getClientId() {
+        return clientId;
+    }
 
-	@JsonProperty("clientSecret")
-	public String getClientSecret() {
-		return clientSecret;
-	}
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
 
-	@JsonProperty("clientSecret")
-	public void setClientSecret(String clientSecret) {
-		this.clientSecret = clientSecret;
-	}
+    public String getOctaneUdf() {
+        return octaneUdf;
+    }
 
-	@JsonProperty("clientId")
-	public String getClientId() {
-		return clientId;
-	}
+    public void setOctaneUdf(String octaneUdf) {
+        this.octaneUdf = octaneUdf;
+    }
 
-	@JsonProperty("clientId")
-	public void setClientId(String clientId) {
-		this.clientId = clientId;
-	}
+    public String getBaseUrl() {
+        return baseUrl;
+    }
 
-	@JsonProperty("octaneUdf")
-	public String getOctaneUdf() {
-		return octaneUdf;
-	}
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
-	@JsonProperty("octaneUdf")
-	public void setOctaneUdf(String octaneUdf) {
-		this.octaneUdf = octaneUdf;
-	}
+    public String getSharedspaceId() {
+        return sharedspaceId;
+    }
 
-	public String getBaseUrl() {
-		if (details != null) {
-			return details.getBaseUrl();
-		} else if (parseLocation()) {
-			return details.getBaseUrl();
-		}
-		return null;
-	}
+    public void setSharedspaceId(String sharedspaceId) {
+        this.sharedspaceId = sharedspaceId;
+    }
 
-	public String getSharespaceId() {
-		if (details != null) {
-			return details.getSharedspaceId();
-		} else if (parseLocation()) {
-			return details.getSharedspaceId();
+    public String getWorkspaceId() {
+        return workspaceId;
+    }
 
-		}
-		return null;
-	}
+    public void setWorkspaceId(String workspaceId) {
+        this.workspaceId = workspaceId;
+    }
 
-	public String getWorkspaceId() {
-		if (details != null) {
-			return details.getWorkspaceId();
-		} else if (parseLocation()) {
-			return details.getWorkspaceId();
+    public Set<String> getJiraIssueTypes() {
+        return jiraIssueTypes;
+    }
 
-		}
-		return null;
-	}
+    public void setJiraIssueTypes(Set<String> jiraIssueTypes) {
+        this.jiraIssueTypes = jiraIssueTypes;
+    }
 
-	public boolean parseLocation() {
-		try {
-			this.details = OctaneConfigurationManager.parseUiLocation(this.getLocation());
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
+    public Set<String> getJiraProjects() {
+        return jiraProjects;
+    }
 
-	public OctaneConfiguration clone() {
-		try {
-			return (OctaneConfiguration) super.clone();
-		} catch (CloneNotSupportedException e) {
-			return null;//not possible
-		}
-	}
-
-
-	public static final class OctaneDetails {
-		private String baseUrl;
-		private String sharedspaceId;
-		private String workspaceId;
-
-		public String getBaseUrl() {
-			return baseUrl;
-		}
-
-		public void setBaseUrl(String baseUrl) {
-			this.baseUrl = baseUrl;
-		}
-
-		public String getSharedspaceId() {
-			return sharedspaceId;
-		}
-
-		public void setSharedspaceId(String sharedspaceId) {
-			this.sharedspaceId = sharedspaceId;
-		}
-
-		public String getWorkspaceId() {
-			return workspaceId;
-		}
-
-		public void setWorkspaceId(String workspaceId) {
-			this.workspaceId = workspaceId;
-		}
-	}
+    public void setJiraProjects(Set<String> jiraProjects) {
+        this.jiraProjects = jiraProjects;
+    }
 }

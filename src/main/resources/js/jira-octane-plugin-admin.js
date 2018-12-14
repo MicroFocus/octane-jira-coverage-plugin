@@ -6,36 +6,46 @@ var baseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
     // wait for the DOM (i.e., document "skeleton") to load. This likely isn't necessary for the current case,
     // but may be helpful for AJAX that provides secondary content.
     $(document).ready(function () {
-        // request the config information from the server
-        $.ajax({
-            url: baseUrl,
-            dataType: "json"
-        }).done(function (config) { // when the configuration is returned...
-            // ...populate the form.
-            $("#clientId").val(config.clientId);
-            $("#clientSecret").val(config.clientSecret);
-            $("#location").val(config.location);
-            $("#octaneUdf").val(config.octaneUdf);
 
-            $("#test_connection").click(function () {
-                testConnection();
-            });
-
-            $("#save").click(function () {
-                updateConfig();
-            });
-        });
+        loadConfiguration();
+        addButtonRegistrations();
     });
 
 })(AJS.$ || jQuery);
 
-function getData() {
-    var data = {
-        location : $("#location").attr("value"),
-        clientId : $("#clientId").attr("value"),
-        clientSecret : $("#clientSecret").attr("value"),
-        octaneUdf : $("#octaneUdf").attr("value")
+function addButtonRegistrations() {
+    $("#test_connection").click(function () {
+        testConnection();
+    });
 
+    $("#save").click(function () {
+        updateConfig();
+    });
+}
+
+function loadConfiguration() {
+    $.ajax({
+        url: baseUrl,
+        dataType: "json"
+    }).done(function (config) { // when the configuration is returned...
+        // ...populate the form.
+        $("#clientId").val(config.clientId);
+        $("#clientSecret").val(config.clientSecret);
+        $("#location").val(config.location);
+        $("#octaneUdf").val(config.octaneUdf);
+        $("#jiraIssueTypes").val(config.jiraIssueTypes);
+        $("#jiraProjects").val(config.jiraProjects);
+    });
+}
+
+function getConfigData() {
+    var data = {
+        location: $("#location").attr("value"),
+        clientId: $("#clientId").attr("value"),
+        clientSecret: $("#clientSecret").attr("value"),
+        octaneUdf: $("#octaneUdf").attr("value"),
+        jiraIssueTypes: $("#jiraIssueTypes").attr("value"),
+        jiraProjects: $("#jiraProjects").attr("value")
     }
     var myJSON = JSON.stringify(data);
     return myJSON;
@@ -43,7 +53,7 @@ function getData() {
 
 function updateConfig() {
     setStatusText("Configuration is saving ...");
-    var data = getData();
+    var data = getConfigData();
     var request = $.ajax({
         url: baseUrl,
         type: "PUT",
@@ -66,7 +76,7 @@ function testConnection() {
     var request = $.ajax({
         url: baseUrl + "test-connection",
         type: "PUT",
-        data: getData(),
+        data: getConfigData(),
         dataType: "json",
         contentType: "application/json"
     });

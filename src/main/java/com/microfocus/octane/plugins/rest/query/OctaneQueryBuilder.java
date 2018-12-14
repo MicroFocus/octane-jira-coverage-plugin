@@ -55,6 +55,14 @@ public class OctaneQueryBuilder implements Serializable {
 		return this;
 	}
 
+	public OctaneQueryBuilder addQueryConditions(Collection<QueryPhrase> conditions) {
+		if (queryConditions == null) {
+			queryConditions = new ArrayList<>();
+		}
+		queryConditions.addAll(conditions);
+		return this;
+	}
+
 	public OctaneQueryBuilder addStartIndex(Integer startIndex) {
 		this.startIndex = startIndex;
 		return this;
