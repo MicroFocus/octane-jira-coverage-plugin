@@ -29,7 +29,7 @@ public class TestCoverageWebPanelCondition implements Condition {
             OctaneConfiguration octaneConfiguration = configManager.getConfiguration();
             if (!octaneConfiguration.getJiraProjects().isEmpty()) {
                 Project project = (Project) map.get("project");
-                String projectKey = project.getKey().toLowerCase();
+                String projectKey = project.getKey().toUpperCase();
                 if (!octaneConfiguration.getJiraProjects().contains(projectKey)) {
                     return false;
                 }

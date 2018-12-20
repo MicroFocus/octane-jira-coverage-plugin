@@ -90,16 +90,21 @@ function testConnection() {
         if (response.failed) {
             setStatusText(response.failed, "statusFailed");
         } else if (response.warning) {
-            setStatusText(response.warning, "statusWarning");
+            setStatusText(response.warning, "statusWarning", true);
         }
     });
 }
 
-function setStatusText(statusText, statusClass) {
+function setStatusText(statusText, statusClass, isHtml) {
     $("#status").removeClass("statusValid");
     $("#status").removeClass("statusWarning");
     $("#status").removeClass("statusFailed");
-    $("#status").text(statusText);
+    if(isHtml){
+        $("#status").html(statusText);
+    }else{
+        $("#status").text(statusText);
+    }
+
     if (statusClass) {
         $("#status").addClass(statusClass);
     }

@@ -66,6 +66,10 @@ public class OctaneConfiguration {
         return jiraIssueTypes;
     }
 
+    /**
+     * Get defined jira issue types in lower case
+     * @param jiraIssueTypes
+     */
     public void setJiraIssueTypes(Set<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
     }
@@ -74,6 +78,10 @@ public class OctaneConfiguration {
         return jiraProjects;
     }
 
+    /**
+     * Get defined jira projects in Upper case
+     * @param jiraProjects
+     */
     public void setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
     }

@@ -127,7 +127,7 @@ public class OctaneConfigurationManager {
         }
 
         //set jira projects
-        String project = outgoing.getJiraProjects().toLowerCase().trim();
+        String project = outgoing.getJiraProjects().toUpperCase().trim();
         if (StringUtils.isEmpty(project)) {
             internal.setJiraProjects(Collections.emptySet());
         } else {

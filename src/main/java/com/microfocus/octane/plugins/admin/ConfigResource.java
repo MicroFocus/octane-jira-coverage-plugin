@@ -1,5 +1,8 @@
 package com.microfocus.octane.plugins.admin;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
@@ -31,10 +34,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Path("/")
@@ -92,10 +92,19 @@ public class ConfigResource {
             return Response.status(Status.CONFLICT).entity(status).build();
         }
 
-        String warningMsg = checkOctaneFieldExistance(outgoingConfig);
-        if (warningMsg != null) {
+        OctaneConfiguration internalConfig = OctaneConfigurationManager.getInstance().convertToInternalConfiguration(outgoingConfig);
+        List<String> warnings = new ArrayList<>();
+        try {
+            checkOctaneFieldExistance(warnings, internalConfig);
+            checkJiraIssueTypeExistance(warnings, internalConfig);
+            checkJiraProjectsExistance(warnings, internalConfig);
+        } catch (Exception e) {
+            log.error("Failed to check warnings : " + e.getMessage());
+        }
+
+        if (!warnings.isEmpty()) {
             Map<String, String> status = new HashMap<>();
-            status.put("warning", "Attention : " + warningMsg);
+            status.put("warning", "Attention : <ul><li>" + StringUtils.join(warnings, "</li><li>") + "</li></ul>");
             return Response.status(Status.CONFLICT).entity(status).build();
         }
 
@@ -111,7 +120,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        String errorMsg = null;//checkConfiguration(config);
+        String errorMsg = checkConfiguration(config);
 
         if (errorMsg != null) {
             return Response.status(Status.CONFLICT).entity("Failed to save : " + errorMsg).build();
@@ -180,9 +189,7 @@ public class ConfigResource {
     }
 
 
-    private String checkOctaneFieldExistance(OctaneConfigurationOutgoing outgoingConfig) {
-        OctaneConfiguration internalConfig = OctaneConfigurationManager.getInstance().convertToInternalConfiguration(outgoingConfig);
-
+    private void checkOctaneFieldExistance(List<String> warnings, OctaneConfiguration internalConfig) {
         String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
                 internalConfig.getSharedspaceId(), internalConfig.getWorkspaceId(), "metadata/fields");
 
@@ -208,13 +215,37 @@ public class ConfigResource {
             Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toSet());
             Set<String> missingTypes = key2LabelType.keySet().stream().filter(key -> !foundTypes.contains(key)).map(key -> key2LabelType.get(key)).collect(Collectors.toSet());
             if (!missingTypes.isEmpty()) {
-                return String.format("The following Octane entity type(s) have no field '%s' : %s",
+                String warn = String.format("The following Octane entity types have no field '%s' : %s",
                         internalConfig.getOctaneUdf(), StringUtils.join(missingTypes, ", "));
+                warnings.add(warn);
             }
         } catch (Exception e) {
             log.error(String.format("Failed on checkOctaneFieldExistance : %s", e.getMessage()), e);
         }
-        return null;
+    }
+
+    private void checkJiraIssueTypeExistance(List<String> warnings, OctaneConfiguration internalConfig) {
+        if (internalConfig.getJiraIssueTypes() != null) {
+            Set<String> existingIssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects().stream()
+                    .map(IssueType::getName).map(String::toLowerCase).collect(Collectors.toSet());
+            Set<String> missingTypes = internalConfig.getJiraIssueTypes().stream().filter(name -> !existingIssueTypes.contains(name)).collect(Collectors.toSet());
+            if (!missingTypes.isEmpty()) {
+                String warn = String.format("The following issue types are not found in Jira : %s", StringUtils.join(missingTypes, ", "));
+                warnings.add(warn);
+            }
+        }
+    }
+
+    private void checkJiraProjectsExistance(List<String> warnings, OctaneConfiguration internalConfig) {
+        if (internalConfig.getJiraProjects() != null) {
+            Set<String> existingProjects = ComponentAccessor.getProjectManager().getProjectObjects().stream().map(Project::getKey).map(String::toUpperCase).collect(Collectors.toSet());
+
+            Set<String> missingKeys = internalConfig.getJiraProjects().stream().filter(key -> !existingProjects.contains(key)).collect(Collectors.toSet());
+            if (!missingKeys.isEmpty()) {
+                String warn = String.format("The following project keys are not found in Jira : %s", StringUtils.join(missingKeys, ", "));
+                warnings.add(warn);
+            }
+        }
     }
 
 }
