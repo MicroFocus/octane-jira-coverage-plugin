@@ -29,7 +29,8 @@
         <div class="field-group">
             <label for="octaneUdf">Octane field:</label>
             <input type="text" id="octaneUdf" name="octaneUdf" class="text">
-            <div class="description">Octane user-defined field for mapping Jira issue (recommended 'jira_key_udf')</div>
+            <div class="description">Octane user-defined field for mapping Jira issue (recommended 'jira_key_udf').<br/>
+                This field should be defined for the following ALM Octane entities : application modules, features, user stories</div>
         </div>
         <div class="field-group">
             <label for="jiraProjects">Jira projects keys:</label>

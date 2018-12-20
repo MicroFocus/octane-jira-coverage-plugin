@@ -1,4 +1,4 @@
-#if($hasData==true)
+#if($status=="hasData")
 <ul class="item-details" style="margin-top: 3px;">
     <!-- octane  entity-->
     <div style="margin-bottom: 10px;">
@@ -36,8 +36,12 @@
         </dl>
     </li>
 </ul>
-#{else}
+
+#elseif($status=="noData")
 <div>No available data</div>
+
+#elseif($status=="noValidConfiguration")
+<div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
 #end
 
 

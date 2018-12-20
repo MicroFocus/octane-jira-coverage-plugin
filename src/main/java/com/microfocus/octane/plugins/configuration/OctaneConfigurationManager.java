@@ -3,6 +3,8 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -14,7 +16,7 @@ import java.util.stream.Stream;
 
 public class OctaneConfigurationManager {
 
-
+    private static final Logger log = LoggerFactory.getLogger(OctaneConfigurationManager.class);
     private PluginSettingsFactory pluginSettingsFactory;
 
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
@@ -54,11 +56,22 @@ public class OctaneConfigurationManager {
 
     private static OctaneConfiguration externalConfig;
 
+    private static boolean validConfiguration = true;
+
     public OctaneConfiguration getConfiguration() {
         if (externalConfig == null) {
-            externalConfig = convertToInternalConfiguration(loadConfiguration());
+            try {
+                externalConfig = convertToInternalConfiguration(loadConfiguration());
+                validConfiguration = true;
+            } catch (Exception e) {
+                validConfiguration = false;
+            }
         }
         return externalConfig;
+    }
+
+    public boolean isValidConfiguration() {
+        return validConfiguration;
     }
 
     public OctaneConfigurationOutgoing loadConfiguration() {
@@ -91,7 +104,7 @@ public class OctaneConfigurationManager {
             try {
                 hl.onOctaneConfigurationChanged();
             } catch (Exception e) {
-                //TODO add log
+                log.error(String.format("Failed on onOctaneConfigurationChanged for listener %s: %s", hl.getClass().getSimpleName(), e.getMessage()));
             }
         }
     }

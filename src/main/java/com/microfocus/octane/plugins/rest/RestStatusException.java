@@ -17,18 +17,51 @@
 
 package com.microfocus.octane.plugins.rest;
 
+import com.google.gson.Gson;
+
+import java.util.Map;
+
+;
+
 /**
  * Thrown if status is not 200 or 201
  * Created by berkovir on 20/11/2016.
  */
 public class RestStatusException extends RuntimeException {
     private Response response;
+    private String error_code;
+    private String description;
 
-    public RestStatusException(Response response ){
+    public RestStatusException(Response response) {
         super(response.getResponseData());
         this.response = response;
+
+        try {
+            if (response.getResponseData().startsWith("{")) {
+                Map statusData = new Gson().fromJson(response.getResponseData(), Map.class);
+                error_code = (String) statusData.get("error_code");
+                description = (String) statusData.get("description");
+            }
+        } catch (Exception e) {
+            //do nothing
+        }
     }
+
     public Response getResponse() {
         return response;
     }
+
+    public String getErrorCode() {
+        return error_code;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public int getStatus() {
+        return this.response.getStatusCode();
+    }
 }
+
+

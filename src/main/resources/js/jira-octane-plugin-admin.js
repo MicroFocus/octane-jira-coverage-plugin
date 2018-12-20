@@ -86,12 +86,18 @@ function testConnection() {
     });
 
     request.fail(function (request, status, error) {
-        setStatusText(request.responseText, "statusFailed");
+        var response = JSON.parse(request.responseText);
+        if (response.failed) {
+            setStatusText(response.failed, "statusFailed");
+        } else if (response.warning) {
+            setStatusText(response.warning, "statusWarning");
+        }
     });
 }
 
 function setStatusText(statusText, statusClass) {
     $("#status").removeClass("statusValid");
+    $("#status").removeClass("statusWarning");
     $("#status").removeClass("statusFailed");
     $("#status").text(statusText);
     if (statusClass) {

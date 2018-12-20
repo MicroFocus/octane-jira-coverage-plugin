@@ -1,5 +1,7 @@
 package com.microfocus.octane.plugins.views;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
@@ -9,6 +11,7 @@ import com.google.gson.Gson;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.rest.RestStatusException;
 import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
@@ -17,6 +20,8 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -25,12 +30,15 @@ import java.util.stream.Collectors;
 @Scanned
 public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
+    private static final Logger log = LoggerFactory.getLogger(TestCoverageWebPanel.class);
+    private OctaneConfigurationManager configurationManager = OctaneConfigurationManager.getInstance();
     private OctaneRestService octaneRestService;
     private NumberFormat countFormat = NumberFormat.getInstance();
     private NumberFormat percentFormatter = NumberFormat.getPercentInstance();
     private Map<String, TypeDescriptor> typeDescriptors = new HashMap<>();
     private Map<String, TestStatusDescriptor> testStatusByNameDescriptors = new HashMap<>();
     private Map<String, TestStatusDescriptor> testStatusByLogicalNameDescriptors = new HashMap<>();
+    private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
 
     public TestCoverageWebPanel(OctaneRestService octaneRestService) {
         this.octaneRestService = octaneRestService;
@@ -73,60 +81,103 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
     @Override
     public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
-        OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
         Map<String, Object> contextMap = new HashMap<>();
-        Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
+        if (configurationManager.isValidConfiguration()) {
+            try {
+                Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
+                QueryPhrase jiraKeyCondition = new LogicalQueryPhrase(configurationManager.getConfiguration().getOctaneUdf(), currentIssue.getKey());
+                if (tryGetApplicationModuleEntity(contextMap, jiraKeyCondition) ||
+                        tryGetWorkItemEntity(contextMap, jiraKeyCondition)) {
+                    //context map is filled
+                } else {
+                    contextMap.put("status", "noData");
+                }
+            } catch (RestStatusException e) {
+                if (e.getResponse().getStatusCode() == 401) {
+                    //credentials issue
+                } else {
+                    log.error("Failed to fill ContextMap (1) : " + e.getMessage());
+                }
+            } catch (Exception e) {
+                log.error("Failed to fill ContextMap (2) : " + e.getMessage());
+            }
+        }
 
-        QueryPhrase jiraKeyCondition = new LogicalQueryPhrase(octaneConfiguration.getOctaneUdf(), currentIssue.getKey());
+        if (!contextMap.containsKey("status")) {
+            contextMap.put("status", "noValidConfiguration");
+            String configUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL) + "/plugins/servlet/admin/octane";
+            contextMap.put("configUrl", configUrl);
+        }
 
-        //CHECK Application modules
-        OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition("application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
-        List<MapBasedObject> groups = null;
-        TypeDescriptor typeDescriptor = null;
-        int total = 0;
-        OctaneEntity octaneEntity = null;
-        if (!applicationModules.getData().isEmpty()) {
-            octaneEntity = applicationModules.getData().get(0);
-            typeDescriptor = typeDescriptors.get(octaneEntity.getType());
-            String path = octaneEntity.getString("path");
+        return contextMap;
+    }
 
-            GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path);
-            int myTotal = total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
-            groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, myTotal))
-                    .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
+    private boolean tryGetApplicationModuleEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+        try {
+            //CHECK Application modules
+            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition("application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
+            if (!applicationModules.getData().isEmpty()) {
 
-        } else {
+                OctaneEntity octaneEntity = applicationModules.getData().get(0);
+                TypeDescriptor typeDescriptor = typeDescriptors.get(octaneEntity.getType());
+                String path = octaneEntity.getString("path");
+
+                GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path);
+                int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
+                List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
+                        .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
+                fillContextMapWithEntity(contextMap, typeDescriptor, octaneEntity, groups, total);
+                return true;
+            }
+        } catch (RestStatusException e) {
+            if (UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
+                //field is not defined - skip
+            } else {
+                throw e;
+            }
+        }
+        return false;
+    }
+
+    private boolean tryGetWorkItemEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+        try {
             //CHECK WORKING ITEM
             QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
             OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition("work_items",
                     Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name", "last_runs"));
             if (!workItems.getData().isEmpty()) {
-                octaneEntity = workItems.getData().get(0);
+                OctaneEntity octaneEntity = workItems.getData().get(0);
 
-                typeDescriptor = typeDescriptors.get(octaneEntity.getString("subtype"));
+                TypeDescriptor typeDescriptor = typeDescriptors.get(octaneEntity.getString("subtype"));
                 String lastRuns = octaneEntity.getString("last_runs");
                 Map<String, Double> name2countStatuses = new Gson().fromJson(lastRuns, Map.class);
-                int myTotal = total = name2countStatuses.values().stream().mapToInt(a -> a.intValue()).sum();
-                groups = name2countStatuses.entrySet().stream().filter(entry -> entry.getValue() > 0)
-                        .map(entry -> convertGroupEntityToUiEntity(entry.getKey(), entry.getValue().intValue(), myTotal))
+                int total = name2countStatuses.values().stream().mapToInt(a -> a.intValue()).sum();
+                List<MapBasedObject> groups = name2countStatuses.entrySet().stream().filter(entry -> entry.getValue() > 0)
+                        .map(entry -> convertGroupEntityToUiEntity(entry.getKey(), entry.getValue().intValue(), total))
                         .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
+                fillContextMapWithEntity(contextMap, typeDescriptor, octaneEntity, groups, total);
+                return true;
+            }
+        } catch (RestStatusException e) {
+            if (UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
+                //field is not defined - skip
+            } else {
+                throw e;
             }
         }
+        return false;
+    }
 
-        if (octaneEntity != null) {
-            contextMap.put("hasData", true);
-            octaneEntity.put("url", typeDescriptor.buildEntityUrl(octaneConfiguration, octaneEntity.getId()));
-            octaneEntity.put("typeKey", typeDescriptor.getTypeKey());
-            octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
-            contextMap.put("total", total);
-            contextMap.put("groups", groups);
-            contextMap.put("hasData", true);
-            contextMap.put("octaneEntity", octaneEntity);
-        } else {
-            contextMap.put("hasData", false);
-        }
+    private void fillContextMapWithEntity(Map<String, Object> contextMap, TypeDescriptor typeDescriptor, OctaneEntity octaneEntity, List<MapBasedObject> groups, int total) {
+        octaneEntity.put("url", typeDescriptor.buildEntityUrl(octaneEntity.getId()));
+        octaneEntity.put("typeKey", typeDescriptor.getTypeKey());
+        octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
+        contextMap.put("total", total);
+        contextMap.put("groups", groups);
+        contextMap.put("status", "hasData");
+        contextMap.put("octaneEntity", octaneEntity);
+        contextMap.put("hasData", true);
 
-        return contextMap;
     }
 
     private MapBasedObject convertGroupEntityToUiEntity(String statusName, int count, int totalCount) {
@@ -218,7 +269,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             return nameForNavigation;
         }
 
-        public String buildEntityUrl(OctaneConfiguration octaneConfiguration, String entityId) {
+        public String buildEntityUrl(String entityId) {
+            OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
             String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
                     octaneConfiguration.getBaseUrl(), octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(),
                     this.getNameForNavigation(), entityId);

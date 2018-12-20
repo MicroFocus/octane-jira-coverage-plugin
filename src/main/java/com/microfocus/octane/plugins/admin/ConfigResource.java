@@ -7,6 +7,7 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
+import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.components.api.Constants;
 import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
@@ -14,7 +15,14 @@ import com.microfocus.octane.plugins.configuration.OctaneConfigurationOutgoing;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
+import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
+import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
+import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
+import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -23,13 +31,17 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("/")
 @Scanned
 public class ConfigResource {
 
+    private static final Logger log = LoggerFactory.getLogger(ConfigResource.class);
 
     @ComponentImport
     private final UserManager userManager;
@@ -47,8 +59,9 @@ public class ConfigResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context HttpServletRequest request) {
-        String username = userManager.getRemoteUsername(request);
-        if (username == null || !userManager.isSystemAdmin(username)) {
+
+        UserProfile username = userManager.getRemoteUser(request);
+        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -66,11 +79,55 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response testConnection(final OctaneConfigurationOutgoing outgoingConfig, @Context HttpServletRequest request) {
-        String username = userManager.getRemoteUsername(request);
-        if (username == null || !userManager.isSystemAdmin(username)) {
+        UserProfile username = userManager.getRemoteUser(request);
+        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
+        String errorMsg = checkConfiguration(outgoingConfig);
+
+        if (errorMsg != null) {
+            Map<String, String> status = new HashMap<>();
+            status.put("failed", "Validation failed : " + errorMsg);
+            return Response.status(Status.CONFLICT).entity(status).build();
+        }
+
+        String warningMsg = checkOctaneFieldExistance(outgoingConfig);
+        if (warningMsg != null) {
+            Map<String, String> status = new HashMap<>();
+            status.put("warning", "Attention : " + warningMsg);
+            return Response.status(Status.CONFLICT).entity(status).build();
+        }
+
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response put(final OctaneConfigurationOutgoing config, @Context HttpServletRequest request) {
+        UserProfile username = userManager.getRemoteUser(request);
+        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        String errorMsg = null;//checkConfiguration(config);
+
+        if (errorMsg != null) {
+            return Response.status(Status.CONFLICT).entity("Failed to save : " + errorMsg).build();
+        } else {
+            transactionTemplate.execute(new TransactionCallback() {
+                public Object doInTransaction() {
+                    OctaneConfigurationManager.getInstance().saveConfiguration(config);
+                    return null;
+                }
+            });
+        }
+
+        return Response.ok().build();
+    }
+
+    private String checkConfiguration(OctaneConfigurationOutgoing outgoingConfig) {
         String errorMsg = null;
         if (StringUtils.isEmpty(outgoingConfig.getLocation())) {
             errorMsg = "Location URL is required";
@@ -116,35 +173,48 @@ public class ConfigResource {
                     } else {
                         errorMsg = "Validate that location is correct.";
                     }
-
                 }
             }
         }
-        if (errorMsg != null) {
-            return Response.status(Status.CONFLICT).entity("Failed to connect : " + errorMsg).build();
-        } else {
-            return Response.ok().build();
-        }
+        return errorMsg;
     }
 
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response put(final OctaneConfigurationOutgoing config, @Context HttpServletRequest request) {
-        String username = userManager.getRemoteUsername(request);
-        if (username == null || !userManager.isSystemAdmin(username)) {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
 
-        transactionTemplate.execute(new TransactionCallback() {
-            public Object doInTransaction() {
-                OctaneConfigurationManager.getInstance().saveConfiguration(config);
-                return null;
+    private String checkOctaneFieldExistance(OctaneConfigurationOutgoing outgoingConfig) {
+        OctaneConfiguration internalConfig = OctaneConfigurationManager.getInstance().convertToInternalConfiguration(outgoingConfig);
+
+        String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
+                internalConfig.getSharedspaceId(), internalConfig.getWorkspaceId(), "metadata/fields");
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+
+        try {
+            RestConnector restConnector = new RestConnector();
+            restConnector.setBaseUrl(internalConfig.getBaseUrl());
+            restConnector.setCredentials(internalConfig.getClientId(), internalConfig.getClientSecret());
+            boolean isConnected = restConnector.login();
+
+            QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", internalConfig.getOctaneUdf());
+            Map<String, String> key2LabelType = new HashMap<>();
+            key2LabelType.put("feature", "Feature");
+            key2LabelType.put("story", "User Story");
+            key2LabelType.put("product_area", "Application module");
+            QueryPhrase typeCondition = new InQueryPhrase("entity_name", key2LabelType.keySet());
+
+            String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
+            String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+            OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
+            Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toSet());
+            Set<String> missingTypes = key2LabelType.keySet().stream().filter(key -> !foundTypes.contains(key)).map(key -> key2LabelType.get(key)).collect(Collectors.toSet());
+            if (!missingTypes.isEmpty()) {
+                return String.format("The following Octane entity type(s) have no field '%s' : %s",
+                        internalConfig.getOctaneUdf(), StringUtils.join(missingTypes, ", "));
             }
-        });
-
-        return Response.ok().build();
+        } catch (Exception e) {
+            log.error(String.format("Failed on checkOctaneFieldExistance : %s", e.getMessage()), e);
+        }
+        return null;
     }
-
 
 }

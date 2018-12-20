@@ -9,6 +9,7 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.user.UserManager;
+import com.atlassian.sal.api.user.UserProfile;
 import com.atlassian.templaterenderer.TemplateRenderer;
 
 import javax.inject.Inject;
@@ -42,8 +43,8 @@ public class AdminServlet extends HttpServlet {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{
-		String username = userManager.getRemoteUsername(request);
-		if (username == null || !userManager.isSystemAdmin(username))
+		UserProfile username = userManager.getRemoteUser(request);
+		if (username == null || !userManager.isSystemAdmin(username.getUserKey()))
 		{
 			redirectToLogin(request, response);
 			return;

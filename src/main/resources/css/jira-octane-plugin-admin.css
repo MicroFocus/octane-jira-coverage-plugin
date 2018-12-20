@@ -6,6 +6,10 @@
     color: red;
 }
 
+.statusWarning {
+    color: brown;
+}
+
 .noStatus {
     color: black;
 }

@@ -12,83 +12,100 @@ import java.util.Iterator;
 
 public class OctaneEntityParser {
 
-	public static GroupEntityCollection parseGroupCollection(JSONObject jsonObj) throws JSONException {
-		GroupEntityCollection coll = new GroupEntityCollection();
+    public static GroupEntityCollection parseGroupCollection(String data) {
+        GroupEntityCollection coll = new GroupEntityCollection();
+        try {
+            JSONObject jsonObj = new JSONObject(data);
+            int total = jsonObj.getInt("groupsTotalCount");
+            coll.setGroupsTotalCount(total);
 
-		int total = jsonObj.getInt("groupsTotalCount");
-		coll.setGroupsTotalCount(total);
+            JSONArray entitiesJArr = jsonObj.getJSONArray("groups");
+            for (int i = 0; i < entitiesJArr.length(); i++) {
 
+                JSONObject entObj = entitiesJArr.getJSONObject(i);
+                GroupEntity entity = parseGroupEntity(entObj);
+                coll.getGroups().add(entity);
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException("Failed to parseGroupCollection :" + e.getMessage());
+        }
 
-		JSONArray entitiesJArr = jsonObj.getJSONArray("groups");
-		for (int i = 0; i < entitiesJArr.length(); i++) {
+        return coll;
+    }
 
-			JSONObject entObj = entitiesJArr.getJSONObject(i);
-			GroupEntity entity = parseGroupEntity(entObj);
-			coll.getGroups().add(entity);
-		}
+    public static OctaneEntityCollection parseCollection(String data) {
+        try {
+            JSONObject jsonObj = new JSONObject(data);
+            return parseCollection(jsonObj);
+        } catch (JSONException e) {
+            throw new RuntimeException("Failed to parseCollection(string) :" + e.getMessage());
+        }
 
-		return coll;
-	}
+    }
 
-	public static OctaneEntityCollection parseCollection(JSONObject jsonObj) throws JSONException {
-		OctaneEntityCollection coll = new OctaneEntityCollection();
+    private static OctaneEntityCollection parseCollection(JSONObject jsonObj) {
+        OctaneEntityCollection coll = new OctaneEntityCollection();
+        try {
 
-		int total = jsonObj.getInt("total_count");
-		coll.setTotalCount(total);
+            int total = jsonObj.getInt("total_count");
+            coll.setTotalCount(total);
 
-		if (jsonObj.has("exceeds_total_count")) {
-			boolean exceedsTotalCount = jsonObj.getBoolean("exceeds_total_count");
-			coll.setExceedsTotalCount(exceedsTotalCount);
-		}
+            if (jsonObj.has("exceeds_total_count")) {
+                boolean exceedsTotalCount = jsonObj.getBoolean("exceeds_total_count");
+                coll.setExceedsTotalCount(exceedsTotalCount);
+            }
 
-		JSONArray entitiesJArr = jsonObj.getJSONArray("data");
-		for (int i = 0; i < entitiesJArr.length(); i++) {
+            JSONArray entitiesJArr = jsonObj.getJSONArray("data");
+            for (int i = 0; i < entitiesJArr.length(); i++) {
 
-			JSONObject entObj = entitiesJArr.getJSONObject(i);
-			OctaneEntity entity = parseEntity(entObj);
+                JSONObject entObj = entitiesJArr.getJSONObject(i);
+                OctaneEntity entity = parseEntity(entObj);
 
-			coll.getData().add(entity);
-		}
+                coll.getData().add(entity);
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException("Failed to parseCollection :" + e.getMessage());
+        }
 
-		return coll;
-	}
+        return coll;
+    }
 
-	public static OctaneEntity parseEntity(JSONObject entObj) throws JSONException {
+    public static OctaneEntity parseEntity(JSONObject entObj) throws JSONException {
 
-		String type = entObj.getString("type");
+        String type = entObj.getString("type");
 
-		OctaneEntity entity = new OctaneEntity(type);
-		for (Iterator<String> it = entObj.keys(); it.hasNext(); ) {
-			String key = it.next();
-			Object value = entObj.get(key);
-			if (value instanceof JSONObject) {
-				JSONObject jObj = (JSONObject) value;
-				if (jObj.has("type")) {
-					OctaneEntity valueEntity = parseEntity(jObj);
-					value = valueEntity;
-				} else if (jObj.has("total_count")) {
-					OctaneEntityCollection coll = parseCollection(jObj);
-					value = coll;
-				} else {
-					value = jObj.toString();
-				}
-			}
-			entity.put(key, value);
-		}
-		return entity;
-	}
+        OctaneEntity entity = new OctaneEntity(type);
+        for (Iterator<String> it = entObj.keys(); it.hasNext(); ) {
+            String key = it.next();
+            Object value = entObj.get(key);
+            if (value instanceof JSONObject) {
+                JSONObject jObj = (JSONObject) value;
+                if (jObj.has("type")) {
+                    OctaneEntity valueEntity = parseEntity(jObj);
+                    value = valueEntity;
+                } else if (jObj.has("total_count")) {
+                    OctaneEntityCollection coll = parseCollection(jObj);
+                    value = coll;
+                } else {
+                    value = jObj.toString();
+                }
+            }
+            entity.put(key, value);
+        }
+        return entity;
+    }
 
-	public static GroupEntity parseGroupEntity(JSONObject entObj) throws JSONException {
+    private static GroupEntity parseGroupEntity(JSONObject entObj) throws JSONException {
 
-		GroupEntity groupEntity = new GroupEntity();
-		int count = entObj.getInt("count");
-		groupEntity.setCount(count);
-		if(!entObj.isNull("value")){
-			JSONObject jsonObject = entObj.getJSONObject("value");
-			OctaneEntity entity = parseEntity(jsonObject);
-			groupEntity.setValue(entity);
-		}
+        GroupEntity groupEntity = new GroupEntity();
+        int count = entObj.getInt("count");
+        groupEntity.setCount(count);
+        if (!entObj.isNull("value")) {
+            JSONObject jsonObject = entObj.getJSONObject("value");
+            OctaneEntity entity = parseEntity(jsonObject);
+            groupEntity.setValue(entity);
+        }
 
-		return groupEntity;
-	}
+        return groupEntity;
+    }
 }

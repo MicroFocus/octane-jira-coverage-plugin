@@ -1,6 +1,5 @@
 package com.microfocus.octane.plugins.components.impl;
 
-import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.ApplicationProperties;
@@ -15,14 +14,21 @@ import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 @ExportAsService({OctaneRestService.class})
 @Named("octaneRestService")
 public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigurationChangedListener {
+
+    private static final Logger log = LoggerFactory.getLogger(OctaneRestServiceImpl.class);
 
     @ComponentImport
     private final ApplicationProperties applicationProperties;
@@ -47,10 +53,14 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     @Override
     public void reloadConfiguration() {
         restConnector.clearAll();
-        octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
-        restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
-        restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
-
+        try {
+            octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
+            restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
+            restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
+        } catch (Exception e) {
+            octaneConfiguration = null;
+            log.error("Failed to reloadConfiguration : " + e.getMessage());
+        }
     }
 
     @Override
@@ -69,13 +79,10 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         //https://center.almoctane.com/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '89009')}}"&group_by=status
 
-        try {
-            String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
-            GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(new JSONObject(responseStr));
-            return col;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to getCoverageForApplicationModule : " + e.getMessage(), e);
-        }
+        String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
+        return col;
+
     }
 
     @Override
@@ -89,13 +96,9 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
         headers.put("HPECLIENTTYPE", "HPE_CI_CLIENT");
 
-        try {
-            String responseStr = restConnector.httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
-            OctaneEntityCollection col = OctaneEntityParser.parseCollection(new JSONObject(responseStr));
-            return col;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to getEntitiesByCondition : " + e.getMessage(), e);
-        }
+        String responseStr = restConnector.httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
+        OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
+        return col;
     }
 
     @Override
