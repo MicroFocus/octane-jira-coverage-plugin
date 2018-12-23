@@ -1,5 +1,5 @@
 /*
- *     Copyright 2017 EntIT Software LLC, a Micro Focus company, L.P.
+ *     Copyright 2018 EntIT Software LLC, a Micro Focus company, L.P.
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
  *     You may obtain a copy of the License at
@@ -11,9 +11,7 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
- *
  */
-
 
 package com.microfocus.octane.plugins.rest.entities;
 
@@ -41,11 +39,11 @@ public class MapBasedObject {
     }
 
     public String getString(String fieldName) {
-        return (String)fields.get(fieldName);
+        return (String) fields.get(fieldName);
     }
 
 
-    public void remove(String fieldName){
+    public void remove(String fieldName) {
         fields.remove(fieldName);
     }
 
