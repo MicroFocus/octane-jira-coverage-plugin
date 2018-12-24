@@ -33,7 +33,6 @@ import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
-import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +99,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         if (configurationManager.isValidConfiguration()) {
             try {
                 Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
-                QueryPhrase jiraKeyCondition = new LogicalQueryPhrase(configurationManager.getConfiguration().getOctaneUdf(), currentIssue.getKey());
+                QueryPhrase jiraKeyCondition = new InQueryPhrase(configurationManager.getConfiguration().getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
                 if (tryGetApplicationModuleEntity(contextMap, jiraKeyCondition) ||
                         tryGetWorkItemEntity(contextMap, jiraKeyCondition)) {
                     //context map is filled
