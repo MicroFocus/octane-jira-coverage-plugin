@@ -96,6 +96,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
     @Override
     public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
         Map<String, Object> contextMap = new HashMap<>();
+        log.trace("configurationManager.isValidConfiguration() = " + configurationManager.isValidConfiguration());
         if (configurationManager.isValidConfiguration()) {
             try {
                 Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");

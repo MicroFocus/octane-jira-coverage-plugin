@@ -75,10 +75,12 @@ public class OctaneConfigurationManager {
 
     public OctaneConfiguration getConfiguration() {
         if (externalConfig == null) {
+            log.trace("externalConfig is null");
             try {
                 externalConfig = convertToInternalConfiguration(loadConfiguration());
                 validConfiguration = true;
             } catch (Exception e) {
+                log.error("failed to getConfiguration : " + e.getClass().getName() + ", message =" + e.getMessage() + ", cause=" + e.getCause());
                 validConfiguration = false;
             }
         }
@@ -127,14 +129,17 @@ public class OctaneConfigurationManager {
     public OctaneConfiguration convertToInternalConfiguration(OctaneConfigurationOutgoing outgoing) {
         OctaneConfiguration internal = new OctaneConfiguration();
 
+        log.trace("convertToInternalConfiguration : client id : " + outgoing.getClientId());
         internal.setClientId(outgoing.getClientId());
+        log.trace("convertToInternalConfiguration : octane udf : " + outgoing.getOctaneUdf());
         internal.setOctaneUdf(outgoing.getOctaneUdf());
 
         //handle url location
         parseUiLocation(internal, outgoing.getLocation());
 
         //set jira issue type
-        String issueTypes = outgoing.getJiraIssueTypes().toLowerCase().trim();
+        log.trace("convertToInternalConfiguration : issueTypes : " + outgoing.getJiraIssueTypes());
+        String issueTypes = outgoing.getJiraIssueTypes() == null ? null : outgoing.getJiraIssueTypes().toLowerCase().trim();
         if (StringUtils.isEmpty(issueTypes)) {
             internal.setJiraIssueTypes(Collections.emptySet());
         } else {
@@ -142,7 +147,8 @@ public class OctaneConfigurationManager {
         }
 
         //set jira projects
-        String project = outgoing.getJiraProjects().toUpperCase().trim();
+        log.trace("convertToInternalConfiguration : project : " + outgoing.getJiraProjects());
+        String project = outgoing.getJiraProjects() == null ? null : outgoing.getJiraProjects().toUpperCase().trim();
         if (StringUtils.isEmpty(project)) {
             internal.setJiraProjects(Collections.emptySet());
         } else {

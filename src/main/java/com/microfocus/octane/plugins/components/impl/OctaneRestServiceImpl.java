@@ -67,14 +67,17 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
     @Override
     public void reloadConfiguration() {
+        log.debug("before reloadConfiguration");
+
         restConnector.clearAll();
         try {
             octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
             restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
             restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
+            log.debug("after reloadConfiguration, url= " + octaneConfiguration.getBaseUrl() + ", clientID=" + octaneConfiguration.getClientId());
         } catch (Exception e) {
             octaneConfiguration = null;
-            log.error("Failed to reloadConfiguration : " + e.getMessage());
+            log.error("Failed to reloadConfiguration : " + e.getClass().getName() + ", message =" + e.getMessage() + ", cause : " + e.getCause());
         }
     }
 
