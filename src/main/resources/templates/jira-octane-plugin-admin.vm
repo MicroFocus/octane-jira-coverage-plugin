@@ -8,6 +8,7 @@
 <h2>ALM Octane Configuration</h2>
 <form id="octane-admin" class="aui">
     <div class="form-body">
+        <h3>Space</h3>
         <div class="field-group">
             <label for="location">Location:</label>
             <input type="text" id="location" name="location" class="text">
@@ -26,6 +27,8 @@
             <input type="password" id="clientSecret" name="clientSecret" class="text">
             <div class="description">Client secret used for logging into the ALM Octane server</div>
         </div>
+
+        <h3>Workspace</h3>
         <div class="field-group">
             <label for="octaneUdf">Octane field:</label>
             <input type="text" id="octaneUdf" name="octaneUdf" class="text">
@@ -60,5 +63,8 @@
 
     </div>
 </form>
+
+<table id="configuration-rest-table"></table>
+
 </body>
 </html>

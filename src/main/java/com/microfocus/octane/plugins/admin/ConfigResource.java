@@ -52,6 +52,8 @@ import javax.ws.rs.core.Response.Status;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Consumes({MediaType.APPLICATION_JSON})
+@Produces({MediaType.APPLICATION_JSON})
 @Path("/")
 @Scanned
 public class ConfigResource {
@@ -65,18 +67,69 @@ public class ConfigResource {
     @ComponentImport
     private final TransactionTemplate transactionTemplate;
 
+    private List<WorkspaceConfigurationModel> models = new ArrayList<>();
+
     @Inject
     public ConfigResource(UserManager userManager, TransactionTemplate transactionTemplate) {
         this.userManager = userManager;
         this.transactionTemplate = transactionTemplate;
+
+        models.add(new WorkspaceConfigurationModel("1001.1001", "ws1", "key1"));
+        models.add(new WorkspaceConfigurationModel("1001.1002", "ws2", "key2"));
+    }
+
+    @GET
+    @Path("/all")
+    public Response getAllWorkspaceConfigurations(@Context HttpServletRequest request) {
+        return Response.ok(models).build();
+    }
+
+    @GET
+    @Path("/self/{id}")
+    public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
+        return Response.ok(models.stream().filter(m -> id.equals("" + m.getId())).findFirst()).build();
+    }
+
+    @PUT
+    @Path("/self/{id}")
+    public Response updateWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id, WorkspaceConfigurationModel modelForUpdate) {
+        Optional<WorkspaceConfigurationModel> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
+
+        return Response.ok(modelForUpdate).build();
+    }
+
+    int counter = 3;
+
+    @POST
+    @Path("/self")
+    public Response createWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationModel model) {
+        model.setId("" + counter++);
+        models.add(model);
+        return Response.ok(model).build();
+    }
+
+    @DELETE
+    @Path("/self/{id}")
+    public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id) {
+
+        Optional<WorkspaceConfigurationModel> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
+        if (optional.isPresent()) {
+            models.remove(optional.get());
+        }
+
+        return Response.ok().build();
+    }
+
+    private boolean hasPermissions(HttpServletRequest request) {
+        UserProfile username = userManager.getRemoteUser(request);
+        return (username != null && userManager.isSystemAdmin(username.getUserKey()));
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context HttpServletRequest request) {
 
-        UserProfile username = userManager.getRemoteUser(request);
-        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
+        if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
