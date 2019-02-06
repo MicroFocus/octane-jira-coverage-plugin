@@ -163,9 +163,9 @@ public class ConfigResource {
         OctaneConfiguration internalConfig = OctaneConfigurationManager.getInstance().convertToInternalConfiguration(outgoingConfig);
         List<String> warnings = new ArrayList<>();
         try {
-            checkOctaneFieldExistance(warnings, internalConfig);
-            checkJiraIssueTypeExistance(warnings, internalConfig);
-            checkJiraProjectsExistance(warnings, internalConfig);
+            //checkOctaneFieldExistance(warnings, internalConfig);
+            //checkJiraIssueTypeExistance(warnings, internalConfig);
+            //checkJiraProjectsExistance(warnings, internalConfig);
         } catch (Exception e) {
             log.error("Failed to check warnings : " + e.getMessage());
         }
@@ -212,8 +212,6 @@ public class ConfigResource {
             errorMsg = "Client ID is required";
         } else if (StringUtils.isEmpty(outgoingConfig.getClientSecret())) {
             errorMsg = "Client secret is required";
-        } else if (StringUtils.isEmpty(outgoingConfig.getOctaneUdf())) {
-            errorMsg = "Octane field is required";
         } else {
             OctaneConfiguration internalConfig = OctaneConfigurationManager.getInstance().convertToInternalConfiguration(outgoingConfig);
             if (errorMsg == null) {

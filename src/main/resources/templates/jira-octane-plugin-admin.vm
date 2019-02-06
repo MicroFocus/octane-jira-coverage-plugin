@@ -28,28 +28,7 @@
             <div class="description">Client secret used for logging into the ALM Octane server</div>
         </div>
 
-        <h3>Workspace</h3>
-        <div class="field-group">
-            <label for="octaneUdf">Octane field:</label>
-            <input type="text" id="octaneUdf" name="octaneUdf" class="text">
-            <div class="description">Octane user-defined field for mapping Jira issue (recommended 'jira_key_udf').<br/>
-                This field should be defined for the following ALM Octane entities : application modules, features, user stories</div>
-        </div>
-        <div class="field-group">
-            <label for="jiraProjects">Jira projects keys:</label>
-            <input type="text" id="jiraProjects" name="jiraProjects" class="text">
-            <div class="description">Supported Jira projects, in comma-separated way. If value is missing, all projects
-                are supported.
-            </div>
-        </div>
-        <div class="field-group">
-            <label for="jiraIssueTypes">Jira issue types:</label>
-            <input type="text" id="jiraIssueTypes" name="jiraIssueTypes" class="text">
-            <div class="description">Supported Jira issue types, in comma-separated way. If value is missing, all issue
-                types are supported.
-            </div>
-        </div>
-        <div class="field-group">
+         <div class="field-group">
             <div id="button-group">
                 <input type="button" class="aui-button aui-button-primary" id="save" value="Save configuration"
                        style="float: left;">
