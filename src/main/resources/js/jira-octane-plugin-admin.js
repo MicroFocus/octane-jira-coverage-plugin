@@ -45,9 +45,8 @@ function loadTable() {
                 '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="' + dropdownId + '">Split more</button></div>' +
 
                 '<aui-dropdown-menu id="' + dropdownId + '">' +
-                '<aui-item-link>Menu item 1</aui-item-link>' +
-                '<aui-item-link>Menu item 2</aui-item-link>' +
-                '<aui-item-link>Menu item 3</aui-item-link>' +
+                '<aui-item-link >Edit</aui-item-link>' +
+                '<aui-item-link>Remove</aui-item-link>' +
                 '</aui-dropdown-menu>');
 
             return $(buttons);
