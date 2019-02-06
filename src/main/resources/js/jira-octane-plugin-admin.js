@@ -39,16 +39,22 @@ function loadTable() {
         renderOperations: function () {
             var instance = this;
 
+
+
+            var editButton = $('<aui-item-link >Edit</aui-item-link>').click(function (e) {
+                alert("Edit " + instance.model.id)
+            });
+            var deleteButton = $('<aui-item-link >Remove</aui-item-link>').click(function (e) {
+                alert("Delete " + instance.model.id)
+            });
+
             var dropdownId = "split-container-dropdown" + instance.model.id;
-
-            var buttons = $('<div class="aui-buttons">' +
-                '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="' + dropdownId + '">Split more</button></div>' +
-
-                '<aui-dropdown-menu id="' + dropdownId + '">' +
-                '<aui-item-link >Edit</aui-item-link>' +
-                '<aui-item-link>Remove</aui-item-link>' +
-                '</aui-dropdown-menu>');
-
+            var topLevelEl = $('<div class="aui-buttons">'+
+                '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="'
+                + dropdownId + '">...</button></div>');
+            var bottomLevelEl = $('<aui-dropdown-menu id="' + dropdownId + '"></aui-dropdown-menu>').append(editButton, deleteButton);
+            var parentEl = $('<div></div>').append(topLevelEl,bottomLevelEl);
+            return parentEl;
             return $(buttons);
             /*return $("<a href='#' class='aui-button' />")
                 .addClass(this.classNames.DELETE)
@@ -56,10 +62,8 @@ function loadTable() {
                     e.preventDefault();
                     instance.destroy();
                 });*/
-
         }
     });
-
 
     configRestTable = new AJS.RestfulTable({
         el: jQuery("#configuration-rest-table"),
