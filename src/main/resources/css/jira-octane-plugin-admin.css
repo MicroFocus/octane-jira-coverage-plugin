@@ -22,3 +22,18 @@
     max-width: 400px;
     width: 400px;
 }
+
+.simple-list {
+    list-style: none;
+    padding: 0;
+}
+
+.sectionTitle {
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+}
+
+#configuration-rest-table .aui-restfultable-operations{
+    width: 10px;
+}

@@ -74,8 +74,10 @@ public class ConfigResource {
         this.userManager = userManager;
         this.transactionTemplate = transactionTemplate;
 
-        models.add(new WorkspaceConfigurationModel("1001.1001", "ws1", "key1"));
-        models.add(new WorkspaceConfigurationModel("1001.1002", "ws2", "key2"));
+        models.add(new WorkspaceConfigurationModel("1001.1001", "ws1", "key1", Arrays.asList("User story","Feature"),
+                Arrays.asList("JiraIssueType1","JiraIssueType2","JiraIssueType3"),Arrays.asList("JiraProject1","JiraProject2","JiraProject3")));
+        models.add(new WorkspaceConfigurationModel("1001.1002", "ws2", "key2", Collections.emptyList(),
+                Collections.emptyList(),Arrays.asList("JiraProject5","JiraProject6","JiraProject7")));
     }
 
     @GET

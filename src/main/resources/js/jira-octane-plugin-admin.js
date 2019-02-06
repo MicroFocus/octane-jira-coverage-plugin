@@ -19,10 +19,36 @@ function loadTable() {
 
     var NameReadView = AJS.RestfulTable.CustomReadView.extend({
         render: function (self) {
-            console.log(self);
+            //console.log(self);
+            //var row = this;
+            console.log(this.model);
             return $("<strong />").text(self.value);
         }
     });
+    var ListReadView = AJS.RestfulTable.CustomReadView.extend({
+        render: function (self) {
+            var output = _.reduce(self.value, function(memo, current) {
+                return memo + '<li>' + current + '</li>';
+            },'<ul class="simple-list">');
+            output += '</ul>'
+            return output;
+        }
+    });
+
+    var MyRow = AJS.RestfulTable.Row.extend({
+        renderOperations: function () {
+            var instance = this;
+
+            return $("<a href='#' class='aui-button' />")
+                .addClass(this.classNames.DELETE)
+                .text("bububu").click(function (e) {
+                    e.preventDefault();
+                    instance.destroy();
+                });
+
+        }
+    });
+
 
     configRestTable = new AJS.RestfulTable({
         el: jQuery("#configuration-rest-table"),
@@ -33,40 +59,20 @@ function loadTable() {
         columns: [
             {id: "id", header: "Id",readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
-            {id: "octaneField", header: "Octane Field"}
+            {id: "octaneField", header: "ALM Octane Field"},
+            {id: "octaneEntityTypes", header: "Supported ALM Octane Entity Types", readView: ListReadView},
+            {id: "jiraIssueTypes", header: "Jira Issue Types", readView: ListReadView},
+            {id: "jiraProject", header: "Jira Project", readView: ListReadView}
         ],
         autoFocus: false,
         allowEdit: false,
+        allowReorder: false,
         allowCreate: false,
+        allowDelete: false,
         noEntriesMsg: "No configuration",
-        loadingMsg: "Loading",
-        allowDelete: true,
-        deleteConfirmation: function (model) {
-            return '<section role="dialog" id="cep-confirm-delete-dialog" class="aui-dialog2 aui-dialog2-small aui-dialog2-warning">' +
-                '	<header class="aui-dialog2-header"><h2 class="aui-dialog2-header-main">Delete?</h2></header>' +
-                '	<div class="aui-dialog2-content"><p>Do you really want to delete configuration for workspace ' + model.workspaceName + '</p></div>' +
-                '   <footer class="aui-dialog2-footer">' +
-                '   <div class="aui-dialog2-footer-actions">'+
-                '		<form style="display: inline; margin: 0 5px;"><input type="submit" id="dialog-submit-button" class="aui-button aui-button-primary" value="Yes"/></form>' +
-                '       <button id="warning-dialog-cancel" class="aui-button aui-button-link cancel" >Cancel</button>'+
-                '   </div></footer></section>';
-        },
-
-        deleteConfirmationCallback2 : function (model) {
-            AJS.$("#restful-table-model")[0].innerHTML = "<b>ID:</b> " + model.id + " <b>status:</b> " + model.status + " <b>description:</b> " + model.description;
-            AJS.dialog2("#delete-confirmation-dialog").show();
-            return new Promise(function (resolve, reject) {
-                AJS.$("#dialog-submit-button").click(function (e) {
-                    resolve();
-                    e.preventDefault();
-                    AJS.dialog2("#delete-confirmation-dialog").hide();
-                });
-                AJS.$(".aui-dialog2-header-close, #warning-dialog-cancel").click(function (e) {
-                    reject();
-                    e.preventDefault();
-                    AJS.dialog2("#delete-confirmation-dialog").hide();
-                });
-            });
+        loadingMsg: "Loading ...",
+        views: {
+            row: MyRow
         }
     });
 }

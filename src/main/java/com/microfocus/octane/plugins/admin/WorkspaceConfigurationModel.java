@@ -4,6 +4,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collections;
+import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -18,15 +20,27 @@ public class WorkspaceConfigurationModel {
     @XmlElement(name = "octaneField")
     private String octaneField;
 
+    @XmlElement(name = "octaneEntityTypes")
+    private List<String> octaneEntityTypes = Collections.emptyList();
+
+    @XmlElement(name = "jiraIssueTypes")
+    private List<String> jiraIssueTypes = Collections.emptyList();
+
+    @XmlElement(name = "jiraProject")
+    private List<String> jiraProjects = Collections.emptyList();
+
     public WorkspaceConfigurationModel() {
 
     }
 
-    public WorkspaceConfigurationModel(String id, String workspaceName, String octaneField)
+    public WorkspaceConfigurationModel(String id, String workspaceName, String octaneField, List<String> octaneEntityTypes, List<String> jiraIssueTypes, List<String> jiraProjects)
     {
         setId(id);
         setWorkspaceName(workspaceName);
         setOctaneField(octaneField);
+        setOctaneEntityTypes(octaneEntityTypes);
+        setJiraIssueTypes(jiraIssueTypes);
+        setJiraProjects(jiraProjects);
     }
 
     public String getId() {
@@ -53,4 +67,28 @@ public class WorkspaceConfigurationModel {
         this.octaneField = octaneField;
     }
 
+
+    public List<String> getOctaneEntityTypes() {
+        return octaneEntityTypes;
+    }
+
+    public void setOctaneEntityTypes(List<String> octaneEntityTypes) {
+        this.octaneEntityTypes = octaneEntityTypes;
+    }
+
+    public List<String> getJiraIssueTypes() {
+        return jiraIssueTypes;
+    }
+
+    public void setJiraIssueTypes(List<String> jiraIssueTypes) {
+        this.jiraIssueTypes = jiraIssueTypes;
+    }
+
+    public List<String> getJiraProjects() {
+        return jiraProjects;
+    }
+
+    public void setJiraProjects(List<String> jiraProjects) {
+        this.jiraProjects = jiraProjects;
+    }
 }

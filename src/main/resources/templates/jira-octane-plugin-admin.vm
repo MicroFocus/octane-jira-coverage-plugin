@@ -6,9 +6,10 @@
 </head>
 <body>
 <h2>ALM Octane Configuration</h2>
+<br/>
 <form id="octane-admin" class="aui">
     <div class="form-body">
-        <h3>Space</h3>
+        <h3 class="sectionTitle">Space</h3>
         <div class="field-group">
             <label for="location">Location:</label>
             <input type="text" id="location" name="location" class="text">
@@ -43,6 +44,8 @@
     </div>
 </form>
 
+<h3 class="sectionTitle">Workspaces</h3>
+<p>Here will be text explaining about adding new workspace</p>
 <table id="configuration-rest-table"></table>
 
 </body>
