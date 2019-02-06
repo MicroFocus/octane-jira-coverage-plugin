@@ -101,12 +101,22 @@ function loadTable() {
 }
 
 function addButtonRegistrations() {
-    $("#test_connection").click(function () {
+    AJS.$("#test_connection").click(function () {
         testConnection();
     });
 
-    $("#save").click(function () {
+    AJS.$("#save").click(function () {
         updateConfig();
+    });
+
+    AJS.$("#show-dialog-button").click(function(e) {
+        e.preventDefault();
+        AJS.dialog2("#demo-dialog").show();
+    });
+
+    AJS.$("#dialog-submit-button").click(function (e) {
+        e.preventDefault();
+        AJS.dialog2("#demo-dialog").hide();
     });
 }
 

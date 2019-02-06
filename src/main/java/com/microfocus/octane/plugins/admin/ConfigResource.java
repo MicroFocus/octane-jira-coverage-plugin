@@ -241,6 +241,7 @@ public class ConfigResource {
                         }
                     }
                 } catch (Exception exc) {
+                    log.warn("checkConfiguration failed " + exc.getClass().getSimpleName() + " : " + exc.getMessage());
                     if (exc.getMessage().contains("platform.not_authorized")) {
                         errorMsg = "Validate credentials";
                     } else if (exc.getMessage().contains("type workspace does not exist")) {
