@@ -27,9 +27,9 @@ function loadTable() {
     });
     var ListReadView = AJS.RestfulTable.CustomReadView.extend({
         render: function (self) {
-            var output = _.reduce(self.value, function(memo, current) {
+            var output = _.reduce(self.value, function (memo, current) {
                 return memo + '<li>' + current + '</li>';
-            },'<ul class="simple-list">');
+            }, '<ul class="simple-list">');
             output += '</ul>'
             return output;
         }
@@ -41,14 +41,14 @@ function loadTable() {
 
             var dropdownId = "split-container-dropdown" + instance.model.id;
 
-            var buttons = $('<div class="aui-buttons">'+
-            '<button class="aui-button aui-dropdown2-trigger aui-button-split-more" aria-controls="'+dropdownId+'">Split more</button></div>'+
+            var buttons = $('<div class="aui-buttons">' +
+                '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="' + dropdownId + '">Split more</button></div>' +
 
-            '<aui-dropdown-menu id="' +dropdownId+'">'+
-                '<aui-item-link>Menu item 1</aui-item-link>'+
-                '<aui-item-link>Menu item 2</aui-item-link>'+
-                '<aui-item-link>Menu item 3</aui-item-link>'+
-            '</aui-dropdown-menu>');
+                '<aui-dropdown-menu id="' + dropdownId + '">' +
+                '<aui-item-link>Menu item 1</aui-item-link>' +
+                '<aui-item-link>Menu item 2</aui-item-link>' +
+                '<aui-item-link>Menu item 3</aui-item-link>' +
+                '</aui-dropdown-menu>');
 
             return $(buttons);
             /*return $("<a href='#' class='aui-button' />")
@@ -69,7 +69,7 @@ function loadTable() {
             self: octaneBaseUrl + "self"
         },
         columns: [
-            {id: "id", header: "<i>Id</i>",readView: NameReadView},
+            {id: "id", header: "<i>Id</i>", readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
             {id: "octaneField", header: "ALM Octane Field"},
             {id: "octaneEntityTypes", header: "Supported ALM Octane Entity Types", readView: ListReadView},
@@ -91,7 +91,7 @@ function loadTable() {
     AJS.$(document).bind(AJS.RestfulTable.Events.INITIALIZED, function () {
         //update name of action column that is second from end
         //last two columns don't have name : action column and loading indicator used when editing
-        $("#configuration-rest-table th:nth-last-child(2)").each(function() {
+        $("#configuration-rest-table th:nth-last-child(2)").each(function () {
             this.innerHTML = 'Actions';
         });
     });
