@@ -57,7 +57,7 @@ function loadTable() {
             self: octaneBaseUrl + "self"
         },
         columns: [
-            {id: "id", header: "Id",readView: NameReadView},
+            {id: "id", header: "<i>Id</i>",readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
             {id: "octaneField", header: "ALM Octane Field"},
             {id: "octaneEntityTypes", header: "Supported ALM Octane Entity Types", readView: ListReadView},
@@ -74,6 +74,14 @@ function loadTable() {
         views: {
             row: MyRow
         }
+    });
+
+    AJS.$(document).bind(AJS.RestfulTable.Events.INITIALIZED, function () {
+        //update name of action column
+        //last two columns don't have name : action column and loading indicator used when editing
+        $("#configuration-rest-table th:nth-last-child(2)").each(function() {
+            this.innerHTML = 'Actions';
+        });
     });
 }
 
