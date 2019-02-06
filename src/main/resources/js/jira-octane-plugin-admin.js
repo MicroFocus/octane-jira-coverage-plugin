@@ -21,7 +21,7 @@ function loadTable() {
         render: function (self) {
             //console.log(self);
             //var row = this;
-            console.log(this.model);
+            //console.log(this.model);
             return $("<strong />").text(self.value);
         }
     });
@@ -39,12 +39,24 @@ function loadTable() {
         renderOperations: function () {
             var instance = this;
 
-            return $("<a href='#' class='aui-button' />")
+            var dropdownId = "split-container-dropdown" + instance.model.id;
+
+            var buttons = $('<div class="aui-buttons">'+
+            '<button class="aui-button aui-dropdown2-trigger aui-button-split-more" aria-controls="'+dropdownId+'">Split more</button></div>'+
+
+            '<aui-dropdown-menu id="' +dropdownId+'">'+
+                '<aui-item-link>Menu item 1</aui-item-link>'+
+                '<aui-item-link>Menu item 2</aui-item-link>'+
+                '<aui-item-link>Menu item 3</aui-item-link>'+
+            '</aui-dropdown-menu>');
+
+            return $(buttons);
+            /*return $("<a href='#' class='aui-button' />")
                 .addClass(this.classNames.DELETE)
                 .text("bububu").click(function (e) {
                     e.preventDefault();
                     instance.destroy();
-                });
+                });*/
 
         }
     });
@@ -77,7 +89,7 @@ function loadTable() {
     });
 
     AJS.$(document).bind(AJS.RestfulTable.Events.INITIALIZED, function () {
-        //update name of action column
+        //update name of action column that is second from end
         //last two columns don't have name : action column and loading indicator used when editing
         $("#configuration-rest-table th:nth-last-child(2)").each(function() {
             this.innerHTML = 'Actions';
