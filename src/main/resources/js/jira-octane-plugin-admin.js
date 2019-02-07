@@ -1,4 +1,7 @@
-var octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
+var octanePluginContext = {
+    octaneBaseUrl : AJS.contextPath() + "/rest/octane-admin/1.0/",
+}
+
 var configRestTable
 
 (function ($) { // this closure helps us keep our variables to ourselves.
@@ -69,8 +72,8 @@ function loadTable() {
     configRestTable = new AJS.RestfulTable({
         el: jQuery("#configuration-rest-table"),
         resources: {
-            all: octaneBaseUrl + "workspace-config/all",
-            self: octaneBaseUrl + "workspace-config/self"
+            all: octanePluginContext.octaneBaseUrl + "workspace-config/all",
+            self: octanePluginContext.octaneBaseUrl + "workspace-config/self"
         },
         columns: [
             {id: "id", header: "<i>Id</i>", readView: NameReadView},
@@ -127,7 +130,7 @@ function configureAddDialog(){
         placeholder: "Select a workspace",
 
         ajax: {
-            url: octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
+            url: octanePluginContext.octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
             dataType: 'json',
             results: function (data, page) {
                 return { results: data.results };
@@ -139,7 +142,7 @@ function configureAddDialog(){
 
 function loadConfiguration() {
     $.ajax({
-        url: octaneBaseUrl,
+        url: octanePluginContext.octaneBaseUrl,
         dataType: "json"
     }).done(function (config) { // when the configuration is returned...
         // ...populate the form.
@@ -163,7 +166,7 @@ function updateConfig() {
     setStatusText("Configuration is saving ...");
     var data = getConfigData();
     var request = $.ajax({
-        url: octaneBaseUrl,
+        url: octanePluginContext.octaneBaseUrl,
         type: "PUT",
         data: data,
         dataType: "json",
@@ -182,7 +185,7 @@ function updateConfig() {
 function testConnection() {
     setStatusText("Configuration is validating ...");
     var request = $.ajax({
-        url: octaneBaseUrl + "test-connection",
+        url: octanePluginContext.octaneBaseUrl + "test-connection",
         type: "PUT",
         data: getConfigData(),
         dataType: "json",
