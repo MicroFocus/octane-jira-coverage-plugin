@@ -1,8 +1,5 @@
-var octanePluginContext = {
-    octaneBaseUrl : AJS.contextPath() + "/rest/octane-admin/1.0/",
-}
-
-var configRestTable
+var octanePluginContext = {};
+octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 
 (function ($) { // this closure helps us keep our variables to ourselves.
     // This pattern is known as an "iife" - immediately invoked function expression
@@ -69,7 +66,7 @@ function loadTable() {
         }
     });
 
-    configRestTable = new AJS.RestfulTable({
+    octanePluginContext.configRestTable = new AJS.RestfulTable({
         el: jQuery("#configuration-rest-table"),
         resources: {
             all: octanePluginContext.octaneBaseUrl + "workspace-config/all",
