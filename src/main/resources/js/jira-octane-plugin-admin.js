@@ -11,6 +11,7 @@ var configRestTable
         loadTable();
         loadConfiguration();
         addButtonRegistrations();
+        configureAddDialog();
     });
 
 })(AJS.$ || jQuery);
@@ -108,7 +109,9 @@ function addButtonRegistrations() {
     AJS.$("#save").click(function () {
         updateConfig();
     });
+}
 
+function configureAddDialog(){
     AJS.$("#show-dialog-button").click(function(e) {
         e.preventDefault();
         AJS.dialog2("#demo-dialog").show();
@@ -117,6 +120,13 @@ function addButtonRegistrations() {
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
         AJS.dialog2("#demo-dialog").hide();
+    });
+
+    AJS.$('#workspace-selector').auiSelect2({
+        ajax: {
+            url: octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
+            dataType: 'json'
+        }
     });
 }
 

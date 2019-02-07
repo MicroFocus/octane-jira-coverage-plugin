@@ -45,12 +45,14 @@
 </form>
 
 <h3 class="section-title">Workspaces</h3>
-<p>Here will be text explaining about adding new workspace. In order create new workspace configuration click <button id="show-dialog-button" class="aui-button aui-button-link">here</button></p>
+<p><button id="show-dialog-button" class="aui-button aui-button-link">Create</button> new workspace configuration. </p>
 <table id="configuration-rest-table"></table>
 
 <section id="demo-dialog" class="aui-dialog2 aui-dialog2-small aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
     <header class="aui-dialog2-header">
-        <h2 class="aui-dialog2-header-main">Captain...</h2>
+        <h2 class="aui-dialog2-header-main">
+            Create new workspace configuration
+        </h2>
         <a class="aui-dialog2-header-close">
             <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
         </a>

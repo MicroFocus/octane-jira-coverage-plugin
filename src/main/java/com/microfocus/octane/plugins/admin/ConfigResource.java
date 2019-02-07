@@ -27,6 +27,8 @@ import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.components.api.Constants;
+import com.microfocus.octane.plugins.components.api.OctaneContext;
+import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationOutgoing;
@@ -63,22 +65,35 @@ public class ConfigResource {
     @ComponentImport
     private final UserManager userManager;
 
-
     @ComponentImport
     private final TransactionTemplate transactionTemplate;
+
+    //private final OctaneRestService octaneRestService;
 
     private List<WorkspaceConfigurationModel> models = new ArrayList<>();
 
     @Inject
-    public ConfigResource(UserManager userManager, TransactionTemplate transactionTemplate) {
+    public ConfigResource(UserManager userManager, TransactionTemplate transactionTemplate/*, OctaneRestService octaneRestService*/) {
         this.userManager = userManager;
         this.transactionTemplate = transactionTemplate;
+        //this.octaneRestService = octaneRestService;
 
         models.add(new WorkspaceConfigurationModel("1001.1001", "ws1", "key1", Arrays.asList("User story","Feature"),
                 Arrays.asList("JiraIssueType1","JiraIssueType2","JiraIssueType3"),Arrays.asList("JiraProject1","JiraProject2","JiraProject3")));
         models.add(new WorkspaceConfigurationModel("1001.1002", "ws2", "key2", Collections.emptyList(),
                 Collections.emptyList(),Arrays.asList("JiraProject5","JiraProject6","JiraProject7")));
     }
+
+    @GET
+    @Path("/workspace-config/additional-data/unused-octane-workspaces")
+    public Response getUnusedOctaneWorkspace(@Context HttpServletRequest request) {
+
+        Select2Result result = new Select2Result();
+        //OctaneEntityCollection octaneEntityCollection = octaneRestService.getEntitiesByCondition(OctaneContext.Space,"workspaces",null,null);
+        //octaneEntityCollection.getData().forEach(e->result.addItem(e.getId(),e.getName()));
+        return Response.ok(result).build();
+    }
+
 
     @GET
     @Path("/workspace-config/all")

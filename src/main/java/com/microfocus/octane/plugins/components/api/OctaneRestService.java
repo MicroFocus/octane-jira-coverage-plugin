@@ -25,7 +25,7 @@ public interface OctaneRestService {
 
     GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath);
 
-    OctaneEntityCollection getEntitiesByCondition(String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
+    OctaneEntityCollection getEntitiesByCondition(OctaneContext octaneContext, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
 
     void reloadConfiguration();
 }

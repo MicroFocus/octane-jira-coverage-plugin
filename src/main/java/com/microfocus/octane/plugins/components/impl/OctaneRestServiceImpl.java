@@ -20,6 +20,7 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.components.api.Constants;
+import com.microfocus.octane.plugins.components.api.OctaneContext;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedListener;
@@ -104,11 +105,18 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     }
 
     @Override
-    public OctaneEntityCollection getEntitiesByCondition(String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
+    public OctaneEntityCollection getEntitiesByCondition(OctaneContext octaneContext, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
 
         String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).addSelectedFields(fields).build();
-        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
-                octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(), collectionName);
+        String url;
+        if (OctaneContext.Space.equals(octaneContext)) {
+            url = String.format(Constants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES,
+                    octaneConfiguration.getSharedspaceId(), collectionName);
+        } else {
+            url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
+                    octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(), collectionName);
+        }
+
 
         Map<String, String> headers = new HashMap<>();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);

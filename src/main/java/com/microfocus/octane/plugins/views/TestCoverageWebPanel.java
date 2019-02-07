@@ -23,6 +23,7 @@ import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.google.gson.Gson;
+import com.microfocus.octane.plugins.components.api.OctaneContext;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
@@ -130,7 +131,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
     private boolean tryGetApplicationModuleEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
             //CHECK Application modules
-            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition("application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
+            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(OctaneContext.Workspace,"application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
             if (!applicationModules.getData().isEmpty()) {
 
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
@@ -158,7 +159,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         try {
             //CHECK WORKING ITEM
             QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
-            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition("work_items",
+            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(OctaneContext.Workspace,"work_items",
                     Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name", "last_runs"));
             if (!workItems.getData().isEmpty()) {
                 OctaneEntity octaneEntity = workItems.getData().get(0);
