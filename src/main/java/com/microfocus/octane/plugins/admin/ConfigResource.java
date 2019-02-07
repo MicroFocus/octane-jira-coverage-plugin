@@ -241,7 +241,6 @@ public class ConfigResource {
                         }
                     }
                 } catch (Exception exc) {
-                    log.warn("checkConfiguration failed " + exc.getClass().getSimpleName() + " : " + exc.getMessage());
                     if (exc.getMessage().contains("platform.not_authorized")) {
                         errorMsg = "Validate credentials";
                     } else if (exc.getMessage().contains("type workspace does not exist")) {
@@ -249,7 +248,7 @@ public class ConfigResource {
                     } else if (exc.getMessage().contains("type shared_space does not exist")) {
                         errorMsg = "Sharedspace '" + internalConfig.getSharedspaceId() + "' is not available";
                     } else {
-                        errorMsg = "Validate that location is correct.";
+                        errorMsg = "Unexpected " + exc.getClass().getName() + " : " + exc.getMessage();//"Validate that location is correct.";
                     }
                 }
             }
