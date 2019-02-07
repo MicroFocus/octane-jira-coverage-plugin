@@ -117,7 +117,6 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
                     octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(), collectionName);
         }
 
-
         Map<String, String> headers = new HashMap<>();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
         headers.put("HPECLIENTTYPE", "HPE_CI_CLIENT");

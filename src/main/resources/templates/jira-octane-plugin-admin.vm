@@ -58,8 +58,10 @@
         </a>
     </header>
     <div class="aui-dialog2-content">
-        <p>We've detected debris of some sort in a loose orbit.</p>
-        <p>I suggest we beam a section aboard for analysis...</p>
+        <form class="aui">
+            <!--https://community.developer.atlassian.com/t/aui-select2-how-to-make-it-autocomplete-dynamically/17187/2-->
+            <input type='hidden' name='workspace-selector' id='workspace-selector' />
+        </form>
     </div>
     <footer class="aui-dialog2-footer">
         <div class="aui-dialog2-footer-actions">

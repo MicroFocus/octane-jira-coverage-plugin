@@ -128,6 +128,13 @@ function configureAddDialog(){
             dataType: 'json'
         }
     });
+
+    AJS.$("#workspace-selector").auiSelect2({
+        ajax: {
+            url: octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
+            dataType: 'json'
+        }
+    });
 }
 
 function loadConfiguration() {
