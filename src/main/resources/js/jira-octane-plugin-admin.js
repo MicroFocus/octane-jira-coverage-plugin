@@ -122,13 +122,6 @@ function configureAddDialog(){
         AJS.dialog2("#demo-dialog").hide();
     });
 
-    AJS.$('#workspace-selector').auiSelect2({
-        ajax: {
-            url: octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
-            dataType: 'json'
-        }
-    });
-
     AJS.$("#workspace-selector").auiSelect2({
         multiple: false,
         placeholder: "Select a workspace",
