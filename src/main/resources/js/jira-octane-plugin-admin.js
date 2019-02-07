@@ -130,10 +130,17 @@ function configureAddDialog(){
     });
 
     AJS.$("#workspace-selector").auiSelect2({
+        multiple: false,
+        placeholder: "Select a workspace",
+
         ajax: {
             url: octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
-            dataType: 'json'
-        }
+            dataType: 'json',
+            results: function (data, page) {
+                return { results: data.results };
+            }
+        },
+        minimumResultsForSearch: Infinity,//don't show search box
     });
 }
 
