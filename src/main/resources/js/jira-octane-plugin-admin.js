@@ -68,8 +68,8 @@ function loadTable() {
     configRestTable = new AJS.RestfulTable({
         el: jQuery("#configuration-rest-table"),
         resources: {
-            all: octaneBaseUrl + "all",
-            self: octaneBaseUrl + "self"
+            all: octaneBaseUrl + "workspace-config/all",
+            self: octaneBaseUrl + "workspace-config/self"
         },
         columns: [
             {id: "id", header: "<i>Id</i>", readView: NameReadView},

@@ -81,19 +81,19 @@ public class ConfigResource {
     }
 
     @GET
-    @Path("/all")
+    @Path("/workspace-config/all")
     public Response getAllWorkspaceConfigurations(@Context HttpServletRequest request) {
         return Response.ok(models).build();
     }
 
     @GET
-    @Path("/self/{id}")
+    @Path("/workspace-config/self/{id}")
     public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
         return Response.ok(models.stream().filter(m -> id.equals("" + m.getId())).findFirst()).build();
     }
 
     @PUT
-    @Path("/self/{id}")
+    @Path("/workspace-config/self/{id}")
     public Response updateWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id, WorkspaceConfigurationModel modelForUpdate) {
         Optional<WorkspaceConfigurationModel> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
 
@@ -103,7 +103,7 @@ public class ConfigResource {
     int counter = 3;
 
     @POST
-    @Path("/self")
+    @Path("/workspace-config/self")
     public Response createWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationModel model) {
         model.setId("" + counter++);
         models.add(model);
@@ -111,7 +111,7 @@ public class ConfigResource {
     }
 
     @DELETE
-    @Path("/self/{id}")
+    @Path("/workspace-config/self/{id}")
     public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id) {
 
         Optional<WorkspaceConfigurationModel> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
