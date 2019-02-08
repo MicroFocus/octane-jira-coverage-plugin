@@ -21,9 +21,6 @@ function loadTable() {
 
     var NameReadView = AJS.RestfulTable.CustomReadView.extend({
         render: function (self) {
-            //console.log(self);
-            //var row = this;
-            //console.log(this.model);
             return $("<strong />").text(self.value);
         }
     });
@@ -117,6 +114,15 @@ function configureAddDialog(){
         unusedOctaneWorkspaces:[]
     }
 
+
+    //fixing focus on search control
+    //https://community.developer.atlassian.com/t/aui-dialog-2-modal-problems-with-select-2-user-search-and-modal-does-not-lock-keyboard/10474
+    $("#workspace-selector").on("select2-open", function() {
+        console.log("select2-open tabondex updated");
+        $("[tabindex=0]").attr("tabindex","-1");
+        $("div.select2-search input.select2-input").attr("tabindex",  "0").focus();
+    });
+
     AJS.$("#show-dialog-button").click(function(e) {
         e.preventDefault();
         var request = $.ajax({
@@ -127,7 +133,6 @@ function configureAddDialog(){
         });
 
         request.success(function (data) {
-            console.log(data);
             octanePluginContext.createDialogData = data;
 
             AJS.$("#workspace-selector").auiSelect2({
@@ -137,15 +142,6 @@ function configureAddDialog(){
             });
 
             AJS.dialog2("#demo-dialog").show();
-
-
-            //fixing focus on search control
-            //https://community.developer.atlassian.com/t/aui-dialog-2-modal-problems-with-select-2-user-search-and-modal-does-not-lock-keyboard/10474
-            $("#workspace-selector").on("select2-open", function() {
-                console.log("select2-open tabondex updated");
-                $("[tabindex=0]").attr("tabindex","-1");
-                $("div.select2-search input.select2-input").attr("tabindex",  "0").focus();
-            });
 
         });
 
