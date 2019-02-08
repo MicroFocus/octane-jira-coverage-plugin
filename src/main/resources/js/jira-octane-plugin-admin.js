@@ -12,6 +12,7 @@ octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/
         loadConfiguration();
         addButtonRegistrations();
         configureAddDialog();
+
     });
 
 })(AJS.$ || jQuery);
@@ -112,28 +113,53 @@ function addButtonRegistrations() {
 }
 
 function configureAddDialog(){
+    octanePluginContext.createDialogData = {
+        unusedOctaneWorkspaces:[]
+    }
+
     AJS.$("#show-dialog-button").click(function(e) {
         e.preventDefault();
-        AJS.dialog2("#demo-dialog").show();
+        var request = $.ajax({
+            url: octanePluginContext.octaneBaseUrl  + "workspace-config/additional-data",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json"
+        });
+
+        request.success(function (data) {
+            console.log(data);
+            octanePluginContext.createDialogData = data;
+
+            AJS.$("#workspace-selector").auiSelect2({
+                multiple: false,
+                placeholder: "Select a workspace",
+                data : octanePluginContext.createDialogData.unusedOctaneWorkspaces,
+            });
+
+            AJS.dialog2("#demo-dialog").show();
+
+
+            //fixing focus on search control
+            //https://community.developer.atlassian.com/t/aui-dialog-2-modal-problems-with-select-2-user-search-and-modal-does-not-lock-keyboard/10474
+            $("#workspace-selector").on("select2-open", function() {
+                console.log("select2-open tabondex updated");
+                $("[tabindex=0]").attr("tabindex","-1");
+                $("div.select2-search input.select2-input").attr("tabindex",  "0").focus();
+            });
+
+        });
+
+        request.fail(function (request, status, error) {
+            //TODO SHOW ERROR MESSAGE
+        });
+
+
     });
 
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
         AJS.dialog2("#demo-dialog").hide();
-    });
-
-    AJS.$("#workspace-selector").auiSelect2({
-        multiple: false,
-        placeholder: "Select a workspace",
-
-        ajax: {
-            url: octanePluginContext.octaneBaseUrl + "workspace-config/additional-data/unused-octane-workspaces",
-            dataType: 'json',
-            results: function (data, page) {
-                return { results: data.results };
-            }
-        },
-        minimumResultsForSearch: Infinity,//don't show search box
+        AJS.$("#workspace-selector").select2("destroy");
     });
 }
 

@@ -94,6 +94,16 @@ public class ConfigResource {
         return Response.ok(result).build();
     }
 
+    @GET
+    @Path("/workspace-config/additional-data")
+    public Response getDataForCreateDialog(@Context HttpServletRequest request) {
+        OctaneEntityCollection octaneEntityCollection = octaneRestService.getEntitiesByCondition(OctaneContext.Space,"workspaces",null,Arrays.asList("id","name"));
+        List<Select2ResultItem> workspaces = octaneEntityCollection.getData().stream().map(e->new Select2ResultItem(e.getId(),e.getName())).collect(Collectors.toList());
+
+        Map<String,Object> data = new HashMap<>();
+        data.put("unusedOctaneWorkspaces",workspaces);
+        return Response.ok(data).build();
+    }
 
     @GET
     @Path("/workspace-config/all")

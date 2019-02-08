@@ -49,7 +49,7 @@ public class OctaneQueryBuilder implements Serializable {
         if (queryConditions == null) {
             queryConditions = new ArrayList<>();
         }
-        if(condition!=null){
+        if (condition != null) {
             queryConditions.add(condition);
         }
 
@@ -60,7 +60,7 @@ public class OctaneQueryBuilder implements Serializable {
         if (queryConditions == null) {
             queryConditions = new ArrayList<>();
         }
-        if(conditions!=null){
+        if (conditions != null) {
             queryConditions.addAll(conditions);
         }
 
