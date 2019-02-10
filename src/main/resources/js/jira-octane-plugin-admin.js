@@ -173,16 +173,17 @@ function configureAddDialog(){
         e.preventDefault();
 
         var model = {};
-        model.id = $("#workspaceSelector").val();
+        model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         model.workspaceName = $("#workspaceSelector").select2('data').text;
         model.octaneField = $("#octaneUdf").attr("value"),
         model.octaneEntityTypes = $("#octaneEntityTypes").attr("value"),
-        model.jiraIssueTypes =  _.map($("#jiraIssueTypesSelector").select2('data'), function(item){return item.id;})
-        model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function(item){return item.id;});
+        model.jiraIssueTypes =  _.map($("#jiraIssueTypesSelector").select2('data'), function(item){return item.id;})//convert selected objects to array of strings
+        model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function(item){return item.id;});//convert selected objects to array of strings
 
 
         console.log(model);
-        octanePluginContext.configRestTable.addRow(model,0);
+        //octanePluginContext.configRestTable.model.save(model);
+        //octanePluginContext.configRestTable.addRow(model,0);
         console.log("added");
         closeDialog();
 
