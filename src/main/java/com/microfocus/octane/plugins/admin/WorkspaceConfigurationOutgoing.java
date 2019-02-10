@@ -26,7 +26,7 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "jiraIssueTypes")
     private List<String> jiraIssueTypes = Collections.emptyList();
 
-    @XmlElement(name = "jiraProject")
+    @XmlElement(name = "jiraProjects")
     private List<String> jiraProjects = Collections.emptyList();
 
     public WorkspaceConfigurationOutgoing() {

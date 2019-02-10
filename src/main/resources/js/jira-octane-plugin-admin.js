@@ -76,7 +76,7 @@ function loadTable() {
             {id: "octaneField", header: "ALM Octane Field"},
             {id: "octaneEntityTypes", header: "Supported ALM Octane Entity Types", readView: ListReadView},
             {id: "jiraIssueTypes", header: "Jira Issue Types", readView: ListReadView},
-            {id: "jiraProject", header: "Jira Project", readView: ListReadView}
+            {id: "jiraProjects", header: "Jira Project", readView: ListReadView}
         ],
         autoFocus: false,
         allowEdit: false,
@@ -162,12 +162,35 @@ function configureAddDialog(){
 
     });
 
-    AJS.$("#dialog-submit-button").click(function (e) {
-        e.preventDefault();
+    function closeDialog(){
         AJS.dialog2("#config-dialog").hide();
         AJS.$("#workspaceSelector").select2("destroy");
         AJS.$("#jiraIssueTypesSelector").select2("destroy");
         AJS.$("#jiraProjectsSelector").select2("destroy");
+    }
+
+    AJS.$("#dialog-submit-button").click(function (e) {
+        e.preventDefault();
+
+        var model = {};
+        model.id = $("#workspaceSelector").val();
+        model.workspaceName = $("#workspaceSelector").select2('data').text;
+        model.octaneField = $("#octaneUdf").attr("value"),
+        model.octaneEntityTypes = $("#octaneEntityTypes").attr("value"),
+        model.jiraIssueTypes =  _.map($("#jiraIssueTypesSelector").select2('data'), function(item){return item.id;})
+        model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function(item){return item.id;});
+
+
+        console.log(model);
+        octanePluginContext.configRestTable.addRow(model,0);
+        console.log("added");
+        closeDialog();
+
+    });
+
+    AJS.$("#dialog-cancel-button").click(function (e) {
+        e.preventDefault();
+        closeDialog();
     });
 }
 
