@@ -11,21 +11,21 @@
     <div class="form-body">
         <h3 class="sectionTitle">Space</h3>
         <div class="field-group">
-            <label for="location">Location:</label>
-            <input type="text" id="location" name="location" class="text">
+            <label for="location">Location <span class="aui-icon icon-required"/></label>
+            <input type="text" id="location" name="location" class="text long-field">
             <div class="description">Location of the ALM Octane application, for example :
                 http://myServer.myCompany.com:8081/ui/?p=1001/1002
                 <br/><b>Tip</b>: You can copy the URL from the address bar of the browser in which you opened ALM Octane
             </div>
         </div>
         <div class="field-group">
-            <label for="clientId">Client ID:</label>
-            <input type="text" id="clientId" name="clientId" class="text">
+            <label for="clientId">Client ID <span class="aui-icon icon-required"/></label>
+            <input type="text" id="clientId" name="clientId" class="text long-field">
             <div class="description">Client ID used for logging into the ALM Octane server</div>
         </div>
         <div class="field-group">
-            <label for="clientSecret">Client secret:</label>
-            <input type="password" id="clientSecret" name="clientSecret" class="text">
+            <label for="clientSecret" >Client secret <span class="aui-icon icon-required"/></label>
+            <input type="password" id="clientSecret" name="clientSecret" class="text long-field">
             <div class="description">Client secret used for logging into the ALM Octane server</div>
         </div>
 
@@ -48,7 +48,7 @@
 <p><button id="show-dialog-button" class="aui-button aui-button-link">Create</button> new workspace configuration. </p>
 <table id="configuration-rest-table"></table>
 
-<section id="demo-dialog" class="aui-dialog2 aui-dialog2-small aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
+<section id="config-dialog" class="aui-dialog2 aui-dialog2-large aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
     <header class="aui-dialog2-header">
         <h2 class="aui-dialog2-header-main">
             Create new workspace configuration
@@ -59,8 +59,34 @@
     </header>
     <div class="aui-dialog2-content">
         <form class="aui">
-            <!--https://community.developer.atlassian.com/t/aui-select2-how-to-make-it-autocomplete-dynamically/17187/2-->
-            <input type='hidden' name='workspace-selector' id='workspace-selector' />
+            <div class="field-group">
+                <label  for="workspaceSelector">ALM Octane workspace<span class="aui-icon icon-required"/></label>
+                <input type='hidden' name='workspaceSelector' id='workspaceSelector' class="text long-field"/>
+                <div class="description"></div>
+            </div>
+            <div class="field-group">
+                <label for="octaneUdf">ALM Octane field <span class="aui-icon icon-required"/></label>
+                <input type="text" id="octaneUdf" name="octaneUdf" class="text long-field">
+                <div class="description">Octane user-defined field for mapping Jira issue (recommended 'jira_key_udf')</div>
+            </div>
+            <div class="field-group">
+                <label for="octaneEntityTypes">ALM Octane entity types</label>
+                <input type="text" id="octaneEntityTypes" name="octaneUdf" class="text long-field" disabled>
+                <button class="aui-button aui-button-subtle" resolved=""><span class="aui-icon aui-icon-small aui-iconfont-refresh"></span></button>
+                <div class="description">Octane entity type that have defined 'Octane field'</div>
+            </div>
+            <div class="field-group">
+                <label for="jiraProjectsSelector">Jira projects keys<span class="aui-icon icon-required"/></label>
+                <input type='hidden' name='jiraProjectsSelector' id='jiraProjectsSelector' class="text long-field"/>
+                <div class="description">Supported Jira projects. Each jira project can be selected only for one  ALM Octane workspace.
+                </div>
+            </div>
+            <div class="field-group">
+                <label for="jiraIssueTypesSelector">Jira issue types</label>
+                <input type='hidden' name='jiraIssueTypesSelector' id='jiraIssueTypesSelector' class="text long-field"/>
+                <div class="description">Supported Jira issue types. If value is missing, all issue types are supported.
+                </div>
+            </div>
         </form>
     </div>
     <footer class="aui-dialog2-footer">

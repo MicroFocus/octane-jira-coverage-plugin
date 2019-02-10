@@ -14,13 +14,9 @@
     color: black;
 }
 
-#octane-admin .text {
-    max-width: 400px;
-}
-
 #button-group {
-    max-width: 400px;
-    width: 400px;
+    max-width: 500px;
+    width: 500px;
 }
 
 .simple-list {

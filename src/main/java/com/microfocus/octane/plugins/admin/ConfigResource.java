@@ -15,6 +15,7 @@
 
 package com.microfocus.octane.plugins.admin;
 
+import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
@@ -77,23 +78,23 @@ public class ConfigResource {
     }
 
     @GET
-    @Path("/workspace-config/additional-data/unused-octane-workspaces")
-    public Response getUnusedOctaneWorkspace(@Context HttpServletRequest request) {
-
-        Select2Result result = new Select2Result();
-        OctaneEntityCollection octaneEntityCollection = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", null, Arrays.asList("id", "name"));
-        octaneEntityCollection.getData().forEach(e -> result.addItem(e.getId(), e.getName()));
-        return Response.ok(result).build();
-    }
-
-    @GET
     @Path("/workspace-config/additional-data")
     public Response getDataForCreateDialog(@Context HttpServletRequest request) {
-        OctaneEntityCollection octaneEntityCollection = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", null, Arrays.asList("id", "name"));
-        List<Select2ResultItem> workspaces = octaneEntityCollection.getData().stream().map(e -> new Select2ResultItem(e.getId(), e.getName())).collect(Collectors.toList());
+        OctaneEntityCollection workspaces = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", null, Arrays.asList("id", "name"));
+        Collection<Select2ResultItem> select2workspaces = workspaces.getData()
+                .stream().map(e -> new Select2ResultItem(e.getId(), e.getName())).collect(Collectors.toList());
+
+        Collection<Select2ResultItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
+                .stream().map(e -> new Select2ResultItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
+
+        Collection<Select2ResultItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
+                .stream().map(e -> new Select2ResultItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
 
         Map<String, Object> data = new HashMap<>();
-        data.put("unusedOctaneWorkspaces", workspaces);
+        data.put("workspaces", select2workspaces);
+        data.put("issueTypes", select2IssueTypes);
+        data.put("projects", select2Projects);
+
         return Response.ok(data).build();
     }
 

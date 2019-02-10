@@ -110,9 +110,7 @@ function addButtonRegistrations() {
 }
 
 function configureAddDialog(){
-    octanePluginContext.createDialogData = {
-        unusedOctaneWorkspaces:[]
-    }
+    octanePluginContext.createDialogData = { };
 
 
     //fixing focus on search control
@@ -135,13 +133,25 @@ function configureAddDialog(){
         request.success(function (data) {
             octanePluginContext.createDialogData = data;
 
-            AJS.$("#workspace-selector").auiSelect2({
+            AJS.$("#workspaceSelector").auiSelect2({
                 multiple: false,
-                placeholder: "Select a workspace",
-                data : octanePluginContext.createDialogData.unusedOctaneWorkspaces,
+                //placeholder: "Select a workspace",
+                data : octanePluginContext.createDialogData.workspaces,
             });
 
-            AJS.dialog2("#demo-dialog").show();
+            AJS.$("#jiraIssueTypesSelector").auiSelect2({
+                multiple: true,
+                //placeholder: "Select issue types",
+                data : octanePluginContext.createDialogData.issueTypes,
+            });
+
+            AJS.$("#jiraProjectsSelector").auiSelect2({
+                multiple: true,
+                //placeholder: "Select projects",
+                data : octanePluginContext.createDialogData.projects,
+            });
+
+            AJS.dialog2("#config-dialog").show();
 
         });
 
@@ -154,8 +164,10 @@ function configureAddDialog(){
 
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
-        AJS.dialog2("#demo-dialog").hide();
-        AJS.$("#workspace-selector").select2("destroy");
+        AJS.dialog2("#config-dialog").hide();
+        AJS.$("#workspaceSelector").select2("destroy");
+        AJS.$("#jiraIssueTypesSelector").select2("destroy");
+        AJS.$("#jiraProjectsSelector").select2("destroy");
     });
 }
 
