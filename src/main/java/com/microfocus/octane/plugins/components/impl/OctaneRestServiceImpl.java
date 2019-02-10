@@ -20,11 +20,8 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.components.api.Constants;
-import com.microfocus.octane.plugins.components.api.OctaneContext;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedListener;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.*;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
@@ -44,6 +41,7 @@ import java.util.Map;
 @Named("octaneRestService")
 public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigurationChangedListener {
 
+
     private static final Logger log = LoggerFactory.getLogger(OctaneRestServiceImpl.class);
 
     @ComponentImport
@@ -52,7 +50,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     @ComponentImport
     private final PluginSettingsFactory pluginSettingsFactory;
 
-    private OctaneConfiguration octaneConfiguration;
+    private SpaceConfiguration octaneConfiguration;
 
     private RestConnector restConnector = new RestConnector();
 
@@ -72,10 +70,10 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         restConnector.clearAll();
         try {
-            octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
-            restConnector.setBaseUrl(octaneConfiguration.getBaseUrl());
+            octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration().getSpaces().get(0);
+            restConnector.setBaseUrl(octaneConfiguration.getLocationParts().getBaseUrl());
             restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
-            log.debug("after reloadConfiguration, url= " + octaneConfiguration.getBaseUrl() + ", clientID=" + octaneConfiguration.getClientId());
+            log.debug("after reloadConfiguration, url= " + octaneConfiguration.getLocationParts().getBaseUrl() + ", clientID=" + octaneConfiguration.getClientId());
         } catch (Exception e) {
             octaneConfiguration = null;
             log.error("Failed to reloadConfiguration : " + e.getClass().getName() + ", message =" + e.getMessage() + ", cause : " + e.getCause());
@@ -83,9 +81,9 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     }
 
     @Override
-    public GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath) {
+    public GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
-        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(), "runs/groups");
+        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
         Map<String, String> headers = new HashMap<>();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
@@ -105,16 +103,16 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     }
 
     @Override
-    public OctaneEntityCollection getEntitiesByCondition(OctaneContext octaneContext, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
+    public OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
 
         String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).addSelectedFields(fields).build();
         String url;
-        if (OctaneContext.Space.equals(octaneContext)) {
+        if (SPACE_CONTEXT == workspaceId) {
             url = String.format(Constants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES,
-                    octaneConfiguration.getSharedspaceId(), collectionName);
+                    octaneConfiguration.getLocationParts().getSpaceId(), collectionName);
         } else {
             url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
-                    octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(), collectionName);
+                    octaneConfiguration.getLocationParts().getSpaceId(), octaneConfiguration.getLocationParts().getSpaceId(), collectionName);
         }
 
         Map<String, String> headers = new HashMap<>();

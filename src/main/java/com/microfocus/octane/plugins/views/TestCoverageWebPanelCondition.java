@@ -20,10 +20,12 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.project.Project;
 import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.web.Condition;
-import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
+import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 
 import java.util.Map;
+import java.util.Optional;
 
 public class TestCoverageWebPanelCondition implements Condition {
 
@@ -41,24 +43,20 @@ public class TestCoverageWebPanelCondition implements Condition {
     @Override
     public boolean shouldDisplay(Map<String, Object> map) {
         if (configManager.isValidConfiguration()) {
-            OctaneConfiguration octaneConfiguration = configManager.getConfiguration();
-            if (!octaneConfiguration.getJiraProjects().isEmpty()) {
-                Project project = (Project) map.get("project");
-                String projectKey = project.getKey().toUpperCase();
-                if (!octaneConfiguration.getJiraProjects().contains(projectKey)) {
-                    return false;
-                }
-            }
+            SpaceConfiguration spaceConfiguration = configManager.getConfiguration().getSpaces().get(0);
+            Project project = (Project) map.get("project");
 
-            if (!octaneConfiguration.getJiraIssueTypes().isEmpty()) {
+            Optional<WorkspaceConfiguration> workspaceConfigOpt = spaceConfiguration.getWorkspaces().stream().filter(w -> w.getJiraProjects().contains(project.getName())).findFirst();
+            if (workspaceConfigOpt.isPresent()) {
                 Issue issue = (Issue) map.get("issue");
-                String issueType = issue.getIssueType().getName().toLowerCase();
-                if (!octaneConfiguration.getJiraIssueTypes().contains(issueType)) {
-                    return false;
+                String issueType = issue.getIssueType().getName();
+                WorkspaceConfiguration workspaceConfig = workspaceConfigOpt.get();
+                if (workspaceConfig.getJiraIssueTypes().isEmpty() || workspaceConfig.getJiraIssueTypes().contains(issueType)) {
+                    return true;
                 }
             }
         }
 
-        return true;
+        return false;
     }
 }

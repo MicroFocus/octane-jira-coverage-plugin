@@ -58,7 +58,7 @@ public class OctaneEntityParser {
 
     }
 
-    private static OctaneEntityCollection parseCollection(JSONObject jsonObj) {
+    public static OctaneEntityCollection parseCollection(JSONObject jsonObj) {
         OctaneEntityCollection coll = new OctaneEntityCollection();
         try {
 

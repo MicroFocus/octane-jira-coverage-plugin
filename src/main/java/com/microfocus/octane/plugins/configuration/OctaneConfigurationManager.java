@@ -17,16 +17,16 @@ package com.microfocus.octane.plugins.configuration;
 
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import org.apache.commons.lang.StringUtils;
+import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 public class OctaneConfigurationManager {
@@ -35,12 +35,16 @@ public class OctaneConfigurationManager {
     private PluginSettingsFactory pluginSettingsFactory;
 
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
-    private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
-    private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
-    private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
-    private static final String OCTANE_UDF_FIELD_KEY = PLUGIN_PREFIX + "octaneUdf";
-    private static final String JIRA_ISSUE_TYPES_KEY = PLUGIN_PREFIX + "jiraIssueTypes";
-    private static final String JIRA_PROJECTS_KEY = PLUGIN_PREFIX + "jiraProjects";
+    private static final String CONFIGURATION_KEY = PLUGIN_PREFIX + "configuration";
+
+    private static ConfigurationCollection configuration;
+
+    //private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
+    //private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
+    //private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
+    //private static final String OCTANE_UDF_FIELD_KEY = PLUGIN_PREFIX + "octaneUdf";
+    //private static final String JIRA_ISSUE_TYPES_KEY = PLUGIN_PREFIX + "jiraIssueTypes";
+    //private static final String JIRA_PROJECTS_KEY = PLUGIN_PREFIX + "jiraProjects";
 
 
     public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
@@ -69,53 +73,71 @@ public class OctaneConfigurationManager {
         listeners.add(toAdd);
     }
 
-    private static OctaneConfiguration externalConfig;
-
     private static boolean validConfiguration = true;
 
-    public OctaneConfiguration getConfiguration() {
-        if (externalConfig == null) {
-            log.trace("externalConfig is null");
+    public ConfigurationCollection getConfiguration() {
+        if (configuration == null) {
+            log.trace("configuration is null");
             try {
-                externalConfig = convertToInternalConfiguration(loadConfiguration());
-                validConfiguration = true;
+                configuration = loadConfiguration();
+                validConfiguration = configuration.getSpaces().get(0).getLocation() != null;
             } catch (Exception e) {
                 log.error("failed to getConfiguration : " + e.getClass().getName() + ", message =" + e.getMessage() + ", cause=" + e.getCause());
                 validConfiguration = false;
             }
         }
-        return externalConfig;
+        return configuration;
     }
 
     public boolean isValidConfiguration() {
         return validConfiguration;
     }
 
-    public OctaneConfigurationOutgoing loadConfiguration() {
+    public ConfigurationCollection loadConfiguration() throws IOException {
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        OctaneConfigurationOutgoing outgoingConfiguration = new OctaneConfigurationOutgoing();
-        outgoingConfiguration.setLocation((String) settings.get(OCTANE_LOCATION_KEY));
-        outgoingConfiguration.setClientId((String) settings.get(CLIENT_ID_KEY));
-        outgoingConfiguration.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
-        outgoingConfiguration.setOctaneUdf((String) settings.get(OCTANE_UDF_FIELD_KEY));
-        outgoingConfiguration.setJiraIssueTypes((String) settings.get(JIRA_ISSUE_TYPES_KEY));
-        outgoingConfiguration.setJiraProjects((String) settings.get(JIRA_PROJECTS_KEY));
-        return outgoingConfiguration;
-    }
+        String confStr = ((String) settings.get(CONFIGURATION_KEY));
 
-    public void saveConfiguration(OctaneConfigurationOutgoing config) {
-        PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
-        pluginSettings.put(OCTANE_LOCATION_KEY, config.getLocation());
-        pluginSettings.put(CLIENT_ID_KEY, config.getClientId());
-        pluginSettings.put(OCTANE_UDF_FIELD_KEY, config.getOctaneUdf());
-        pluginSettings.put(JIRA_ISSUE_TYPES_KEY, config.getJiraIssueTypes());
-        pluginSettings.put(JIRA_PROJECTS_KEY, config.getJiraProjects());
-
-        if (!PASSWORD_REPLACE.equals(config.getClientSecret())) {
-            pluginSettings.put(CLIENT_SECRET_KEY, config.getClientSecret());
+        if (confStr == null) {//create initial configuration
+            SpaceConfiguration spaceConfiguration = new SpaceConfiguration();
+            spaceConfiguration.setId(UUID.randomUUID().toString());
+            spaceConfiguration.setWorkspaces(new ArrayList<>());
+            configuration = new ConfigurationCollection();
+            configuration.setSpaces(Arrays.asList(spaceConfiguration));
+            persistConfiguration();
+        } else {
+            configuration = JsonHelper.deserialize(confStr, ConfigurationCollection.class);
         }
 
-        externalConfig = null;
+        return configuration;
+    }
+
+    private void persistConfiguration() {
+
+        try {
+            String confStr = JsonHelper.serialize(configuration);
+            int HARD_LIMIT_SIZE = 99000;
+            if (confStr.length() >= HARD_LIMIT_SIZE) {
+                new RuntimeException("Configuration file exceeds hard limit size of " + HARD_LIMIT_SIZE + " characters");
+            }
+            PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+            settings.put(CONFIGURATION_KEY, confStr);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to persist configuration :" + e.getMessage());
+        }
+    }
+
+    public void saveSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
+        SpaceConfiguration spConfig = getConfiguration().getSpaces().get(0);
+        spConfig.setClientId(spaceConfigurationOutgoing.getClientId());
+        if (!PASSWORD_REPLACE.equals(spaceConfigurationOutgoing.getClientSecret())) {
+            spConfig.setClientSecret(spaceConfigurationOutgoing.getClientSecret());
+        }
+
+        spConfig.setLocationParts(parseUiLocation(spaceConfigurationOutgoing.getLocation()));
+        spConfig.setLocation(spaceConfigurationOutgoing.getLocation());
+
+        persistConfiguration();
+
         //update listeners
         for (OctaneConfigurationChangedListener hl : listeners) {
             try {
@@ -126,47 +148,7 @@ public class OctaneConfigurationManager {
         }
     }
 
-    public OctaneConfiguration convertToInternalConfiguration(OctaneConfigurationOutgoing outgoing) {
-        OctaneConfiguration internal = new OctaneConfiguration();
-
-        log.trace("convertToInternalConfiguration : client id : " + outgoing.getClientId());
-        internal.setClientId(outgoing.getClientId());
-        log.trace("convertToInternalConfiguration : octane udf : " + outgoing.getOctaneUdf());
-        internal.setOctaneUdf(outgoing.getOctaneUdf());
-
-        //handle url location
-        parseUiLocation(internal, outgoing.getLocation());
-
-        //set jira issue type
-        log.trace("convertToInternalConfiguration : issueTypes : " + outgoing.getJiraIssueTypes());
-        String issueTypes = outgoing.getJiraIssueTypes() == null ? null : outgoing.getJiraIssueTypes().toLowerCase().trim();
-        if (StringUtils.isEmpty(issueTypes)) {
-            internal.setJiraIssueTypes(Collections.emptySet());
-        } else {
-            internal.setJiraIssueTypes(Stream.of(issueTypes.split(",")).map(String::trim).collect(Collectors.toSet()));
-        }
-
-        //set jira projects
-        log.trace("convertToInternalConfiguration : project : " + outgoing.getJiraProjects());
-        String project = outgoing.getJiraProjects() == null ? null : outgoing.getJiraProjects().toUpperCase().trim();
-        if (StringUtils.isEmpty(project)) {
-            internal.setJiraProjects(Collections.emptySet());
-        } else {
-            internal.setJiraProjects(Stream.of(project.split(",")).map(String::trim).collect(Collectors.toSet()));
-        }
-
-        //replace password
-        if (PASSWORD_REPLACE.equals(outgoing.getClientSecret())) {
-            PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-            internal.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
-        } else {
-            internal.setClientSecret(outgoing.getClientSecret());
-        }
-
-        return internal;
-    }
-
-    private static void parseUiLocation(OctaneConfiguration internal, String uiLocation) {
+    public static LocationParts parseUiLocation(String uiLocation) {
         String errorMsg = null;
         try {
             URL url = new URL(uiLocation);
@@ -174,33 +156,36 @@ public class OctaneConfigurationManager {
             if (contextPos < 0) {
                 errorMsg = "Location url is missing '/ui' part ";
             } else {
-
-                internal.setBaseUrl(uiLocation.substring(0, contextPos));
+                LocationParts parts = new LocationParts();
+                parts.setBaseUrl(uiLocation.substring(0, contextPos));
                 Map<String, List<String>> queries = splitQuery(url);
 
                 if (queries.containsKey(PARAM_SHARED_SPACE)) {
                     List<String> sharedSpaceParamValue = queries.get(PARAM_SHARED_SPACE);
                     if (sharedSpaceParamValue != null && !sharedSpaceParamValue.isEmpty()) {
                         String[] sharedSpaceAndWorkspace = sharedSpaceParamValue.get(0).split("/");
-                        if (sharedSpaceAndWorkspace.length == 2) {
-                            internal.setSharedspaceId(sharedSpaceAndWorkspace[0]);
-                            internal.setWorkspaceId(sharedSpaceAndWorkspace[1]);
+                        if (sharedSpaceAndWorkspace.length == 2 /*p=1001/1002*/ || sharedSpaceAndWorkspace.length == 1 /*p=1001*/) {
+                            try {
+                                long spaceId = Long.parseLong(sharedSpaceAndWorkspace[0].trim());
+                                parts.setSpaceId(spaceId);
+                                return parts;
+                            } catch (NumberFormatException e) {
+                                errorMsg = "Space id must be numeric value";
+                            }
                         } else {
                             errorMsg = "Location url has invalid sharedspace/workspace part";
                         }
-
                     }
                 } else {
                     errorMsg = "Location url is missing sharedspace id";
                 }
             }
-
         } catch (Exception e) {
             errorMsg = "Location contains invalid URL ";
         }
-        if (errorMsg != null) {
-            throw new IllegalArgumentException(errorMsg);
-        }
+
+        throw new IllegalArgumentException(errorMsg);
+
     }
 
     private static Map<String, List<String>> splitQuery(URL url) throws UnsupportedEncodingException {

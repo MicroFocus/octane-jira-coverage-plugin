@@ -12,22 +12,19 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
+package com.microfocus.octane.plugins.configuration;
 
-package com.microfocus.octane.plugins.components.api;
+import java.util.List;
 
-import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
-import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
-import com.microfocus.octane.plugins.rest.query.QueryPhrase;
+public class ConfigurationCollection {
 
-import java.util.Collection;
+    private List<SpaceConfiguration> spaces;
 
-public interface OctaneRestService {
+    public List<SpaceConfiguration> getSpaces() {
+        return spaces;
+    }
 
-    long SPACE_CONTEXT = -1;
-
-    GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath, long workspaceId);
-
-    OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
-
-    void reloadConfiguration();
+    public void setSpaces(List<SpaceConfiguration> spaces) {
+        this.spaces = spaces;
+    }
 }

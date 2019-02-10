@@ -23,9 +23,7 @@ import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.google.gson.Gson;
-import com.microfocus.octane.plugins.components.api.OctaneContext;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.OctaneConfiguration;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
 import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
@@ -101,13 +99,14 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         if (configurationManager.isValidConfiguration()) {
             try {
                 Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
-                QueryPhrase jiraKeyCondition = new InQueryPhrase(configurationManager.getConfiguration().getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
+                //TODO revert comment
+                /*QueryPhrase jiraKeyCondition = new InQueryPhrase(configurationManager.getConfiguration().getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
                 if (tryGetApplicationModuleEntity(contextMap, jiraKeyCondition) ||
                         tryGetWorkItemEntity(contextMap, jiraKeyCondition)) {
                     //context map is filled
                 } else {
                     contextMap.put("status", "noData");
-                }
+                }*/
             } catch (RestStatusException e) {
                 if (e.getResponse().getStatusCode() == 401) {
                     //credentials issue
@@ -130,15 +129,16 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
     private boolean tryGetApplicationModuleEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
+            long workspaceId = getWorkspaceId(contextMap);
             //CHECK Application modules
-            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(OctaneContext.Workspace,"application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
+            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceId, "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
             if (!applicationModules.getData().isEmpty()) {
 
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
                 TypeDescriptor typeDescriptor = typeDescriptors.get(octaneEntity.getType());
                 String path = octaneEntity.getString("path");
 
-                GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path);
+                GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path, workspaceId);
                 int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
                 List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
                         .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
@@ -155,11 +155,16 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
+    private long getWorkspaceId(Map<String, Object> contextMap) {
+        return -1;
+    }
+
     private boolean tryGetWorkItemEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
+            long workspaceId = getWorkspaceId(contextMap);
             //CHECK WORKING ITEM
             QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
-            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(OctaneContext.Workspace,"work_items",
+            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(workspaceId, "work_items",
                     Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name", "last_runs"));
             if (!workItems.getData().isEmpty()) {
                 OctaneEntity octaneEntity = workItems.getData().get(0);
@@ -185,7 +190,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
     }
 
     private void fillContextMapWithEntity(Map<String, Object> contextMap, TypeDescriptor typeDescriptor, OctaneEntity octaneEntity, List<MapBasedObject> groups, int total) {
-        octaneEntity.put("url", typeDescriptor.buildEntityUrl(octaneEntity.getId()));
+        //TODO revert comment
+        //octaneEntity.put("url", typeDescriptor.buildEntityUrl(octaneEntity.getId()));
         octaneEntity.put("typeKey", typeDescriptor.getTypeKey());
         octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
         contextMap.put("total", total);
@@ -285,10 +291,10 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             return nameForNavigation;
         }
 
-        public String buildEntityUrl(String entityId) {
-            OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
+        public String buildEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
+            //OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
             String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
-                    octaneConfiguration.getBaseUrl(), octaneConfiguration.getSharedspaceId(), octaneConfiguration.getWorkspaceId(),
+                    baseUrl, spaceId, workspaceId,
                     this.getNameForNavigation(), entityId);
             return octaneEntityUrl;
         }

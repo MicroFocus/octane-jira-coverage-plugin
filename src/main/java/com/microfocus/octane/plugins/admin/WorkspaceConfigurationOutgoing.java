@@ -9,7 +9,7 @@ import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkspaceConfigurationModel {
+public class WorkspaceConfigurationOutgoing {
 
     @XmlElement(name = "id")
     private String id;
@@ -29,11 +29,11 @@ public class WorkspaceConfigurationModel {
     @XmlElement(name = "jiraProject")
     private List<String> jiraProjects = Collections.emptyList();
 
-    public WorkspaceConfigurationModel() {
+    public WorkspaceConfigurationOutgoing() {
 
     }
 
-    public WorkspaceConfigurationModel(String id, String workspaceName, String octaneField, List<String> octaneEntityTypes, List<String> jiraIssueTypes, List<String> jiraProjects)
+    public WorkspaceConfigurationOutgoing(String id, String workspaceName, String octaneField, List<String> octaneEntityTypes, List<String> jiraIssueTypes, List<String> jiraProjects)
     {
         setId(id);
         setWorkspaceName(workspaceName);
