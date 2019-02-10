@@ -20,6 +20,7 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface OctaneRestService {
 
@@ -28,6 +29,8 @@ public interface OctaneRestService {
     GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath, long workspaceId);
 
     OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
+
+    Set<String> getSupportedOctaneTypes(long workspaceId, String udfName);
 
     void reloadConfiguration();
 }

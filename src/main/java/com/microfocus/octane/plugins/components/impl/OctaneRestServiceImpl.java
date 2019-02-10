@@ -21,7 +21,9 @@ import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.components.api.Constants;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.*;
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedListener;
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
@@ -32,10 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @ExportAsService({OctaneRestService.class})
 @Named("octaneRestService")
@@ -122,6 +122,27 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         String responseStr = restConnector.httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
         return col;
+    }
+
+    public Set<String> getSupportedOctaneTypes(long workspaceId, String udfName) {
+        long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
+        String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
+        Map<String, String> headers = new HashMap<>();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+
+        QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", udfName);
+        Map<String, String> key2LabelType = new HashMap<>();
+        key2LabelType.put("feature", "Feature");
+        key2LabelType.put("story", "User Story");
+        key2LabelType.put("product_area", "Application module");
+        QueryPhrase typeCondition = new InQueryPhrase("entity_name", key2LabelType.keySet());
+
+        String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
+        String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+        OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
+        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toSet());
+
+        return foundTypes;
     }
 
     @Override

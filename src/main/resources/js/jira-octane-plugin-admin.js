@@ -39,7 +39,6 @@ function loadTable() {
             var instance = this;
 
 
-
             var editButton = $('<aui-item-link >Edit</aui-item-link>').click(function (e) {
                 alert("Edit " + instance.model.id)
             });
@@ -48,11 +47,11 @@ function loadTable() {
             });
 
             var dropdownId = "split-container-dropdown" + instance.model.id;
-            var topLevelEl = $('<div class="aui-buttons">'+
+            var topLevelEl = $('<div class="aui-buttons">' +
                 '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="'
                 + dropdownId + '">...</button></div>');
             var bottomLevelEl = $('<aui-dropdown-menu id="' + dropdownId + '"></aui-dropdown-menu>').append(editButton, deleteButton);
-            var parentEl = $('<div></div>').append(topLevelEl,bottomLevelEl);
+            var parentEl = $('<div></div>').append(topLevelEl, bottomLevelEl);
             return parentEl;
             return $(buttons);
             /*return $("<a href='#' class='aui-button' />")
@@ -109,22 +108,58 @@ function addButtonRegistrations() {
     });
 }
 
-function configureAddDialog(){
-    octanePluginContext.createDialogData = { };
+function configureAddDialog() {
+    octanePluginContext.createDialogData = {};
+
+
+    function reloadOctaneSupportedEntityTypes() {
+
+        $("#refreshOctaneEntityTypesSpinner").spin()
+        var workspaceId = $("#workspaceSelector").val();
+        var udfName = $("#octaneUdf").attr("value");
+        var request = $.ajax({
+            url: octanePluginContext.octaneBaseUrl + "workspace-config/supported-octane-types?workspace-id=" + workspaceId + "&udf-name=" + udfName,
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json"
+        });
+        request.success(function (data) {
+            console.log(data);
+            setTimeout(function() {
+                $("#refreshOctaneEntityTypesSpinner").spinStop();
+            }, 1000);
+
+
+            $("#octaneEntityTypes").val(data);
+
+        });
+        request.fail(function (request, status, error) {
+            //TODO SHOW ERROR MESSAGE
+        });
+    }
+
+    $("#octaneUdf").change(function () {
+        reloadOctaneSupportedEntityTypes();
+    });
+
+    $("#refreshOctaneEntityTypesButton").click(function (e) {
+        console.log("button clicked");
+        e.preventDefault();
+        reloadOctaneSupportedEntityTypes();
+    });
 
 
     //fixing focus on search control
     //https://community.developer.atlassian.com/t/aui-dialog-2-modal-problems-with-select-2-user-search-and-modal-does-not-lock-keyboard/10474
-    $("#workspace-selector").on("select2-open", function() {
-        console.log("select2-open tabondex updated");
-        $("[tabindex=0]").attr("tabindex","-1");
-        $("div.select2-search input.select2-input").attr("tabindex",  "0").focus();
+    $("#workspaceSelector").on("select2-open", function () {
+        $("[tabindex=0]").attr("tabindex", "-1");
+        $("div.select2-search input.select2-input").attr("tabindex", "0").focus();
     });
 
-    AJS.$("#show-dialog-button").click(function(e) {
+    AJS.$("#show-dialog-button").click(function (e) {
         e.preventDefault();
         var request = $.ajax({
-            url: octanePluginContext.octaneBaseUrl  + "workspace-config/additional-data",
+            url: octanePluginContext.octaneBaseUrl + "workspace-config/additional-data",
             type: "GET",
             dataType: "json",
             contentType: "application/json"
@@ -136,19 +171,19 @@ function configureAddDialog(){
             AJS.$("#workspaceSelector").auiSelect2({
                 multiple: false,
                 //placeholder: "Select a workspace",
-                data : octanePluginContext.createDialogData.workspaces,
+                data: octanePluginContext.createDialogData.workspaces,
             });
 
             AJS.$("#jiraIssueTypesSelector").auiSelect2({
                 multiple: true,
                 //placeholder: "Select issue types",
-                data : octanePluginContext.createDialogData.issueTypes,
+                data: octanePluginContext.createDialogData.issueTypes,
             });
 
             AJS.$("#jiraProjectsSelector").auiSelect2({
                 multiple: true,
                 //placeholder: "Select projects",
-                data : octanePluginContext.createDialogData.projects,
+                data: octanePluginContext.createDialogData.projects,
             });
 
             AJS.dialog2("#config-dialog").show();
@@ -158,11 +193,9 @@ function configureAddDialog(){
         request.fail(function (request, status, error) {
             //TODO SHOW ERROR MESSAGE
         });
-
-
     });
 
-    function closeDialog(){
+    function closeDialog() {
         AJS.dialog2("#config-dialog").hide();
         AJS.$("#workspaceSelector").select2("destroy");
         AJS.$("#jiraIssueTypesSelector").select2("destroy");
@@ -176,10 +209,10 @@ function configureAddDialog(){
         var model = {};
         model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         model.workspaceName = $("#workspaceSelector").select2('data').text;
-        model.octaneField = $("#octaneUdf").attr("value"),
-        model.octaneEntityTypes = $("#octaneEntityTypes").attr("value").split(","),
-        model.jiraIssueTypes =  _.map($("#jiraIssueTypesSelector").select2('data'), function(item){return item.id;})//convert selected objects to array of strings
-        model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function(item){return item.id;});//convert selected objects to array of strings
+        model.octaneField = $("#octaneUdf").attr("value");
+        model.octaneEntityTypes = $("#octaneEntityTypes").attr("value").split(",");
+        model.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {return item.id;})//convert selected objects to array of strings
+        model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
 
         console.log(model);
         var myJSON = JSON.stringify(model);
@@ -191,7 +224,7 @@ function configureAddDialog(){
             contentType: "application/json"
         });
         request.success(function (msg) {
-            octanePluginContext.configRestTable.addRow(model,0);
+            octanePluginContext.configRestTable.addRow(model, 0);
             closeDialog();
         });
         request.fail(function (request, status, error) {
@@ -271,23 +304,25 @@ function testConnection() {
     });
 }
 
-function setDialogStatusText(statusText, statusClass, isHtml){
+function setDialogStatusText(statusText, statusClass, isHtml) {
     setStatusText("#dialog-status", statusText, statusClass, isHtml)
 }
-function setSpaceStatusText(statusText, statusClass, isHtml){
+
+function setSpaceStatusText(statusText, statusClass, isHtml) {
     setStatusText("#status", statusText, statusClass, isHtml)
 }
-function setStatusText(targetElement, statusText, statusClass, isHtml) {
-    $(targetElement).removeClass("statusValid");
-    $(targetElement).removeClass("statusWarning");
-    $(targetElement).removeClass("statusFailed");
+
+function setStatusText(selector, statusText, statusClass, isHtml) {
+    $(selector).removeClass("statusValid");
+    $(selector).removeClass("statusWarning");
+    $(selector).removeClass("statusFailed");
     if (isHtml) {
-        $(targetElement).html(statusText);
+        $(selector).html(statusText);
     } else {
-        $(targetElement).text(statusText);
+        $(selector).text(statusText);
     }
 
     if (statusClass) {
-        $("#status").addClass(statusClass);
+        $(selector).addClass(statusClass);
     }
 }

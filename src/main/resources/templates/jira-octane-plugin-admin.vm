@@ -69,7 +69,8 @@
             <div class="field-group">
                 <label for="octaneEntityTypes">Entity types</label>
                 <input type="text" id="octaneEntityTypes" name="octaneUdf" class="text long-field" disabled>
-                <button class="aui-button aui-button-subtle" resolved=""><span class="aui-icon aui-icon-small aui-iconfont-refresh"></span></button>
+                <button id="refreshOctaneEntityTypesButton" class="aui-button aui-button-subtle" resolved=""><span class="aui-icon aui-icon-small aui-iconfont-refresh"></span></button>
+                <span id="refreshOctaneEntityTypesSpinner" style="display: inline-block; height: 10px; width: 20px"></span>
                 <div class="description">ALM Octane entity type that have defined 'Octane field'</div>
             </div>
             <div class="field-group">

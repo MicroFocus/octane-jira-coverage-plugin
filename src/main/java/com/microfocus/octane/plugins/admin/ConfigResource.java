@@ -34,6 +34,7 @@ import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.lf5.viewer.configure.ConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,28 +59,29 @@ public class ConfigResource {
     @ComponentImport
     private final UserManager userManager;
 
-    @ComponentImport
-    private final TransactionTemplate transactionTemplate;
-
     private final OctaneRestService octaneRestService;
 
     private List<WorkspaceConfigurationOutgoing> models = new ArrayList<>();
 
     @Inject
-    public ConfigResource(UserManager userManager, TransactionTemplate transactionTemplate, OctaneRestService octaneRestService) {
+    public ConfigResource(UserManager userManager, OctaneRestService octaneRestService) {
         this.userManager = userManager;
-        this.transactionTemplate = transactionTemplate;
         this.octaneRestService = octaneRestService;
 
         models.add(new WorkspaceConfigurationOutgoing("1001.1001", "ws1", "key1", Arrays.asList("User story", "Feature"),
-                Arrays.asList("JiraIssueType1", "JiraIssueType2", "JiraIssueType3"), Arrays.asList("JiraProject1", "JiraProject2", "JiraProject3")));
+                Arrays.asList("JiraIssueType1"), Arrays.asList("JiraProject1")));
         models.add(new WorkspaceConfigurationOutgoing("1001.1002", "ws2", "key2", Collections.emptyList(),
-                Collections.emptyList(), Arrays.asList("JiraProject5", "JiraProject6", "JiraProject7")));
+                Collections.emptyList(), Arrays.asList("JiraProject5", "JiraProject6")));
     }
+
 
     @GET
     @Path("/workspace-config/additional-data")
     public Response getDataForCreateDialog(@Context HttpServletRequest request) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         OctaneEntityCollection workspaces = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", null, Arrays.asList("id", "name"));
         Collection<Select2ResultItem> select2workspaces = workspaces.getData()
                 .stream().map(e -> new Select2ResultItem(e.getId(), e.getName())).collect(Collectors.toList());
@@ -101,20 +103,42 @@ public class ConfigResource {
     @GET
     @Path("/workspace-config/all")
     public Response getAllWorkspaceConfigurations(@Context HttpServletRequest request) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         return Response.ok(models).build();
     }
 
     @GET
     @Path("/workspace-config/self/{id}")
-    public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
+    public Response getWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         return Response.ok(models.stream().filter(m -> id.equals("" + m.getId())).findFirst()).build();
+    }
+
+    @GET
+    @Path("/workspace-config/supported-octane-types")
+    public Response getSupportedOctaneTypes(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name")String udfName) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        Set<String> types = octaneRestService.getSupportedOctaneTypes(workspaceId, udfName);
+        return Response.ok(types).build();
     }
 
     @PUT
     @Path("/workspace-config/self/{id}")
     public Response updateWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id, WorkspaceConfigurationOutgoing modelForUpdate) {
-        Optional<WorkspaceConfigurationOutgoing> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
 
+        Optional<WorkspaceConfigurationOutgoing> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
         return Response.ok(modelForUpdate).build();
     }
 
@@ -123,6 +147,10 @@ public class ConfigResource {
     @POST
     @Path("/workspace-config/self")
     public Response createWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationOutgoing model) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         model.setId("" + counter++);
         models.add(model);
         return Response.ok(model).build();
@@ -131,6 +159,9 @@ public class ConfigResource {
     @DELETE
     @Path("/workspace-config/self/{id}")
     public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
 
         Optional<WorkspaceConfigurationOutgoing> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
         if (optional.isPresent()) {
@@ -148,7 +179,6 @@ public class ConfigResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context HttpServletRequest request) {
-
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
@@ -258,42 +288,4 @@ public class ConfigResource {
         }
         return errorMsg;
     }
-
-
-    private void checkOctaneFieldExistance(List<String> warnings) {
-        /*String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
-                internalConfig.getSharedspaceId(), internalConfig.getWorkspaceId(), "metadata/fields");
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
-
-        try {
-            RestConnector restConnector = new RestConnector();
-            restConnector.setBaseUrl(internalConfig.getBaseUrl());
-            restConnector.setCredentials(internalConfig.getClientId(), internalConfig.getClientSecret());
-            boolean isConnected = restConnector.login();
-
-            QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", internalConfig.getOctaneUdf());
-            Map<String, String> key2LabelType = new HashMap<>();
-            key2LabelType.put("feature", "Feature");
-            key2LabelType.put("story", "User Story");
-            key2LabelType.put("product_area", "Application module");
-            QueryPhrase typeCondition = new InQueryPhrase("entity_name", key2LabelType.keySet());
-
-            String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
-            String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
-            OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
-            Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toSet());
-            Set<String> missingTypes = key2LabelType.keySet().stream().filter(key -> !foundTypes.contains(key)).map(key -> key2LabelType.get(key)).collect(Collectors.toSet());
-            if (!missingTypes.isEmpty()) {
-                String warn = String.format("The following Octane entity types have no field '%s' : %s",
-                        internalConfig.getOctaneUdf(), StringUtils.join(missingTypes, ", "));
-                warnings.add(warn);
-            }
-        } catch (Exception e) {
-            log.error(String.format("Failed on checkOctaneFieldExistance : %s", e.getMessage()), e);
-        }*/
     }
-
-
-}
