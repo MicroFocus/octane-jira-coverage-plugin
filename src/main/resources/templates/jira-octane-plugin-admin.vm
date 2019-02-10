@@ -84,6 +84,9 @@
                 <div class="description">Supported Jira issue types. If value is missing, all issue types are supported.
                 </div>
             </div>
+            <div class="field-group">
+                <div id="dialog-status"></div>
+            </div>
         </form>
     </div>
     <footer class="aui-dialog2-footer">

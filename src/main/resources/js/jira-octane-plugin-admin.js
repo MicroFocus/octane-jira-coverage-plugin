@@ -94,7 +94,7 @@ function loadTable() {
         //update name of action column that is second from end
         //last two columns don't have name : action column and loading indicator used when editing
         $("#configuration-rest-table th:nth-last-child(2)").each(function () {
-            this.innerHTML = 'Actions';
+            //this.innerHTML = 'Actions';
         });
     });
 }
@@ -172,21 +172,31 @@ function configureAddDialog(){
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
 
+        setDialogStatusText("Saving...");
         var model = {};
         model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         model.workspaceName = $("#workspaceSelector").select2('data').text;
         model.octaneField = $("#octaneUdf").attr("value"),
-        model.octaneEntityTypes = $("#octaneEntityTypes").attr("value"),
+        model.octaneEntityTypes = $("#octaneEntityTypes").attr("value").split(","),
         model.jiraIssueTypes =  _.map($("#jiraIssueTypesSelector").select2('data'), function(item){return item.id;})//convert selected objects to array of strings
         model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function(item){return item.id;});//convert selected objects to array of strings
 
-
         console.log(model);
-        //octanePluginContext.configRestTable.model.save(model);
-        //octanePluginContext.configRestTable.addRow(model,0);
-        console.log("added");
-        closeDialog();
-
+        var myJSON = JSON.stringify(model);
+        var request = $.ajax({
+            url: octanePluginContext.configRestTable.options.resources.self,
+            type: "POST",
+            data: myJSON,
+            dataType: "json",
+            contentType: "application/json"
+        });
+        request.success(function (msg) {
+            octanePluginContext.configRestTable.addRow(model,0);
+            closeDialog();
+        });
+        request.fail(function (request, status, error) {
+            setDialogStatusText(request.responseText, "statusFailed");
+        });
     });
 
     AJS.$("#dialog-cancel-button").click(function (e) {
@@ -218,7 +228,7 @@ function getConfigData() {
 }
 
 function updateConfig() {
-    setStatusText("Configuration is saving ...");
+    setSpaceStatusText("Configuration is saving ...");
     var data = getConfigData();
     var request = $.ajax({
         url: octanePluginContext.octaneBaseUrl,
@@ -229,16 +239,16 @@ function updateConfig() {
     });
 
     request.success(function (msg) {
-        setStatusText("Configuration is saved successfully", "statusValid");
+        setSpaceStatusText("Configuration is saved successfully", "statusValid");
     });
 
     request.fail(function (request, status, error) {
-        setStatusText(request.responseText, "statusFailed");
+        setSpaceStatusText(request.responseText, "statusFailed");
     });
 }
 
 function testConnection() {
-    setStatusText("Configuration is validating ...");
+    setSpaceStatusText("Configuration is validating ...");
     var request = $.ajax({
         url: octanePluginContext.octaneBaseUrl + "test-connection",
         type: "PUT",
@@ -248,27 +258,33 @@ function testConnection() {
     });
 
     request.success(function (msg) {
-        setStatusText("Configuration is validated successfully", "statusValid");
+        setSpaceStatusText("Configuration is validated successfully", "statusValid");
     });
 
     request.fail(function (request, status, error) {
         var response = JSON.parse(request.responseText);
         if (response.failed) {
-            setStatusText(response.failed, "statusFailed");
+            setSpaceStatusText(response.failed, "statusFailed");
         } else if (response.warning) {
-            setStatusText(response.warning, "statusWarning", true);
+            setSpaceStatusText(response.warning, "statusWarning", true);
         }
     });
 }
 
-function setStatusText(statusText, statusClass, isHtml) {
-    $("#status").removeClass("statusValid");
-    $("#status").removeClass("statusWarning");
-    $("#status").removeClass("statusFailed");
+function setDialogStatusText(statusText, statusClass, isHtml){
+    setStatusText("#dialog-status", statusText, statusClass, isHtml)
+}
+function setSpaceStatusText(statusText, statusClass, isHtml){
+    setStatusText("#status", statusText, statusClass, isHtml)
+}
+function setStatusText(targetElement, statusText, statusClass, isHtml) {
+    $(targetElement).removeClass("statusValid");
+    $(targetElement).removeClass("statusWarning");
+    $(targetElement).removeClass("statusFailed");
     if (isHtml) {
-        $("#status").html(statusText);
+        $(targetElement).html(statusText);
     } else {
-        $("#status").text(statusText);
+        $(targetElement).text(statusText);
     }
 
     if (statusClass) {

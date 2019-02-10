@@ -21,13 +21,13 @@ public class WorkspaceConfigurationOutgoing {
     private String octaneField;
 
     @XmlElement(name = "octaneEntityTypes")
-    private List<String> octaneEntityTypes = Collections.emptyList();
+    private List<String> octaneEntityTypes ;
 
     @XmlElement(name = "jiraIssueTypes")
-    private List<String> jiraIssueTypes = Collections.emptyList();
+    private List<String> jiraIssueTypes;
 
     @XmlElement(name = "jiraProjects")
-    private List<String> jiraProjects = Collections.emptyList();
+    private List<String> jiraProjects;
 
     public WorkspaceConfigurationOutgoing() {
 
