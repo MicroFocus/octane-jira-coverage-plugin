@@ -72,8 +72,8 @@ function loadTable() {
         columns: [
             {id: "id", header: "<i>Id</i>", readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
-            {id: "octaneField", header: "ALM Octane Field"},
-            {id: "octaneEntityTypes", header: "Supported ALM Octane Entity Types", readView: ListReadView},
+            {id: "octaneField", header: "Mapping Field"},
+            {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
             {id: "jiraIssueTypes", header: "Jira Issue Types", readView: ListReadView},
             {id: "jiraProjects", header: "Jira Project", readView: ListReadView}
         ],
@@ -114,9 +114,15 @@ function configureAddDialog() {
 
     function reloadOctaneSupportedEntityTypes() {
 
-        $("#refreshOctaneEntityTypesSpinner").spin()
+
         var workspaceId = $("#workspaceSelector").val();
         var udfName = $("#octaneUdf").attr("value");
+        if(workspaceId && udfName){
+            $("#refreshOctaneEntityTypesSpinner").spin();
+        }else{
+            return;
+        }
+
         var request = $.ajax({
             url: octanePluginContext.octaneBaseUrl + "workspace-config/supported-octane-types?workspace-id=" + workspaceId + "&udf-name=" + udfName,
             type: "GET",
@@ -127,14 +133,12 @@ function configureAddDialog() {
             console.log(data);
             setTimeout(function() {
                 $("#refreshOctaneEntityTypesSpinner").spinStop();
+                $("#octaneEntityTypes").val(data);
             }, 1000);
-
-
-            $("#octaneEntityTypes").val(data);
-
         });
         request.fail(function (request, status, error) {
             //TODO SHOW ERROR MESSAGE
+            $("#refreshOctaneEntityTypesSpinner").spinStop();
         });
     }
 
@@ -143,7 +147,6 @@ function configureAddDialog() {
     });
 
     $("#refreshOctaneEntityTypesButton").click(function (e) {
-        console.log("button clicked");
         e.preventDefault();
         reloadOctaneSupportedEntityTypes();
     });
@@ -186,6 +189,7 @@ function configureAddDialog() {
                 data: octanePluginContext.createDialogData.projects,
             });
 
+            $("#octaneUdf").val("jira_key_udf");//populate default value
             AJS.dialog2("#config-dialog").show();
 
         });

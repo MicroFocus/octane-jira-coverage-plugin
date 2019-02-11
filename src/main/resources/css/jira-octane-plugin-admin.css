@@ -33,3 +33,14 @@
 #configuration-rest-table .aui-restfultable-operations{
     width: 10px;
 }
+
+#refreshOctaneEntityTypesSpinner{
+    display: inline-block;
+    height: 10px;
+    width: 20px;
+    margin: 0 5px 0 -30px;
+}
+
+#config-dialog div.description{
+    margin-top: 2px;
+}

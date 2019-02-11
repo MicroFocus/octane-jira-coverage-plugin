@@ -140,7 +140,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
         String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
-        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toSet());
+        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).map(key->key2LabelType.get(key)).collect(Collectors.toSet());
 
         return foundTypes;
     }
