@@ -97,5 +97,21 @@
         </div>
     </footer>
 </section>
+<section id="warning-dialog" class="aui-dialog2 aui-dialog2-small aui-dialog2-warning aui-layer" role="dialog" aria-hidden="true">
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">Delete</h2>
+    </header>
+    <div class="aui-dialog2-content">
+
+        <p>Are you sure you want to delete '<span id="workspace-to-delete"></span>' workspace configuration ?</p>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button id="warning-dialog-confirm" class="aui-button aui-button-primary">Delete</button>
+            <button id="warning-dialog-cancel" class="aui-button aui-button-link">Cancel</button>
+        </div>
+    </footer>
+</section>
+
 </body>
 </html>

@@ -43,7 +43,29 @@ function loadTable() {
                 alert("Edit " + instance.model.id)
             });
             var deleteButton = $('<aui-item-link >Remove</aui-item-link>').click(function (e) {
-                alert("Delete " + instance.model.id)
+                $("#workspace-to-delete").text(instance.model.attributes.workspaceName);
+
+                AJS.dialog2("#warning-dialog").show();
+                AJS.$("#warning-dialog-confirm").click(function (e) {
+                    e.preventDefault();
+                    AJS.dialog2("#warning-dialog").hide();
+
+                    var request = $.ajax({
+                        url: octanePluginContext.configRestTable.options.resources.self +"/" + instance.model.id,
+                        type: "DELETE",
+                    });
+                    request.success(function () {
+                        octanePluginContext.configRestTable.removeRow(instance);
+                    });
+                    request.fail(function (request, status, error) {
+                        //TODO PRINT ERROR
+                    });
+                });
+
+                AJS.$("#warning-dialog-cancel").click(function (e) {
+                    e.preventDefault();
+                    AJS.dialog2("#warning-dialog").hide();
+                });
             });
 
             var dropdownId = "split-container-dropdown" + instance.model.id;
@@ -53,13 +75,6 @@ function loadTable() {
             var bottomLevelEl = $('<aui-dropdown-menu id="' + dropdownId + '"></aui-dropdown-menu>').append(editButton, deleteButton);
             var parentEl = $('<div></div>').append(topLevelEl, bottomLevelEl);
             return parentEl;
-            return $(buttons);
-            /*return $("<a href='#' class='aui-button' />")
-                .addClass(this.classNames.DELETE)
-                .text("bububu").click(function (e) {
-                    e.preventDefault();
-                    instance.destroy();
-                });*/
         }
     });
 
