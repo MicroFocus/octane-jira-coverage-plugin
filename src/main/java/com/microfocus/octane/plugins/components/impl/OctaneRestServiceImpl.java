@@ -70,7 +70,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         restConnector.clearAll();
         try {
-            octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration().getSpaces().get(0);
+            octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
             restConnector.setBaseUrl(octaneConfiguration.getLocationParts().getBaseUrl());
             restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
             log.debug("after reloadConfiguration, url= " + octaneConfiguration.getLocationParts().getBaseUrl() + ", clientID=" + octaneConfiguration.getClientId());

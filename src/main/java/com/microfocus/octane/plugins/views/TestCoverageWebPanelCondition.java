@@ -43,7 +43,7 @@ public class TestCoverageWebPanelCondition implements Condition {
     @Override
     public boolean shouldDisplay(Map<String, Object> map) {
         if (configManager.isValidConfiguration()) {
-            SpaceConfiguration spaceConfiguration = configManager.getConfiguration().getSpaces().get(0);
+            SpaceConfiguration spaceConfiguration = configManager.getConfiguration();
             Project project = (Project) map.get("project");
 
             Optional<WorkspaceConfiguration> workspaceConfigOpt = spaceConfiguration.getWorkspaces().stream().filter(w -> w.getJiraProjects().contains(project.getName())).findFirst();

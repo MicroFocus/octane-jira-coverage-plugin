@@ -5,8 +5,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement
+@XmlRootElement()
 @XmlAccessorType(XmlAccessType.FIELD)
+
 public class Select2ResultItem {
 
     @XmlElement(name = "id")
@@ -15,7 +16,8 @@ public class Select2ResultItem {
     @XmlElement(name = "text")
     private String text;
 
-    public Select2ResultItem(String id, String text){
+
+    public Select2ResultItem(String id, String text) {
         this.text = text;
         this.id = id;
     }
@@ -26,5 +28,10 @@ public class Select2ResultItem {
 
     public String getId() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return id +" : " + text;
     }
 }

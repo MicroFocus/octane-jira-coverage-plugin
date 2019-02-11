@@ -20,21 +20,19 @@ import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.components.api.Constants;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.ConfigurationCollection;
 import com.microfocus.octane.plugins.configuration.LocationParts;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
+import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.lf5.viewer.configure.ConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,36 +59,48 @@ public class ConfigResource {
 
     private final OctaneRestService octaneRestService;
 
-    private List<WorkspaceConfigurationOutgoing> models = new ArrayList<>();
-
     @Inject
     public ConfigResource(UserManager userManager, OctaneRestService octaneRestService) {
         this.userManager = userManager;
         this.octaneRestService = octaneRestService;
-
-        models.add(new WorkspaceConfigurationOutgoing("1001.1001", "ws1", "key1", Arrays.asList("User story", "Feature"),
-                Arrays.asList("JiraIssueType1"), Arrays.asList("JiraProject1")));
-        models.add(new WorkspaceConfigurationOutgoing("1001.1002", "ws2", "key2", Collections.emptyList(),
-                Collections.emptyList(), Arrays.asList("JiraProject5", "JiraProject6")));
     }
 
 
     @GET
     @Path("/workspace-config/additional-data")
-    public Response getDataForCreateDialog(@Context HttpServletRequest request) {
+    public Response getDataForCreateDialog(@Context HttpServletRequest request, @QueryParam("update-id") Long id) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
+        SpaceConfiguration spConfig = OctaneConfigurationManager.getInstance().getConfiguration();
+        Set<Long> usedWorkspaces = spConfig.getWorkspaces().stream().map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
+        Set<String> usedJiraProjects = spConfig.getWorkspaces().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
+
+        if (id != null) {
+            Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).findFirst();
+            if (opt.isPresent()) {
+                usedWorkspaces.remove(opt.get().getWorkspaceId());
+                usedJiraProjects.removeAll(opt.get().getJiraProjects());
+            }
+        }
+
         OctaneEntityCollection workspaces = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", null, Arrays.asList("id", "name"));
         Collection<Select2ResultItem> select2workspaces = workspaces.getData()
-                .stream().map(e -> new Select2ResultItem(e.getId(), e.getName())).collect(Collectors.toList());
+                .stream()
+                .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
+                .map(e -> new Select2ResultItem(e.getId(), e.getName()))
+                .collect(Collectors.toList());
+
 
         Collection<Select2ResultItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
                 .stream().map(e -> new Select2ResultItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
 
         Collection<Select2ResultItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
-                .stream().map(e -> new Select2ResultItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
+                .stream()
+                .filter(e -> !usedJiraProjects.contains(e.getKey()))
+                .map(e -> new Select2ResultItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId()))
+                .collect(Collectors.toList());
 
         Map<String, Object> data = new HashMap<>();
         data.put("workspaces", select2workspaces);
@@ -107,22 +117,45 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        return Response.ok(models).build();
+        Collection<WorkspaceConfigurationOutgoing> result = OctaneConfigurationManager.getInstance().getConfiguration()
+                .getWorkspaces().stream().map(wc -> convert(wc)).sorted(Comparator.comparing(WorkspaceConfigurationOutgoing::getId))
+                .collect(Collectors.toList());
+
+        return Response.ok(result).build();
+    }
+
+    private WorkspaceConfigurationOutgoing convert(WorkspaceConfiguration wc) {
+        WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
+                .setId(wc.getWorkspaceId())
+                .setWorkspaceName(wc.getWorkspaceName())
+                .setOctaneUdf(wc.getOctaneUdf())
+                .setOctaneEntityTypes(wc.getOctaneEntityTypes())
+                .setJiraIssueTypes(wc.getJiraIssueTypes())
+                .setJiraProjects(wc.getJiraProjects());
+
+        return result;
     }
 
     @GET
     @Path("/workspace-config/self/{id}")
-    public Response getWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id) {
+    public Response getWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        return Response.ok(models.stream().filter(m -> id.equals("" + m.getId())).findFirst()).build();
+        Optional<WorkspaceConfigurationOutgoing> optResult = OctaneConfigurationManager.getInstance().getConfiguration()
+                .getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).map(wc -> convert(wc)).findFirst();
+
+        if (optResult.isPresent()) {
+            return Response.ok(optResult.get()).build();
+        } else {
+            return Response.status(Status.NOT_FOUND).build();
+        }
     }
 
     @GET
     @Path("/workspace-config/supported-octane-types")
-    public Response getSupportedOctaneTypes(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name")String udfName) {
+    public Response getSupportedOctaneTypes(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
@@ -131,18 +164,16 @@ public class ConfigResource {
         return Response.ok(types).build();
     }
 
-    @PUT
+    /*@PUT
     @Path("/workspace-config/self/{id}")
-    public Response updateWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id, WorkspaceConfigurationOutgoing modelForUpdate) {
+    public Response updateWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id, WorkspaceConfigurationOutgoing modelForUpdate) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Optional<WorkspaceConfigurationOutgoing> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
-        return Response.ok(modelForUpdate).build();
-    }
-
-    int counter = 3;
+        WorkspaceConfiguration wc = OctaneConfigurationManager.getInstance().saveWorkspaceConfiguration(modelForUpdate);
+        return Response.ok(convert(wc)).build();
+    }*/
 
     @POST
     @Path("/workspace-config/self")
@@ -151,24 +182,24 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        model.setId("" + counter++);
-        models.add(model);
-        return Response.ok(model).build();
+        WorkspaceConfiguration wc = OctaneConfigurationManager.getInstance().saveWorkspaceConfiguration(model);
+        return Response.ok(convert(wc)).build();
     }
 
     @DELETE
     @Path("/workspace-config/self/{id}")
-    public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") String id) {
+    public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Optional<WorkspaceConfigurationOutgoing> optional = models.stream().filter(m -> id.equals("" + m.getId())).findFirst();
-        if (optional.isPresent()) {
-            models.remove(optional.get());
+        boolean deleted = OctaneConfigurationManager.getInstance().deleteWorkspaceConfiguration(id);
+        if (deleted) {
+            return Response.ok().build();
+        } else {
+            return Response.status(Status.NOT_FOUND).build();
         }
 
-        return Response.ok().build();
     }
 
     private boolean hasPermissions(HttpServletRequest request) {
@@ -183,8 +214,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        ConfigurationCollection configuration = OctaneConfigurationManager.getInstance().getConfiguration();
-        SpaceConfiguration spaceConfig = configuration.getSpaces().get(0);
+        SpaceConfiguration spaceConfig = OctaneConfigurationManager.getInstance().getConfiguration();
         SpaceConfigurationOutgoing outgoing = SpaceConfigurationOutgoing
                 .create(spaceConfig.getId(), spaceConfig.getLocation(), spaceConfig.getClientId(), OctaneConfigurationManager.PASSWORD_REPLACE);
         return Response.ok(outgoing).build();
@@ -252,7 +282,7 @@ public class ConfigResource {
                 try {
 
                     String secret = OctaneConfigurationManager.PASSWORD_REPLACE.equals(spaceModel.getClientSecret()) ?
-                            OctaneConfigurationManager.getInstance().getConfiguration().getSpaces().get(0).getClientSecret() :
+                            OctaneConfigurationManager.getInstance().getConfiguration().getClientSecret() :
                             spaceModel.getClientSecret();
 
                     RestConnector restConnector = new RestConnector();
@@ -288,4 +318,4 @@ public class ConfigResource {
         }
         return errorMsg;
     }
-    }
+}

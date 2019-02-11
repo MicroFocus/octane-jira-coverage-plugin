@@ -18,6 +18,7 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +76,7 @@ public class OctaneConfigurationManager {
 
     private static boolean validConfiguration = true;
 
-    public ConfigurationCollection getConfiguration() {
+    public SpaceConfiguration getConfiguration() {
         if (configuration == null) {
             log.trace("configuration is null");
             try {
@@ -86,14 +87,14 @@ public class OctaneConfigurationManager {
                 validConfiguration = false;
             }
         }
-        return configuration;
+        return configuration.getSpaces().get(0);
     }
 
     public boolean isValidConfiguration() {
         return validConfiguration;
     }
 
-    public ConfigurationCollection loadConfiguration() throws IOException {
+    private ConfigurationCollection loadConfiguration() throws IOException {
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
         String confStr = ((String) settings.get(CONFIGURATION_KEY));
 
@@ -127,7 +128,7 @@ public class OctaneConfigurationManager {
     }
 
     public void saveSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
-        SpaceConfiguration spConfig = getConfiguration().getSpaces().get(0);
+        SpaceConfiguration spConfig = getConfiguration();
         spConfig.setClientId(spaceConfigurationOutgoing.getClientId());
         if (!PASSWORD_REPLACE.equals(spaceConfigurationOutgoing.getClientSecret())) {
             spConfig.setClientSecret(spaceConfigurationOutgoing.getClientSecret());
@@ -146,6 +147,36 @@ public class OctaneConfigurationManager {
                 log.error(String.format("Failed on onOctaneConfigurationChanged for listener %s: %s", hl.getClass().getSimpleName(), e.getMessage()));
             }
         }
+    }
+
+    public WorkspaceConfiguration saveWorkspaceConfiguration(WorkspaceConfigurationOutgoing model) {
+        SpaceConfiguration spConfig = getConfiguration();
+        Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(w -> w.getWorkspaceId() == model.getId()).findFirst();
+        if (opt.isPresent()) {
+            spConfig.getWorkspaces().remove(opt.get());
+        }
+        WorkspaceConfiguration newWorkspaceConfiguration = new WorkspaceConfiguration();
+        newWorkspaceConfiguration.setWorkspaceId(model.getId());
+        newWorkspaceConfiguration.setWorkspaceName(model.getWorkspaceName());
+        newWorkspaceConfiguration.setOctaneUdf(model.getOctaneUdf());
+        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes());
+        newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes());
+        newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects());
+
+        spConfig.getWorkspaces().add(newWorkspaceConfiguration);
+        persistConfiguration();
+        return newWorkspaceConfiguration;
+    }
+
+    public boolean deleteWorkspaceConfiguration(long id) {
+        SpaceConfiguration spConfig = getConfiguration();
+        Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(w -> w.getWorkspaceId() == id).findFirst();
+        if (opt.isPresent()) {
+            spConfig.getWorkspaces().remove(opt.get());
+            persistConfiguration();
+            return true;
+        }
+        return false;
     }
 
     public static LocationParts parseUiLocation(String uiLocation) {
@@ -202,6 +233,4 @@ public class OctaneConfigurationManager {
         }
         return query_pairs;
     }
-
-
 }

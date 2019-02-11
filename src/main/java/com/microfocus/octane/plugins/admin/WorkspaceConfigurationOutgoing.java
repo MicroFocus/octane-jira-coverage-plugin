@@ -4,91 +4,82 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkspaceConfigurationOutgoing {
 
     @XmlElement(name = "id")
-    private String id;
+    private long id;
 
     @XmlElement(name = "workspaceName")
     private String workspaceName;
 
-    @XmlElement(name = "octaneField")
-    private String octaneField;
+    @XmlElement(name = "octaneUdf")
+    private String octaneUdf;
 
     @XmlElement(name = "octaneEntityTypes")
-    private List<String> octaneEntityTypes ;
+    private Set<String> octaneEntityTypes;
 
     @XmlElement(name = "jiraIssueTypes")
-    private List<String> jiraIssueTypes;
+    private Set<String> jiraIssueTypes;
 
     @XmlElement(name = "jiraProjects")
-    private List<String> jiraProjects;
+    private Set<String> jiraProjects;
 
-    public WorkspaceConfigurationOutgoing() {
-
-    }
-
-    public WorkspaceConfigurationOutgoing(String id, String workspaceName, String octaneField, List<String> octaneEntityTypes, List<String> jiraIssueTypes, List<String> jiraProjects)
-    {
-        setId(id);
-        setWorkspaceName(workspaceName);
-        setOctaneField(octaneField);
-        setOctaneEntityTypes(octaneEntityTypes);
-        setJiraIssueTypes(jiraIssueTypes);
-        setJiraProjects(jiraProjects);
-    }
-
-    public String getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public WorkspaceConfigurationOutgoing setId(long id) {
         this.id = id;
+        return this;
     }
 
     public String getWorkspaceName() {
         return workspaceName;
     }
 
-    public void setWorkspaceName(String workspaceName) {
+    public WorkspaceConfigurationOutgoing setWorkspaceName(String workspaceName) {
         this.workspaceName = workspaceName;
+        return this;
     }
 
-    public String getOctaneField() {
-        return octaneField;
+    public String getOctaneUdf() {
+        return octaneUdf;
     }
 
-    public void setOctaneField(String octaneField) {
-        this.octaneField = octaneField;
+    public WorkspaceConfigurationOutgoing setOctaneUdf(String octaneUdf) {
+        this.octaneUdf = octaneUdf;
+        return this;
     }
 
 
-    public List<String> getOctaneEntityTypes() {
+    public Set<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public void setOctaneEntityTypes(List<String> octaneEntityTypes) {
+    public WorkspaceConfigurationOutgoing setOctaneEntityTypes(Set<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
+        return this;
     }
 
-    public List<String> getJiraIssueTypes() {
+    public Set<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public void setJiraIssueTypes(List<String> jiraIssueTypes) {
+    public WorkspaceConfigurationOutgoing setJiraIssueTypes(Set<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
+        return this;
     }
 
-    public List<String> getJiraProjects() {
+    public Set<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public void setJiraProjects(List<String> jiraProjects) {
+    public WorkspaceConfigurationOutgoing setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
+        return this;
     }
 }

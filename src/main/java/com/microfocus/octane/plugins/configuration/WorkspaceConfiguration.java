@@ -15,24 +15,24 @@
 
 package com.microfocus.octane.plugins.configuration;
 
-import java.util.List;
 import java.util.Set;
 
 
 public class WorkspaceConfiguration {
 
-    private String workspaceId;
+    private long workspaceId;
+    private String workspaceName;
     private String octaneUdf;
-    private Set<String> octaneTypes;
+    private Set<String> octaneEntityTypes;
     private Set<String> jiraIssueTypes;
     private Set<String> jiraProjects;
 
 
-    public String getWorkspaceId() {
+    public long getWorkspaceId() {
         return workspaceId;
     }
 
-    public void setWorkspaceId(String workspaceId) {
+    public void setWorkspaceId(long workspaceId) {
         this.workspaceId = workspaceId;
     }
 
@@ -44,12 +44,12 @@ public class WorkspaceConfiguration {
         this.octaneUdf = octaneUdf;
     }
 
-    public Set<String> getOctaneTypes() {
-        return octaneTypes;
+    public Set<String> getOctaneEntityTypes() {
+        return octaneEntityTypes;
     }
 
-    public void setOctaneTypes(Set<String> octaneTypes) {
-        this.octaneTypes = octaneTypes;
+    public void setOctaneEntityTypes(Set<String> octaneEntityTypes) {
+        this.octaneEntityTypes = octaneEntityTypes;
     }
 
     public Set<String> getJiraIssueTypes() {
@@ -66,5 +66,13 @@ public class WorkspaceConfiguration {
 
     public void setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
+    }
+
+    public String getWorkspaceName() {
+        return workspaceName;
+    }
+
+    public void setWorkspaceName(String workspaceName) {
+        this.workspaceName = workspaceName;
     }
 }

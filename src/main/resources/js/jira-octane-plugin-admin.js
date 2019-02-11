@@ -72,7 +72,7 @@ function loadTable() {
         columns: [
             {id: "id", header: "<i>Id</i>", readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
-            {id: "octaneField", header: "Mapping Field"},
+            {id: "octaneUdf", header: "Mapping Field"},
             {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
             {id: "jiraIssueTypes", header: "Jira Issue Types", readView: ListReadView},
             {id: "jiraProjects", header: "Jira Project", readView: ListReadView}
@@ -171,6 +171,7 @@ function configureAddDialog() {
         request.success(function (data) {
             octanePluginContext.createDialogData = data;
 
+            console.log(octanePluginContext.createDialogData.workspaces);
             AJS.$("#workspaceSelector").auiSelect2({
                 multiple: false,
                 //placeholder: "Select a workspace",
@@ -213,7 +214,7 @@ function configureAddDialog() {
         var model = {};
         model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         model.workspaceName = $("#workspaceSelector").select2('data').text;
-        model.octaneField = $("#octaneUdf").attr("value");
+        model.octaneUdf = $("#octaneUdf").attr("value");
         model.octaneEntityTypes = $("#octaneEntityTypes").attr("value").split(",");
         model.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {return item.id;})//convert selected objects to array of strings
         model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
