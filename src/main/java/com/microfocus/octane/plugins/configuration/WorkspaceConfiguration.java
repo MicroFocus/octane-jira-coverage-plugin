@@ -15,6 +15,7 @@
 
 package com.microfocus.octane.plugins.configuration;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -23,9 +24,9 @@ public class WorkspaceConfiguration {
     private long workspaceId;
     private String workspaceName;
     private String octaneUdf;
-    private Set<String> octaneEntityTypes;
-    private Set<String> jiraIssueTypes;
-    private Set<String> jiraProjects;
+    private List<String> octaneEntityTypes;
+    private List<String> jiraIssueTypes;
+    private List<String> jiraProjects;
 
 
     public long getWorkspaceId() {
@@ -44,27 +45,27 @@ public class WorkspaceConfiguration {
         this.octaneUdf = octaneUdf;
     }
 
-    public Set<String> getOctaneEntityTypes() {
+    public List<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public void setOctaneEntityTypes(Set<String> octaneEntityTypes) {
+    public void setOctaneEntityTypes(List<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
     }
 
-    public Set<String> getJiraIssueTypes() {
+    public List<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public void setJiraIssueTypes(Set<String> jiraIssueTypes) {
+    public void setJiraIssueTypes(List<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
     }
 
-    public Set<String> getJiraProjects() {
+    public List<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public void setJiraProjects(Set<String> jiraProjects) {
+    public void setJiraProjects(List<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
     }
 

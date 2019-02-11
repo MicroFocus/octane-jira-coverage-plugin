@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class OctaneConfigurationManager {
@@ -159,9 +160,9 @@ public class OctaneConfigurationManager {
         newWorkspaceConfiguration.setWorkspaceId(model.getId());
         newWorkspaceConfiguration.setWorkspaceName(model.getWorkspaceName());
         newWorkspaceConfiguration.setOctaneUdf(model.getOctaneUdf());
-        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes());
-        newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes());
-        newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects());
+        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().sorted().collect(Collectors.toList()));
+        newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()));
+        newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects().stream().sorted().collect(Collectors.toList()));
 
         spConfig.getWorkspaces().add(newWorkspaceConfiguration);
         persistConfiguration();
