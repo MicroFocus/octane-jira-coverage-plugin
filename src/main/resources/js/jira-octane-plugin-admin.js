@@ -9,7 +9,7 @@ octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/
     $(document).ready(function () {
 
         loadTable();
-        loadConfiguration();
+        loadSpaceConfiguration();
         addButtonRegistrations();
         configureAddDialog();
 
@@ -43,31 +43,10 @@ function loadTable() {
                 alert("Edit " + instance.model.id)
             });
             var deleteButton = $('<aui-item-link >Remove</aui-item-link>').click(function (e) {
-                $("#workspace-to-delete").text(instance.model.attributes.workspaceName);
-
-                AJS.dialog2("#warning-dialog").show();
-                AJS.$("#warning-dialog-confirm").click(function (e) {
-                    e.preventDefault();
-                    AJS.dialog2("#warning-dialog").hide();
-
-                    var request = $.ajax({
-                        url: octanePluginContext.configRestTable.options.resources.self +"/" + instance.model.id,
-                        type: "DELETE",
-                    });
-                    request.success(function () {
-                        octanePluginContext.configRestTable.removeRow(instance);
-                    });
-                    request.fail(function (request, status, error) {
-                        //TODO PRINT ERROR
-                    });
-                });
-
-                AJS.$("#warning-dialog-cancel").click(function (e) {
-                    e.preventDefault();
-                    AJS.dialog2("#warning-dialog").hide();
-                });
+                removeRow(instance);
             });
 
+            //add action button
             var dropdownId = "split-container-dropdown" + instance.model.id;
             var topLevelEl = $('<div class="aui-buttons">' +
                 '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="'
@@ -113,9 +92,35 @@ function loadTable() {
     });
 }
 
+function removeRow(row){
+    $("#workspace-to-delete").text(row.model.attributes.workspaceName);//update workspace name in dialog text
+
+    AJS.dialog2("#warning-dialog").show();
+    AJS.$("#warning-dialog-confirm").click(function (e) {
+        e.preventDefault();
+        AJS.dialog2("#warning-dialog").hide();
+
+        var request = $.ajax({
+            url: octanePluginContext.configRestTable.options.resources.self +"/" + row.model.id,
+            type: "DELETE",
+        });
+        request.success(function () {
+            octanePluginContext.configRestTable.removeRow(row);
+        });
+        request.fail(function (request, status, error) {
+            //TODO PRINT ERROR
+        });
+    });
+
+    AJS.$("#warning-dialog-cancel").click(function (e) {
+        e.preventDefault();
+        AJS.dialog2("#warning-dialog").hide();
+    });
+}
+
 function addButtonRegistrations() {
-    AJS.$("#save").click(function () {
-        updateConfig();
+    AJS.$("#save-space-configuration").click(function () {
+        updateSpaceConfig();
     });
 }
 
@@ -172,7 +177,7 @@ function configureAddDialog() {
         return octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
     }
 
-    AJS.$("#show-dialog-button").click(function (e) {
+    AJS.$("#show-add-dialog").click(function (e) {
         e.preventDefault();
         var request = $.ajax({
             url: getAdditionalDataUrl(),
@@ -226,7 +231,7 @@ function configureAddDialog() {
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
 
-        setDialogStatusText("Saving...");
+        setAddWorkspaceDialogStatusText("Saving...");
         var model = {};
         model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         model.workspaceName = $("#workspaceSelector").select2('data').text;
@@ -249,7 +254,7 @@ function configureAddDialog() {
             closeDialog();
         });
         request.fail(function (request, status, error) {
-            setDialogStatusText(request.responseText, "statusFailed");
+            setAddWorkspaceDialogStatusText(request.responseText, "statusFailed");
         });
     });
 
@@ -259,7 +264,7 @@ function configureAddDialog() {
     });
 }
 
-function loadConfiguration() {
+function loadSpaceConfiguration() {
     $.ajax({
         url: octanePluginContext.octaneBaseUrl,
         dataType: "json"
@@ -271,7 +276,7 @@ function loadConfiguration() {
     });
 }
 
-function getConfigData() {
+function buildSpaceConfigAsJson() {
     var data = {
         location: $("#location").attr("value"),
         clientId: $("#clientId").attr("value"),
@@ -281,9 +286,9 @@ function getConfigData() {
     return myJSON;
 }
 
-function updateConfig() {
+function updateSpaceConfig() {
     setSpaceStatusText("Space configuration is saving ...");
-    var data = getConfigData();
+    var data = buildSpaceConfigAsJson();
     var request = $.ajax({
         url: octanePluginContext.octaneBaseUrl,
         type: "PUT",
@@ -301,7 +306,7 @@ function updateConfig() {
     });
 }
 
-function setDialogStatusText(statusText, statusClass, isHtml) {
+function setAddWorkspaceDialogStatusText(statusText, statusClass, isHtml) {
     setStatusText("#dialog-status", statusText, statusClass, isHtml)
 }
 
