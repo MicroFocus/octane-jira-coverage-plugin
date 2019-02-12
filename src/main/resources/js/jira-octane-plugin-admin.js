@@ -124,8 +124,6 @@ function configureAddDialog() {
 
 
     function reloadOctaneSupportedEntityTypes() {
-
-
         var workspaceId = $("#workspaceSelector").val();
         var udfName = $("#octaneUdf").attr("value");
         if(workspaceId && udfName){

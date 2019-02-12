@@ -31,7 +31,7 @@
 
          <div class="field-group">
             <div id="button-group">
-                <input type="button" class="aui-button aui-button-primary" id="save" value="Save">
+                <input type="button" class="aui-button" id="save" value="Save">
                 <span id="status"></span>
             </div>
         </div>
