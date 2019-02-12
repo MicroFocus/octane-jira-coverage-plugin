@@ -68,7 +68,7 @@ public class ConfigResource {
 
     @GET
     @Path("/workspace-config/additional-data")
-    public Response getDataForCreateDialog(@Context HttpServletRequest request, @QueryParam("update-id") Long id) {
+    public Response getDataForCreateDialog(@Context HttpServletRequest request, @QueryParam("update-workspace-id") Long id) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
@@ -118,7 +118,8 @@ public class ConfigResource {
         }
 
         Collection<WorkspaceConfigurationOutgoing> result = OctaneConfigurationManager.getInstance().getConfiguration()
-                .getWorkspaces().stream().map(wc -> convert(wc)).sorted(Comparator.comparing(WorkspaceConfigurationOutgoing::getId))
+                .getWorkspaces().stream().map(wc -> convert(wc))
+                .sorted(Comparator.comparing(WorkspaceConfigurationOutgoing::getWorkspaceName))
                 .collect(Collectors.toList());
 
         return Response.ok(result).build();

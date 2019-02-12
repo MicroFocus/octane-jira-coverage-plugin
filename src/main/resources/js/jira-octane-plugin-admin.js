@@ -40,7 +40,8 @@ function loadTable() {
 
 
             var editButton = $('<aui-item-link >Edit</aui-item-link>').click(function (e) {
-                alert("Edit " + instance.model.id)
+                octanePluginContext.workspaceConfigModel = instance.model.attributes;
+                showWorkspaceConfigDialog();
             });
             var deleteButton = $('<aui-item-link >Remove</aui-item-link>').click(function (e) {
                 removeRow(instance);
@@ -173,51 +174,16 @@ function configureAddDialog() {
         $("div.select2-search input.select2-input").attr("tabindex", "0").focus();
     });
 
-    function getAdditionalDataUrl(){
-        return octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
-    }
-
     AJS.$("#show-add-dialog").click(function (e) {
         e.preventDefault();
-        var request = $.ajax({
-            url: getAdditionalDataUrl(),
-            type: "GET",
-            dataType: "json",
-            contentType: "application/json"
-        });
-
-        request.success(function (data) {
-            octanePluginContext.createDialogData = data;
-            AJS.$("#workspaceSelector").auiSelect2({
-                multiple: false,
-                //placeholder: "Select a workspace",
-                data: octanePluginContext.createDialogData.workspaces,
-            });
-
-            AJS.$("#jiraIssueTypesSelector").auiSelect2({
-                multiple: true,
-                //placeholder: "Select issue types",
-                data: octanePluginContext.createDialogData.issueTypes,
-            });
-
-            AJS.$("#jiraProjectsSelector").auiSelect2({
-                multiple: true,
-                //placeholder: "Select projects",
-                data: octanePluginContext.createDialogData.projects,
-            });
-
-            $("#octaneUdf").val("jira_key_udf");//populate default value
-            AJS.dialog2("#config-dialog").show();
-
-        });
-
-        request.fail(function (request, status, error) {
-            //TODO SHOW ERROR MESSAGE
-        });
+        octanePluginContext.workspaceConfigModel = null;
+        showWorkspaceConfigDialog();
     });
 
     function closeDialog() {
         AJS.dialog2("#config-dialog").hide();
+
+        setWorkspaceDialogStatusText("");//clear
 
         AJS.$('#workspaceSelector').val(null).trigger('change');
         AJS.$('#jiraIssueTypesSelector').val(null).trigger('change');
@@ -231,7 +197,7 @@ function configureAddDialog() {
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
 
-        setAddWorkspaceDialogStatusText("Saving...");
+        setWorkspaceDialogStatusText("Saving...");
         var model = {};
         model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         model.workspaceName = $("#workspaceSelector").select2('data').text;
@@ -254,13 +220,59 @@ function configureAddDialog() {
             closeDialog();
         });
         request.fail(function (request, status, error) {
-            setAddWorkspaceDialogStatusText(request.responseText, "statusFailed");
+            setWorkspaceDialogStatusText(request.responseText, "statusFailed");
         });
     });
 
     AJS.$("#dialog-cancel-button").click(function (e) {
         e.preventDefault();
         closeDialog();
+    });
+}
+
+function showWorkspaceConfigDialog(){
+    var dataUrl = octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
+    if(octanePluginContext.workspaceConfigModel){//is edit mode
+        var model = octanePluginContext.workspaceConfigModel;
+        console.log(model);
+        dataUrl = dataUrl + "?update-workspace-id=" + model.id;
+        $('#workspaceSelector').val([model.id]);
+        $("#octaneUdf").val(model.octaneUdf);//populate default value for new item
+        $("#octaneEntityTypes").val(model.octaneEntityTypes);
+        $("#jiraIssueTypesSelector").val(model.jiraIssueTypes);
+        $("#jiraProjectsSelector").val(model.jiraProjects);
+    } else {//new item
+        $("#octaneUdf").val("jira_key_udf");//populate default value for new item
+    }
+
+    var request = $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"});
+
+    request.success(function (data) {
+        octanePluginContext.createDialogData = data;
+        AJS.$("#workspaceSelector").auiSelect2({
+            multiple: false,
+            //placeholder: "Select a workspace",
+            data: octanePluginContext.createDialogData.workspaces,
+        });
+
+        AJS.$("#jiraIssueTypesSelector").auiSelect2({
+            multiple: true,
+            //placeholder: "Select issue types",
+            data: octanePluginContext.createDialogData.issueTypes,
+        });
+
+        AJS.$("#jiraProjectsSelector").auiSelect2({
+            multiple: true,
+            //placeholder: "Select projects",
+            data: octanePluginContext.createDialogData.projects,
+        });
+
+        AJS.dialog2("#config-dialog").show();
+
+    });
+
+    request.fail(function (request, status, error) {
+        //TODO SHOW ERROR MESSAGE
     });
 }
 
@@ -306,7 +318,7 @@ function updateSpaceConfig() {
     });
 }
 
-function setAddWorkspaceDialogStatusText(statusText, statusClass, isHtml) {
+function setWorkspaceDialogStatusText(statusText, statusClass, isHtml) {
     setStatusText("#dialog-status", statusText, statusClass, isHtml)
 }
 
