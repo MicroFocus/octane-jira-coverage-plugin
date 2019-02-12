@@ -126,9 +126,9 @@ function configureAddDialog() {
     function reloadOctaneSupportedEntityTypes() {
         var workspaceId = $("#workspaceSelector").val();
         var udfName = $("#octaneUdf").attr("value");
-        if(workspaceId && udfName){
+        if (workspaceId && udfName) {
             $("#refreshOctaneEntityTypesSpinner").spin();
-        }else{
+        } else {
             return;
         }
 
@@ -168,10 +168,14 @@ function configureAddDialog() {
         $("div.select2-search input.select2-input").attr("tabindex", "0").focus();
     });
 
+    function getAdditionalDataUrl(){
+        return octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
+    }
+
     AJS.$("#show-dialog-button").click(function (e) {
         e.preventDefault();
         var request = $.ajax({
-            url: octanePluginContext.octaneBaseUrl + "workspace-config/additional-data",
+            url: getAdditionalDataUrl(),
             type: "GET",
             dataType: "json",
             contentType: "application/json"
@@ -179,8 +183,6 @@ function configureAddDialog() {
 
         request.success(function (data) {
             octanePluginContext.createDialogData = data;
-
-            console.log(octanePluginContext.createDialogData.workspaces);
             AJS.$("#workspaceSelector").auiSelect2({
                 multiple: false,
                 //placeholder: "Select a workspace",
@@ -280,7 +282,7 @@ function getConfigData() {
 }
 
 function updateConfig() {
-    setSpaceStatusText("Configuration is saving ...");
+    setSpaceStatusText("Space configuration is saving ...");
     var data = getConfigData();
     var request = $.ajax({
         url: octanePluginContext.octaneBaseUrl,
@@ -291,7 +293,7 @@ function updateConfig() {
     });
 
     request.success(function (msg) {
-        setSpaceStatusText("Configuration is saved successfully", "statusValid");
+        setSpaceStatusText("Space configuration is saved successfully", "statusValid");
     });
 
     request.fail(function (request, status, error) {
