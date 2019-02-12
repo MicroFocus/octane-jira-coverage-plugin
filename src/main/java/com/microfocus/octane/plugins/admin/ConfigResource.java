@@ -220,26 +220,6 @@ public class ConfigResource {
         return Response.ok(outgoing).build();
     }
 
-    @Path("/test-connection")
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response testConnection(final SpaceConfigurationOutgoing spaceModel, @Context HttpServletRequest request) {
-        UserProfile username = userManager.getRemoteUser(request);
-        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
-
-        String errorMsg = checkConfiguration(spaceModel);
-
-        if (errorMsg != null) {
-            Map<String, String> status = new HashMap<>();
-            status.put("failed", "Validation failed : " + errorMsg);
-            return Response.status(Status.CONFLICT).entity(status).build();
-        }
-
-        return Response.ok().build();
-    }
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
@@ -257,7 +237,6 @@ public class ConfigResource {
         } else {
             OctaneConfigurationManager.getInstance().saveSpaceConfiguration(spaceModel);
         }
-
 
         return Response.ok().build();
     }

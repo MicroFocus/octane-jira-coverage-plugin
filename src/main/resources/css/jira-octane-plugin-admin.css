@@ -14,9 +14,8 @@
     color: black;
 }
 
-#button-group {
-    max-width: 500px;
-    width: 500px;
+#status{
+    margin-left: 5px;
 }
 
 .simple-list {

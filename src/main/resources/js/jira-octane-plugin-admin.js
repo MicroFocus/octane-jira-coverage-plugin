@@ -114,10 +114,6 @@ function loadTable() {
 }
 
 function addButtonRegistrations() {
-    AJS.$("#test_connection").click(function () {
-        testConnection();
-    });
-
     AJS.$("#save").click(function () {
         updateConfig();
     });
@@ -217,6 +213,11 @@ function configureAddDialog() {
 
     function closeDialog() {
         AJS.dialog2("#config-dialog").hide();
+
+        AJS.$('#workspaceSelector').val(null).trigger('change');
+        AJS.$('#jiraIssueTypesSelector').val(null).trigger('change');
+        AJS.$('#jiraProjectsSelector').val(null).trigger('change');
+
         AJS.$("#workspaceSelector").select2("destroy");
         AJS.$("#jiraIssueTypesSelector").select2("destroy");
         AJS.$("#jiraProjectsSelector").select2("destroy");
@@ -297,30 +298,6 @@ function updateConfig() {
 
     request.fail(function (request, status, error) {
         setSpaceStatusText(request.responseText, "statusFailed");
-    });
-}
-
-function testConnection() {
-    setSpaceStatusText("Configuration is validating ...");
-    var request = $.ajax({
-        url: octanePluginContext.octaneBaseUrl + "test-connection",
-        type: "PUT",
-        data: getConfigData(),
-        dataType: "json",
-        contentType: "application/json"
-    });
-
-    request.success(function (msg) {
-        setSpaceStatusText("Configuration is validated successfully", "statusValid");
-    });
-
-    request.fail(function (request, status, error) {
-        var response = JSON.parse(request.responseText);
-        if (response.failed) {
-            setSpaceStatusText(response.failed, "statusFailed");
-        } else if (response.warning) {
-            setSpaceStatusText(response.warning, "statusWarning", true);
-        }
     });
 }
 
