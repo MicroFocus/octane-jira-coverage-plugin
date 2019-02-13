@@ -40,7 +40,7 @@ function loadTable() {
 
 
             var editButton = $('<aui-item-link >Edit</aui-item-link>').click(function (e) {
-                octanePluginContext.workspaceConfigModel = instance.model.attributes;
+                octanePluginContext.currentRow = instance;
                 showWorkspaceConfigDialog();
             });
             var deleteButton = $('<aui-item-link >Remove</aui-item-link>').click(function (e) {
@@ -176,7 +176,7 @@ function configureAddDialog() {
 
     AJS.$("#show-add-dialog").click(function (e) {
         e.preventDefault();
-        octanePluginContext.workspaceConfigModel = null;
+        octanePluginContext.currentRow = null;
         showWorkspaceConfigDialog();
     });
 
@@ -215,8 +215,6 @@ function configureAddDialog() {
             contentType: "application/json"
         });
         request.success(function (msg) {
-
-
             octanePluginContext.configRestTable.addRow(model, 0);
             closeDialog();
         });
@@ -234,21 +232,23 @@ function configureAddDialog() {
 function showWorkspaceConfigDialog(){
 
     var dataUrl = octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
-    if(octanePluginContext.workspaceConfigModel){//is edit mode
-        var model = octanePluginContext.workspaceConfigModel;
+    if(octanePluginContext.currentRow){//is edit mode
+        var model = octanePluginContext.currentRow.model.attributes;
         console.log(model);
         dataUrl = dataUrl + "?update-workspace-id=" + model.id;
         $('#workspaceSelector').val([model.id]);
-        $('#workspaceSelector').prop('disabled', true);
-
-
+        $('#workspaceSelector').prop('disabled', true); //disable workspace selector
         $("#octaneUdf").val(model.octaneUdf);//populate default value for new item
         $("#octaneEntityTypes").val(model.octaneEntityTypes);
         $("#jiraIssueTypesSelector").val(model.jiraIssueTypes);
         $("#jiraProjectsSelector").val(model.jiraProjects);
+
+        $('#config-dialog-title').text("Edit");//set dialog title
     } else {//new item
         $("#octaneUdf").val("jira_key_udf");//populate default value for new item
-        $('#workspaceSelector').prop('disabled', false);
+        $('#workspaceSelector').prop('disabled', false);//enable workspace selector
+
+        $('#config-dialog-title').text("Create");//set dialog title
     }
 
     var request = $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"});

@@ -45,7 +45,7 @@
 
 <section id="config-dialog" class="aui-dialog2 aui-dialog2-large aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
     <header class="aui-dialog2-header">
-        <h2 class="aui-dialog2-header-main">
+        <h2 class="aui-dialog2-header-main" id="config-dialog-title">
             Create new workspace configuration
         </h2>
     </header>
