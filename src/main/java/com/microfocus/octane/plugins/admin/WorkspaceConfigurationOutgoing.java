@@ -13,6 +13,9 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "id")
     private long id;
 
+    @XmlElement(name = "workspaceId")
+    private long workspaceId;
+
     @XmlElement(name = "workspaceName")
     private String workspaceName;
 
@@ -80,6 +83,15 @@ public class WorkspaceConfigurationOutgoing {
 
     public WorkspaceConfigurationOutgoing setJiraProjects(List<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
+        return this;
+    }
+
+    public long getWorkspaceId() {
+        return workspaceId;
+    }
+
+    public WorkspaceConfigurationOutgoing setWorkspaceId(long workspaceId) {
+        this.workspaceId = workspaceId;
         return this;
     }
 }

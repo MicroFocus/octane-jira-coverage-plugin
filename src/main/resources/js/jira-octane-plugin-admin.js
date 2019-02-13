@@ -206,7 +206,6 @@ function configureAddDialog() {
         model.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {return item.id;})//convert selected objects to array of strings
         model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
 
-        console.log(model);
         var myJSON = JSON.stringify(model);
         var request = $.ajax({
             url: octanePluginContext.configRestTable.options.resources.self,
@@ -216,6 +215,8 @@ function configureAddDialog() {
             contentType: "application/json"
         });
         request.success(function (msg) {
+
+
             octanePluginContext.configRestTable.addRow(model, 0);
             closeDialog();
         });
@@ -231,18 +232,23 @@ function configureAddDialog() {
 }
 
 function showWorkspaceConfigDialog(){
+
     var dataUrl = octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
     if(octanePluginContext.workspaceConfigModel){//is edit mode
         var model = octanePluginContext.workspaceConfigModel;
         console.log(model);
         dataUrl = dataUrl + "?update-workspace-id=" + model.id;
         $('#workspaceSelector').val([model.id]);
+        $('#workspaceSelector').prop('disabled', true);
+
+
         $("#octaneUdf").val(model.octaneUdf);//populate default value for new item
         $("#octaneEntityTypes").val(model.octaneEntityTypes);
         $("#jiraIssueTypesSelector").val(model.jiraIssueTypes);
         $("#jiraProjectsSelector").val(model.jiraProjects);
     } else {//new item
         $("#octaneUdf").val("jira_key_udf");//populate default value for new item
+        $('#workspaceSelector').prop('disabled', false);
     }
 
     var request = $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"});

@@ -128,6 +128,7 @@ public class ConfigResource {
     private WorkspaceConfigurationOutgoing convert(WorkspaceConfiguration wc) {
         WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
                 .setId(wc.getWorkspaceId())
+                .setWorkspaceId(wc.getWorkspaceId())
                 .setWorkspaceName(wc.getWorkspaceName())
                 .setOctaneUdf(wc.getOctaneUdf())
                 .setOctaneEntityTypes(wc.getOctaneEntityTypes())
