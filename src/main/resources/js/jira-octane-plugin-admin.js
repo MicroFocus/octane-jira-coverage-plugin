@@ -145,7 +145,6 @@ function configureAddDialog() {
             contentType: "application/json"
         });
         request.success(function (data) {
-            console.log(data);
             setTimeout(function() {
                 $("#refreshOctaneEntityTypesSpinner").spinStop();
                 $("#octaneEntityTypes").val(data);
@@ -198,15 +197,15 @@ function configureAddDialog() {
         e.preventDefault();
 
         setWorkspaceDialogStatusText("Saving...");
-        var model = {};
-        model.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
-        model.workspaceName = $("#workspaceSelector").select2('data').text;
-        model.octaneUdf = $("#octaneUdf").attr("value");
-        model.octaneEntityTypes = $("#octaneEntityTypes").attr("value").split(",");
-        model.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {return item.id;})//convert selected objects to array of strings
-        model.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
+        var modelForUpdate = {};
+        modelForUpdate.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
+        modelForUpdate.workspaceName = $("#workspaceSelector").select2('data').text;
+        modelForUpdate.octaneUdf = $("#octaneUdf").attr("value");
+        modelForUpdate.octaneEntityTypes = $("#octaneEntityTypes").attr("value").split(",");
+        modelForUpdate.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {return item.id;})//convert selected objects to array of strings
+        modelForUpdate.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
 
-        var myJSON = JSON.stringify(model);
+        var myJSON = JSON.stringify(modelForUpdate);
         var request = $.ajax({
             url: octanePluginContext.configRestTable.options.resources.self,
             type: "POST",
@@ -214,8 +213,19 @@ function configureAddDialog() {
             dataType: "json",
             contentType: "application/json"
         });
+
         request.success(function (msg) {
-            octanePluginContext.configRestTable.addRow(model, 0);
+            if (octanePluginContext.currentRow) {//is edit mode
+                var rowModel = octanePluginContext.currentRow.model.attributes;
+                rowModel.octaneUdf = modelForUpdate.octaneUdf;
+                rowModel.octaneEntityTypes = modelForUpdate.octaneEntityTypes;
+                rowModel.jiraIssueTypes = modelForUpdate.jiraIssueTypes;
+                rowModel.jiraProjects = modelForUpdate.jiraProjects;
+                octanePluginContext.currentRow.render();
+            } else {//new mode
+                octanePluginContext.configRestTable.addRow(model, 0);
+            }
+
             closeDialog();
         });
         request.fail(function (request, status, error) {
@@ -234,7 +244,6 @@ function showWorkspaceConfigDialog(){
     var dataUrl = octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
     if(octanePluginContext.currentRow){//is edit mode
         var model = octanePluginContext.currentRow.model.attributes;
-        console.log(model);
         dataUrl = dataUrl + "?update-workspace-id=" + model.id;
         $('#workspaceSelector').val([model.id]);
         $('#workspaceSelector').prop('disabled', true); //disable workspace selector
