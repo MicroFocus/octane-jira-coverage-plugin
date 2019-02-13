@@ -15,8 +15,9 @@
 
 package com.microfocus.octane.plugins.configuration;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import java.util.List;
-import java.util.Set;
 
 
 public class WorkspaceConfiguration {
@@ -28,6 +29,8 @@ public class WorkspaceConfiguration {
     private List<String> jiraIssueTypes;
     private List<String> jiraProjects;
 
+    @JsonIgnore
+    private SpaceConfiguration spaceConfiguration;
 
     public long getWorkspaceId() {
         return workspaceId;
@@ -75,5 +78,14 @@ public class WorkspaceConfiguration {
 
     public void setWorkspaceName(String workspaceName) {
         this.workspaceName = workspaceName;
+    }
+
+    @JsonIgnore
+    public SpaceConfiguration getSpaceConfiguration() {
+        return spaceConfiguration;
+    }
+
+    public void setSpaceConfiguration(SpaceConfiguration spaceConfiguration) {
+        this.spaceConfiguration = spaceConfiguration;
     }
 }

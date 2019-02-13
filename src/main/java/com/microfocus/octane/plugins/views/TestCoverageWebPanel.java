@@ -106,10 +106,10 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                 QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
                 boolean found = false;
                 if (workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_FEATURE) || workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_USER_STORY)) {
-                    found = tryGetWorkItemEntity(workspaceConfig.getWorkspaceId(), contextMap, jiraKeyCondition);
+                    found = tryGetWorkItemEntity(workspaceConfig, contextMap, jiraKeyCondition);
                 }
                 if (!found && workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_APPLICATION_MODULE)) {
-                    found = tryGetApplicationModuleEntity(workspaceConfig.getWorkspaceId(), contextMap, jiraKeyCondition);
+                    found = tryGetApplicationModuleEntity(workspaceConfig, contextMap, jiraKeyCondition);
                 }
                 if (!found) {
                     contextMap.put("status", "noData");
@@ -136,21 +136,21 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return contextMap;
     }
 
-    private boolean tryGetApplicationModuleEntity(long workspaceId, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+    private boolean tryGetApplicationModuleEntity(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
             //CHECK Application modules
-            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceId, "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
+            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
             if (!applicationModules.getData().isEmpty()) {
 
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
                 TypeDescriptor typeDescriptor = typeDescriptors.get(octaneEntity.getType());
                 String path = octaneEntity.getString("path");
 
-                GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path, workspaceId);
+                GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path, workspaceConfiguration.getWorkspaceId());
                 int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
                 List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
                         .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
-                fillContextMapWithEntity(contextMap, typeDescriptor, octaneEntity, groups, total);
+                fillContextMapWithEntity(contextMap, workspaceConfiguration, typeDescriptor, octaneEntity, groups, total);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -163,11 +163,11 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
-    private boolean tryGetWorkItemEntity(long workspaceId, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+    private boolean tryGetWorkItemEntity(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
             //CHECK WORKING ITEM
             QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
-            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(workspaceId, "work_items",
+            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "work_items",
                     Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name", "last_runs"));
             if (!workItems.getData().isEmpty()) {
                 OctaneEntity octaneEntity = workItems.getData().get(0);
@@ -179,7 +179,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                 List<MapBasedObject> groups = name2countStatuses.entrySet().stream().filter(entry -> entry.getValue() > 0)
                         .map(entry -> convertGroupEntityToUiEntity(entry.getKey(), entry.getValue().intValue(), total))
                         .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
-                fillContextMapWithEntity(contextMap, typeDescriptor, octaneEntity, groups, total);
+                fillContextMapWithEntity(contextMap, workspaceConfiguration, typeDescriptor, octaneEntity, groups, total);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -192,9 +192,10 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
-    private void fillContextMapWithEntity(Map<String, Object> contextMap, TypeDescriptor typeDescriptor, OctaneEntity octaneEntity, List<MapBasedObject> groups, int total) {
+    private void fillContextMapWithEntity(Map<String, Object> contextMap, WorkspaceConfiguration workspaceConfiguration, TypeDescriptor typeDescriptor, OctaneEntity octaneEntity, List<MapBasedObject> groups, int total) {
         //TODO revert comment
-        //octaneEntity.put("url", typeDescriptor.buildEntityUrl(octaneEntity.getId()));
+        octaneEntity.put("url", typeDescriptor.buildEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
+                workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
         octaneEntity.put("typeKey", typeDescriptor.getTypeKey());
         octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
         contextMap.put("total", total);

@@ -108,6 +108,9 @@ public class OctaneConfigurationManager {
             persistConfiguration();
         } else {
             configuration = JsonHelper.deserialize(confStr, ConfigurationCollection.class);
+            configuration.getSpaces().forEach(sc -> {
+                sc.getWorkspaces().forEach(wc -> wc.setSpaceConfiguration(sc));
+            });
         }
 
         return configuration;
@@ -156,6 +159,7 @@ public class OctaneConfigurationManager {
         if (opt.isPresent()) {
             spConfig.getWorkspaces().remove(opt.get());
         }
+
         WorkspaceConfiguration newWorkspaceConfiguration = new WorkspaceConfiguration();
         newWorkspaceConfiguration.setWorkspaceId(model.getId());
         newWorkspaceConfiguration.setWorkspaceName(model.getWorkspaceName());
@@ -163,6 +167,7 @@ public class OctaneConfigurationManager {
         newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().sorted().collect(Collectors.toList()));
         newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()));
         newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects().stream().sorted().collect(Collectors.toList()));
+        newWorkspaceConfiguration.setSpaceConfiguration(spConfig);
 
         spConfig.getWorkspaces().add(newWorkspaceConfiguration);
         persistConfiguration();

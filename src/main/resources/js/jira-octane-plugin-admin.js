@@ -65,7 +65,7 @@ function loadTable() {
             self: octanePluginContext.octaneBaseUrl + "workspace-config/self"
         },
         columns: [
-            {id: "id", header: "<i>Id</i>", readView: NameReadView},
+            {id: "id", header: "Id", readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
             {id: "octaneUdf", header: "Mapping Field"},
             {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
@@ -196,7 +196,6 @@ function configureAddDialog() {
     AJS.$("#dialog-submit-button").click(function (e) {
         e.preventDefault();
 
-        setWorkspaceDialogStatusText("Saving...");
         var modelForUpdate = {};
         modelForUpdate.id = $("#workspaceSelector").select2('data').id;//$("#workspaceSelector").val();
         modelForUpdate.workspaceName = $("#workspaceSelector").select2('data').text;
@@ -223,7 +222,7 @@ function configureAddDialog() {
                 rowModel.jiraProjects = modelForUpdate.jiraProjects;
                 octanePluginContext.currentRow.render();
             } else {//new mode
-                octanePluginContext.configRestTable.addRow(model, 0);
+                octanePluginContext.configRestTable.addRow(modelForUpdate, 0);
             }
 
             closeDialog();
