@@ -25,6 +25,9 @@ import java.util.Set;
 public interface OctaneRestService {
 
     long SPACE_CONTEXT = -1;
+    String OCTANE_ENTITY_FEATURE = "Feature";
+    String OCTANE_ENTITY_USER_STORY = "User Story";
+    String OCTANE_ENTITY_APPLICATION_MODULE = "Application module";
 
     GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath, long workspaceId);
 

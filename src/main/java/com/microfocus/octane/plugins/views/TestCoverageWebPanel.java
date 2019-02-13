@@ -25,6 +25,7 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.google.gson.Gson;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.rest.RestStatusException;
 import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
@@ -98,15 +99,23 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         log.trace("configurationManager.isValidConfiguration() = " + configurationManager.isValidConfiguration());
         if (configurationManager.isValidConfiguration()) {
             try {
+                WorkspaceConfiguration workspaceConfig = configurationManager.getConfiguration().getWorkspaces().stream()
+                        .filter(w -> w.getJiraProjects().contains(jiraHelper.getProject().getKey())).findFirst().get();//we use get without validation because validation is done in condition
                 Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
-                //TODO revert comment
-                /*QueryPhrase jiraKeyCondition = new InQueryPhrase(configurationManager.getConfiguration().getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
-                if (tryGetApplicationModuleEntity(contextMap, jiraKeyCondition) ||
-                        tryGetWorkItemEntity(contextMap, jiraKeyCondition)) {
-                    //context map is filled
-                } else {
+
+                QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
+                boolean found = false;
+                if (workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_FEATURE) || workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_USER_STORY)) {
+                    found = tryGetWorkItemEntity(workspaceConfig.getWorkspaceId(), contextMap, jiraKeyCondition);
+                }
+                if (!found && workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_APPLICATION_MODULE)) {
+                    found = tryGetApplicationModuleEntity(workspaceConfig.getWorkspaceId(), contextMap, jiraKeyCondition);
+                }
+                if (!found) {
                     contextMap.put("status", "noData");
-                }*/
+                } else {
+                    //context map is filled
+                }
             } catch (RestStatusException e) {
                 if (e.getResponse().getStatusCode() == 401) {
                     //credentials issue
@@ -127,9 +136,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return contextMap;
     }
 
-    private boolean tryGetApplicationModuleEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+    private boolean tryGetApplicationModuleEntity(long workspaceId, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
-            long workspaceId = getWorkspaceId(contextMap);
             //CHECK Application modules
             OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceId, "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
             if (!applicationModules.getData().isEmpty()) {
@@ -155,13 +163,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
-    private long getWorkspaceId(Map<String, Object> contextMap) {
-        return -1;
-    }
-
-    private boolean tryGetWorkItemEntity(Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+    private boolean tryGetWorkItemEntity(long workspaceId, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
         try {
-            long workspaceId = getWorkspaceId(contextMap);
             //CHECK WORKING ITEM
             QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
             OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(workspaceId, "work_items",

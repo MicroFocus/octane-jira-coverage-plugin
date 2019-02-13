@@ -46,7 +46,7 @@ public class TestCoverageWebPanelCondition implements Condition {
             SpaceConfiguration spaceConfiguration = configManager.getConfiguration();
             Project project = (Project) map.get("project");
 
-            Optional<WorkspaceConfiguration> workspaceConfigOpt = spaceConfiguration.getWorkspaces().stream().filter(w -> w.getJiraProjects().contains(project.getName())).findFirst();
+            Optional<WorkspaceConfiguration> workspaceConfigOpt = spaceConfiguration.getWorkspaces().stream().filter(w -> w.getJiraProjects().contains(project.getKey())).findFirst();
             if (workspaceConfigOpt.isPresent()) {
                 Issue issue = (Issue) map.get("issue");
                 String issueType = issue.getIssueType().getName();

@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 @Named("octaneRestService")
 public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigurationChangedListener {
 
-
     private static final Logger log = LoggerFactory.getLogger(OctaneRestServiceImpl.class);
 
     @ComponentImport
@@ -112,7 +111,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
                     octaneConfiguration.getLocationParts().getSpaceId(), collectionName);
         } else {
             url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
-                    octaneConfiguration.getLocationParts().getSpaceId(), octaneConfiguration.getLocationParts().getSpaceId(), collectionName);
+                    octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, collectionName);
         }
 
         Map<String, String> headers = new HashMap<>();
@@ -132,15 +131,15 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", udfName);
         Map<String, String> key2LabelType = new HashMap<>();
-        key2LabelType.put("feature", "Feature");
-        key2LabelType.put("story", "User Story");
-        key2LabelType.put("product_area", "Application module");
+        key2LabelType.put("feature", OCTANE_ENTITY_FEATURE);
+        key2LabelType.put("story", OCTANE_ENTITY_USER_STORY);
+        key2LabelType.put("product_area", OCTANE_ENTITY_APPLICATION_MODULE);
         QueryPhrase typeCondition = new InQueryPhrase("entity_name", key2LabelType.keySet());
 
         String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
         String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
-        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).map(key->key2LabelType.get(key)).collect(Collectors.toSet());
+        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).map(key -> key2LabelType.get(key)).collect(Collectors.toSet());
 
         return foundTypes;
     }
