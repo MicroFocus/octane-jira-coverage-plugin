@@ -162,7 +162,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Set<String> types = octaneRestService.getSupportedOctaneTypes(workspaceId, udfName);
+        List<String> types = octaneRestService.getSupportedOctaneTypes(workspaceId, udfName);
         return Response.ok(types).build();
     }
 

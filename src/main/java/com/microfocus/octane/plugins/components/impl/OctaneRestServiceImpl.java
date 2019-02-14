@@ -123,7 +123,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         return col;
     }
 
-    public Set<String> getSupportedOctaneTypes(long workspaceId, String udfName) {
+    public List<String> getSupportedOctaneTypes(long workspaceId, String udfName) {
         long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
         String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
         Map<String, String> headers = new HashMap<>();
@@ -139,7 +139,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
         String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
-        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).map(key -> key2LabelType.get(key)).collect(Collectors.toSet());
+        List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).map(key -> key2LabelType.get(key)).sorted().collect(Collectors.toList());
 
         return foundTypes;
     }
