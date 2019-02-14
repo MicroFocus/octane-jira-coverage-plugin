@@ -63,7 +63,7 @@ function loadTable() {
             self: octanePluginContext.octaneBaseUrl + "workspace-config/self"
         },
         columns: [
-            {id: "id", header: "Id", readView: NameReadView},
+            {id: "id", header: "Workspace Id", readView: NameReadView},
             {id: "workspaceName", header: "Workspace Name"},
             {id: "octaneUdf", header: "Mapping Field"},
             {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
@@ -236,7 +236,7 @@ function showWorkspaceConfigDialog(){
 
         $('#config-dialog-title').text("Edit");//set dialog title
     } else {//new item
-        $("#octaneUdf").val("jira_key_udf");//populate default value for new item
+        //$("#octaneUdf").val("jira_key_udf");//populate default value for new item
         $('#workspaceSelector').prop('disabled', false);//enable workspace selector
 
         $('#config-dialog-title').text("Create");//set dialog title
