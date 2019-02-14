@@ -101,14 +101,10 @@ function removeRow(row){
         e.preventDefault();
         AJS.dialog2("#warning-dialog").hide();
 
-        var request = $.ajax({
-            url: octanePluginContext.configRestTable.options.resources.self +"/" + row.model.id,
-            type: "DELETE",
-        });
-        request.success(function () {
+        $.ajax({url: octanePluginContext.configRestTable.options.resources.self +"/" + row.model.id, type: "DELETE",
+        }).done(function () {
             octanePluginContext.configRestTable.removeRow(row);
-        });
-        request.fail(function (request, status, error) {
+        }).fail(function (request, status, error) {
             //TODO PRINT ERROR
         });
     });
@@ -138,25 +134,26 @@ function configureAddDialog() {
             return;
         }
 
-        var request = $.ajax({
+        $.ajax({
             url: octanePluginContext.octaneBaseUrl + "workspace-config/supported-octane-types?workspace-id=" + workspaceId + "&udf-name=" + udfName,
             type: "GET",
             dataType: "json",
             contentType: "application/json"
-        });
-        request.success(function (data) {
+        }).done(function (data) {
             setTimeout(function() {
                 $("#refreshOctaneEntityTypesSpinner").spinStop();
                 $("#octaneEntityTypes").val(data);
             }, 1000);
-        });
-        request.fail(function (request, status, error) {
+        }).fail(function (request, status, error) {
             //TODO SHOW ERROR MESSAGE
             $("#refreshOctaneEntityTypesSpinner").spinStop();
         });
     }
 
     $("#octaneUdf").change(function () {
+        reloadOctaneSupportedEntityTypes();
+    });
+    $("#workspaceSelector").change(function () {
         reloadOctaneSupportedEntityTypes();
     });
 
@@ -205,15 +202,8 @@ function configureAddDialog() {
         modelForUpdate.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
 
         var myJSON = JSON.stringify(modelForUpdate);
-        var request = $.ajax({
-            url: octanePluginContext.configRestTable.options.resources.self,
-            type: "POST",
-            data: myJSON,
-            dataType: "json",
-            contentType: "application/json"
-        });
-
-        request.success(function (msg) {
+        $.ajax({url: octanePluginContext.configRestTable.options.resources.self, type: "POST", data: myJSON, dataType: "json", contentType: "application/json"
+        }).done(function (msg) {
             if (octanePluginContext.currentRow) {//is edit mode
                 var rowModel = octanePluginContext.currentRow.model.attributes;
                 rowModel.octaneUdf = modelForUpdate.octaneUdf;
@@ -226,8 +216,7 @@ function configureAddDialog() {
             }
 
             closeDialog();
-        });
-        request.fail(function (request, status, error) {
+        }).fail(function (request, status, error) {
             setWorkspaceDialogStatusText(request.responseText, "statusFailed");
         });
     });
@@ -259,42 +248,34 @@ function showWorkspaceConfigDialog(){
         $('#config-dialog-title').text("Create");//set dialog title
     }
 
-    var request = $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"});
+    $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
+        .done(function (data) {
+            octanePluginContext.createDialogData = data;
+            AJS.$("#workspaceSelector").auiSelect2({
+                multiple: false,
+                data: octanePluginContext.createDialogData.workspaces
+            });
 
-    request.success(function (data) {
-        octanePluginContext.createDialogData = data;
-        AJS.$("#workspaceSelector").auiSelect2({
-            multiple: false,
-            //placeholder: "Select a workspace",
-            data: octanePluginContext.createDialogData.workspaces,
-        });
+            AJS.$("#jiraIssueTypesSelector").auiSelect2({
+                multiple: true,
+                data: octanePluginContext.createDialogData.issueTypes,
+            });
 
-        AJS.$("#jiraIssueTypesSelector").auiSelect2({
-            multiple: true,
-            //placeholder: "Select issue types",
-            data: octanePluginContext.createDialogData.issueTypes,
-        });
+            AJS.$("#jiraProjectsSelector").auiSelect2({
+                multiple: true,
+                data: octanePluginContext.createDialogData.projects,
+            });
 
-        AJS.$("#jiraProjectsSelector").auiSelect2({
-            multiple: true,
-            //placeholder: "Select projects",
-            data: octanePluginContext.createDialogData.projects,
-        });
+            AJS.dialog2("#config-dialog").show();
 
-        AJS.dialog2("#config-dialog").show();
-
-    });
-
-    request.fail(function (request, status, error) {
+    }).fail(function (request, status, error) {
         //TODO SHOW ERROR MESSAGE
     });
 }
 
 function loadSpaceConfiguration() {
-    $.ajax({
-        url: octanePluginContext.octaneBaseUrl,
-        dataType: "json"
-    }).done(function (config) { // when the configuration is returned...
+    $.ajax({url: octanePluginContext.octaneBaseUrl, dataType: "json"})
+        .done(function (config) { // when the configuration is returned...
         // ...populate the form.
         $("#clientId").val(config.clientId);
         $("#clientSecret").val(config.clientSecret);
@@ -315,19 +296,10 @@ function buildSpaceConfigAsJson() {
 function updateSpaceConfig() {
     setSpaceStatusText("Space configuration is saving ...");
     var data = buildSpaceConfigAsJson();
-    var request = $.ajax({
-        url: octanePluginContext.octaneBaseUrl,
-        type: "PUT",
-        data: data,
-        dataType: "json",
-        contentType: "application/json"
-    });
-
-    request.success(function (msg) {
+    $.ajax({url: octanePluginContext.octaneBaseUrl, type: "PUT", data: data, dataType: "json", contentType: "application/json"
+    }).done(function (msg) {
         setSpaceStatusText("Space configuration is saved successfully", "statusValid");
-    });
-
-    request.fail(function (request, status, error) {
+    }).fail(function (request, status, error) {
         setSpaceStatusText(request.responseText, "statusFailed");
     });
 }

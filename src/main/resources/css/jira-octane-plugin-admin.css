@@ -41,3 +41,17 @@
 #config-dialog div.description{
     margin-top: 2px;
 }
+
+#config-dialog .select2-choice {
+    background-color: #fff;
+    border-color: rgb(193, 199, 208);
+    color: rgb(23, 43, 77);
+}
+
+#config-dialog .select2-container-disabled .select2-choice{
+    color: #97a0af;
+    background-color: rgb(244, 245, 247);
+    padding-left: 5px;
+    cursor: not-allowed;
+}
+
