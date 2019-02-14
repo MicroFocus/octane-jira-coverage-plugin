@@ -7,12 +7,10 @@ octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/
     // wait for the DOM (i.e., document "skeleton") to load. This likely isn't necessary for the current case,
     // but may be helpful for AJAX that provides secondary content.
     $(document).ready(function () {
-
         loadTable();
         loadSpaceConfiguration();
         addButtonRegistrations();
         configureAddDialog();
-
     });
 
 })(AJS.$ || jQuery);
@@ -104,8 +102,6 @@ function removeRow(row){
         $.ajax({url: octanePluginContext.configRestTable.options.resources.self +"/" + row.model.id, type: "DELETE",
         }).done(function () {
             octanePluginContext.configRestTable.removeRow(row);
-        }).fail(function (request, status, error) {
-            //TODO PRINT ERROR
         });
     });
 
@@ -124,14 +120,13 @@ function addButtonRegistrations() {
 function configureAddDialog() {
     octanePluginContext.createDialogData = {};
 
-
     function reloadOctaneSupportedEntityTypes() {
         var workspaceId = $("#workspaceSelector").val();
         var udfName = $("#octaneUdf").attr("value");
         if (workspaceId && udfName) {
             $("#refreshOctaneEntityTypesSpinner").spin();
         } else {
-            return;
+            return;//dont load entity type if missing one of the workspaceId or udfName
         }
 
         $.ajax({
@@ -145,7 +140,6 @@ function configureAddDialog() {
                 $("#octaneEntityTypes").val(data);
             }, 1000);
         }).fail(function (request, status, error) {
-            //TODO SHOW ERROR MESSAGE
             $("#refreshOctaneEntityTypesSpinner").spinStop();
         });
     }
@@ -153,6 +147,7 @@ function configureAddDialog() {
     $("#octaneUdf").change(function () {
         reloadOctaneSupportedEntityTypes();
     });
+
     $("#workspaceSelector").change(function () {
         reloadOctaneSupportedEntityTypes();
     });
@@ -161,7 +156,6 @@ function configureAddDialog() {
         e.preventDefault();
         reloadOctaneSupportedEntityTypes();
     });
-
 
     //fixing focus on search control
     //https://community.developer.atlassian.com/t/aui-dialog-2-modal-problems-with-select-2-user-search-and-modal-does-not-lock-keyboard/10474
@@ -267,9 +261,6 @@ function showWorkspaceConfigDialog(){
             });
 
             AJS.dialog2("#config-dialog").show();
-
-    }).fail(function (request, status, error) {
-        //TODO SHOW ERROR MESSAGE
     });
 }
 
