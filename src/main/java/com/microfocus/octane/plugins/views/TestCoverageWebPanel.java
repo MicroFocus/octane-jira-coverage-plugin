@@ -60,9 +60,9 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         percentFormatter.setMinimumFractionDigits(1);
 
         //TYPE
-        TypeDescriptor applicationModuleType = new TypeDescriptor("application_module", "AM", "#43e4ff", "product_area");
-        TypeDescriptor featureType = new TypeDescriptor("feature", "F", "#e57828", "work_item");
-        TypeDescriptor storyType = new TypeDescriptor("story", "US", "#ffb000", "work_item");
+        TypeDescriptor applicationModuleType = new TypeDescriptor("application_module", "AM", "#43e4ff", "product_area", "tests-in-pa");
+        TypeDescriptor featureType = new TypeDescriptor("feature", "F", "#e57828", "work_item", "tests_in_backlog");
+        TypeDescriptor storyType = new TypeDescriptor("story", "US", "#ffb000", "work_item", "tests_in_backlog");
         typeDescriptors.put(applicationModuleType.getTypeName(), applicationModuleType);
         typeDescriptors.put(featureType.getTypeName(), featureType);
         typeDescriptors.put(storyType.getTypeName(), storyType);
@@ -196,6 +196,8 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         //TODO revert comment
         octaneEntity.put("url", typeDescriptor.buildEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
                 workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
+        octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
+                workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
         octaneEntity.put("typeKey", typeDescriptor.getTypeKey());
         octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
         contextMap.put("total", total);
@@ -271,12 +273,14 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         private String typeKey;
         private String typeColor;
         private String nameForNavigation;
+        private String testTabName;
 
-        public TypeDescriptor(String typeName, String typeKey, String typeColor, String nameForNavigation) {
+        public TypeDescriptor(String typeName, String typeKey, String typeColor, String nameForNavigation, String testTabName) {
             this.typeName = typeName;
             this.typeKey = typeKey;
             this.typeColor = typeColor;
             this.nameForNavigation = nameForNavigation;
+            this.testTabName = testTabName;
         }
 
         public String getTypeKey() {
@@ -295,12 +299,21 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             return nameForNavigation;
         }
 
+        public String getTestTabName() {
+            return testTabName;
+        }
+
         public String buildEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
-            //OctaneConfiguration octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
             String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
                     baseUrl, spaceId, workspaceId,
                     this.getNameForNavigation(), entityId);
             return octaneEntityUrl;
         }
+
+        public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
+            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
+        }
+
+
     }
 }

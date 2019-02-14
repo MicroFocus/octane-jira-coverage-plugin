@@ -35,6 +35,7 @@
             </dd>
         </dl>
     </li>
+    <div style="margin-top: 5px;"><a target="_blank" href="$octaneEntity.get("testTabUrl")">View in Alm Octane</a></div>
 </ul>
 
 #elseif($status=="noData")
