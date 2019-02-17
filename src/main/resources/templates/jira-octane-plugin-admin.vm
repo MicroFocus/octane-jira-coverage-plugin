@@ -68,7 +68,7 @@
                 <div class="description">ALM Octane entity types that have the 'Mapping field' defined.</div>
             </div>
             <div class="field-group">
-                <label for="jiraProjectsSelector">Jira projects keys</label>
+                <label for="jiraProjectsSelector">Jira project keys</label>
                 <input type='hidden' name='jiraProjectsSelector' id='jiraProjectsSelector' class="text medium-long-field"/>
                 <div class="description">Supported Jira projects. Each Jira project can be selected for one ALM Octane workspace only.</div>
             </div>

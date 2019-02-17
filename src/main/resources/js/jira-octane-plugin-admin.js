@@ -75,7 +75,7 @@ function loadTable() {
         allowReorder: false,
         allowCreate: false,
         allowDelete: false,
-        noEntriesMsg: "No configuration",
+        noEntriesMsg: "No configuration is defined",
         loadingMsg: "Loading ...",
         views: {
             row: MyRow
