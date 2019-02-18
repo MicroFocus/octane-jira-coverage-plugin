@@ -1,48 +1,52 @@
-#if($status=="hasData")
-<ul class="item-details" style="margin-top: 3px;">
-    <!-- octane  entity-->
-    <div style="margin-bottom: 10px;">
-        <span style="display: inline-block;position: relative; text-align: center;vertical-align: middle;height: 30px;
-        width: 30px;border-radius: 50%; background-color: $octaneEntity.get("typeColor");margin-top: -2px;">
-            <span style="display: inline-block;position: relative;font-size: 14px; color: #ffffff;top: 4px;">$octaneEntity.get("typeKey")</span>
-        </span>
-        <span style="margin-left: 5px;"><a target="_blank" href="$octaneEntity.get("url")">$octaneEntity.getId()</a></span>
-        <span style="color: #cccccc;font-size: 20px;line-height: 35px; margin: 0 5px;">|</span>
-        <span style="">$octaneEntity.getName()</span>
-    </div>
+<div id="coverage-panel">
+    #if($status=="hasData")
+        <ul class="item-details">
+            <!-- octane  entity-->
+            <div id="octane-entity">
+                <span class="octane-entity-icon" style="background-color: $octaneEntity.get("typeColor");">
+                    <span class="octane-entity-icon-text">$octaneEntity.get("typeKey")</span>
+                </span>
+                <span class="octane-entity-url">
+                    <a target="_blank" href="$octaneEntity.get("url")">$octaneEntity.getId()</a>
+                </span>
+                <span class="octane-entity-url2name-splitter">|</span>
+                <span >$octaneEntity.getName()</span>
+            </div>
 
-    <!-- test status-->
-    <li>
-        #foreach( $group in $groups )
-            <dl>
-                <dt>
-                    <div>
-                        <div style="float: left; width: 5px; height: 18px; background:$group.get("color")"/>
-                        <div style="margin-left: 8px;min-width: 120px;">$group.get("name"):</div>
-                    </div>
-                </dt>
-                <dd>
-                    <span style="display: inline-block;width: 45px;text-align: right;">$group.get("count")</span>
-                    <span style="margin-left: 15px;font-size: x-small;">($group.get("percentage"))</span>
-                </dd>
+            <!-- test status-->
+            <li>
+                #foreach( $group in $groups )
+                    <dl>
+                        <dt>
+                            <div>
+                                <div class="octane-test-status-icon" style="background:$group.get("color")"/>
+                                <div class="octane-test-status-name" >$group.get("name"):</div>
+                            </div>
+                        </dt>
+                        <dd>
+                            <span class="octane-test-status-count">$group.get("count")</span>
+                            <span class="octane-test-status-percentage">($group.get("percentage"))</span>
+                        </dd>
 
-            </dl>
+                    </dl>
 
-        #end
-        <dl>
-            <dt><b>Total tests:</b></dt>
-            <dd><span style="display: inline-block;width: 45px;text-align: right;"><b>$total</b></span>
-            </dd>
-        </dl>
-    </li>
-    <div style="margin-top: 5px;"><a target="_blank" href="$octaneEntity.get("testTabUrl")">View in Alm Octane</a></div>
-</ul>
+                #end
+                <dl>
+                    <dt><b>Total tests:</b></dt>
+                    <dd><span class="octane-test-status-total-count"><b>$total</b></span>
+                    </dd>
+                </dl>
+            </li>
+            <div class="view-in-octane-text"><a target="_blank" href="$octaneEntity.get("testTabUrl")">View in Alm
+                Octane</a></div>
+        </ul>
 
-#elseif($status=="noData")
-<div>No available data</div>
+    #elseif($status=="noData")
+        <div>No available data</div>
 
-#elseif($status=="noValidConfiguration")
-<div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
-#end
+    #elseif($status=="noValidConfiguration")
+        <div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
+    #end
+</div>
 
 
