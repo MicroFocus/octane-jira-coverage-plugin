@@ -17,20 +17,53 @@ package com.microfocus.octane.plugins.descriptors;
 
 public class OctaneEntityTypeDescriptor {
 
-    private String aggregatedType;
+    /***
+     * Type name
+     */
     private String typeName;
+
+    /**
+     * Short type key , for example US, F, etc
+     */
     private String typeKey;
+
+    private String collectionName;
+
+    /**
+     * User friendly label
+     */
     private String label;
+
+    /**
+     * color used to color typeKey in coverage widget
+     */
     private String typeColor;
+
+    /**
+     * used to build url to navigate to entity
+     */
     private String nameForNavigation;
+
+    /**
+     * name of test tab, used to build url of tests for specific entity
+     */
     private String testTabName;
+
+    /**
+     * Reference field of test to specific entity, used to build coverage query
+     */
     private String testReferenceField;
+
+    /**
+     * indicate how to get coverage by entity id or by path for hierarchical entity
+     */
     private boolean hierarchicalEntity;
 
-    public OctaneEntityTypeDescriptor(String typeName, String typeKey, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
+    public OctaneEntityTypeDescriptor(String typeName, String typeKey, String collectionName, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
         this.typeName = typeName;
-        this.label= label;
+        this.label = label;
         this.hierarchicalEntity = hierarchicalEntity;
+        this.collectionName = collectionName;
         this.typeKey = typeKey;
         this.typeColor = typeColor;
         this.nameForNavigation = nameForNavigation;
@@ -80,5 +113,12 @@ public class OctaneEntityTypeDescriptor {
 
     public String getLabel() {
         return label;
+    }
+
+    /**
+     * Used for requesting entity from ALM Octane rest API
+     */
+    public String getCollectionName() {
+        return collectionName;
     }
 }
