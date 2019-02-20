@@ -25,9 +25,7 @@ public class OctaneEntityTypeDescriptor {
     /**
      * Short type key , for example US, F, etc
      */
-    private String typeKey;
-
-    private String collectionName;
+    private String typeAbbreviation;
 
     /**
      * User friendly label
@@ -35,7 +33,7 @@ public class OctaneEntityTypeDescriptor {
     private String label;
 
     /**
-     * color used to color typeKey in coverage widget
+     * color used to color typeAbbreviation in coverage widget
      */
     private String typeColor;
 
@@ -59,20 +57,19 @@ public class OctaneEntityTypeDescriptor {
      */
     private boolean hierarchicalEntity;
 
-    public OctaneEntityTypeDescriptor(String typeName, String typeKey, String collectionName, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
+    public OctaneEntityTypeDescriptor(String typeName, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
         this.typeName = typeName;
         this.label = label;
         this.hierarchicalEntity = hierarchicalEntity;
-        this.collectionName = collectionName;
-        this.typeKey = typeKey;
+        this.typeAbbreviation = typeAbbreviation;
         this.typeColor = typeColor;
         this.nameForNavigation = nameForNavigation;
         this.testTabName = testTabName;
         this.testReferenceField = testReferenceField;
     }
 
-    public String getTypeKey() {
-        return typeKey;
+    public String getTypeAbbreviation() {
+        return typeAbbreviation;
     }
 
     public String getTypeName() {
@@ -113,12 +110,5 @@ public class OctaneEntityTypeDescriptor {
 
     public String getLabel() {
         return label;
-    }
-
-    /**
-     * Used for requesting entity from ALM Octane rest API
-     */
-    public String getCollectionName() {
-        return collectionName;
     }
 }

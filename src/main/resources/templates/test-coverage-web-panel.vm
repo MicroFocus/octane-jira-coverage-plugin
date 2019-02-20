@@ -4,7 +4,7 @@
             <!-- octane  entity-->
             <div id="octane-entity">
                 <span class="octane-entity-icon" style="background-color: $octaneEntity.get("typeColor");">
-                    <span class="octane-entity-icon-text">$octaneEntity.get("typeKey")</span>
+                    <span class="octane-entity-icon-text">$octaneEntity.get("typeAbbreviation")</span>
                 </span>
                 <span class="octane-entity-url">
                     <a target="_blank" href="$octaneEntity.get("url")">$octaneEntity.getId()</a>

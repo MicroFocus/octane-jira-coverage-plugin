@@ -15,27 +15,29 @@
 
 package com.microfocus.octane.plugins.descriptors;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class OctaneEntityTypeManager {
 
     private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByName = new HashMap<>();
     private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByLabel = new HashMap<>();
+    private static List<AggregateDescriptor> aggregators = new ArrayList<>();
 
     static {
         //TYPE
-        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "application_modules", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas", true);
-        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "work_items", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content", false);
-        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "work_items", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content", false);
-        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "requirement_documents", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement", true);
+        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas", true);
+        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content", false);
+        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content", false);
+        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement", true);
 
         Arrays.asList(applicationModuleType, featureType, storyType, requirementType).forEach(descriptor -> {
             typeDescriptorsByName.put(descriptor.getTypeName(), descriptor);
             typeDescriptorsByLabel.put(descriptor.getLabel(), descriptor);
         });
+
+        aggregators.add(new AggregateDescriptor("work_items", Arrays.asList(featureType, storyType)));
+        aggregators.add(new AggregateDescriptor("application_modules", Arrays.asList(applicationModuleType)));
+        aggregators.add(new AggregateDescriptor("requirement_documents", Arrays.asList(requirementType)));
     }
 
     public static OctaneEntityTypeDescriptor getByTypeName(String key) {
@@ -48,5 +50,9 @@ public class OctaneEntityTypeManager {
 
     public static Collection<String> getSupportedTypes() {
         return typeDescriptorsByName.keySet();
+    }
+
+    public static List<AggregateDescriptor> getAggregators() {
+        return aggregators;
     }
 }

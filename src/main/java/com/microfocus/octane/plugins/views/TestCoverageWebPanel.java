@@ -25,6 +25,7 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.descriptors.AggregateDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
@@ -87,6 +88,16 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
                 QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
                 boolean found = false;
+                /*for (AggregateDescriptor aggDescriptor : OctaneEntityTypeManager.getAggregators()) {
+                    for (OctaneEntityTypeDescriptor entityDesc:aggDescriptor.getDescriptors()) {
+                        if (workspaceConfig.getOctaneEntityTypes().contains(entityDesc.getTypeName())) {
+                            found = tryGetWorkItemEntity(workspaceConfig, contextMap, jiraKeyCondition);
+                            continue;
+                        }
+                    }
+                }*/
+
+
                 if (workspaceConfig.getOctaneEntityTypes().contains("feature") || workspaceConfig.getOctaneEntityTypes().contains("story")) {
                     found = tryGetWorkItemEntity(workspaceConfig, contextMap, jiraKeyCondition);
                 }
@@ -198,7 +209,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                 workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
         octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
                 workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
-        octaneEntity.put("typeKey", typeDescriptor.getTypeKey());
+        octaneEntity.put("typeAbbreviation", typeDescriptor.getTypeAbbreviation());
         octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
         contextMap.put("total", total);
         contextMap.put("groups", groups);
