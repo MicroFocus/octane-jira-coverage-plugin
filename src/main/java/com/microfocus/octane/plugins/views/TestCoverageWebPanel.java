@@ -87,10 +87,10 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
                 QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
                 boolean found = false;
-                if (workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_FEATURE) || workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_USER_STORY)) {
+                if (workspaceConfig.getOctaneEntityTypes().contains("feature") || workspaceConfig.getOctaneEntityTypes().contains("story")) {
                     found = tryGetWorkItemEntity(workspaceConfig, contextMap, jiraKeyCondition);
                 }
-                if (!found && workspaceConfig.getOctaneEntityTypes().contains(OctaneRestService.OCTANE_ENTITY_APPLICATION_MODULE)) {
+                if (!found && workspaceConfig.getOctaneEntityTypes().contains("application_module")) {
                     found = tryGetApplicationModuleEntity(workspaceConfig, contextMap, jiraKeyCondition);
                 }
                 if (!found) {
@@ -126,7 +126,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
                 OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
 
-                getCoverageAndFillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
+                getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -148,7 +148,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             if (!workItems.getData().isEmpty()) {
                 OctaneEntity octaneEntity = workItems.getData().get(0);
                 OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getString("subtype"));
-                getCoverageAndFillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
+                getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
 
                 return true;
             }

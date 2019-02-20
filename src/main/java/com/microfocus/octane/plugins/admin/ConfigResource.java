@@ -28,6 +28,7 @@ import com.microfocus.octane.plugins.configuration.LocationParts;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.rest.RestConnector;
@@ -66,7 +67,6 @@ public class ConfigResource {
         this.userManager = userManager;
         this.octaneRestService = octaneRestService;
     }
-
 
     @GET
     @Path("/workspace-config/additional-data")
@@ -133,7 +133,8 @@ public class ConfigResource {
                 .setWorkspaceId(wc.getWorkspaceId())
                 .setWorkspaceName(wc.getWorkspaceName())
                 .setOctaneUdf(wc.getOctaneUdf())
-                .setOctaneEntityTypes(wc.getOctaneEntityTypes())
+                .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
+                        .map(typeName->OctaneEntityTypeManager.getByTypeName(typeName).getLabel()).sorted().collect(Collectors.toList()))
                 .setJiraIssueTypes(wc.getJiraIssueTypes())
                 .setJiraProjects(wc.getJiraProjects());
 
@@ -165,7 +166,8 @@ public class ConfigResource {
         }
 
         List<String> types = octaneRestService.getSupportedOctaneTypes(workspaceId, udfName);
-        return Response.ok(types).build();
+        List<String> names = types.stream().map(t -> OctaneEntityTypeManager.getByTypeName(t).getLabel()).sorted().collect(Collectors.toList());
+        return Response.ok(names).build();
     }
 
     /*@PUT
@@ -181,7 +183,7 @@ public class ConfigResource {
 
     @POST
     @Path("/workspace-config/self")
-    public Response createWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationOutgoing model) {
+    public Response saveWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationOutgoing model) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }

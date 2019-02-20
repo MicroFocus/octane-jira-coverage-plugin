@@ -20,14 +20,16 @@ public class OctaneEntityTypeDescriptor {
     private String aggregatedType;
     private String typeName;
     private String typeKey;
+    private String label;
     private String typeColor;
     private String nameForNavigation;
     private String testTabName;
     private String testReferenceField;
     private boolean hierarchicalEntity;
 
-    public OctaneEntityTypeDescriptor(String typeName, String typeKey, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
+    public OctaneEntityTypeDescriptor(String typeName, String typeKey, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
         this.typeName = typeName;
+        this.label= label;
         this.hierarchicalEntity = hierarchicalEntity;
         this.typeKey = typeKey;
         this.typeColor = typeColor;
@@ -76,4 +78,7 @@ public class OctaneEntityTypeDescriptor {
         return hierarchicalEntity;
     }
 
+    public String getLabel() {
+        return label;
+    }
 }

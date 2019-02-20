@@ -25,6 +25,7 @@ import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedLis
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
@@ -141,16 +142,12 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
         QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", udfName);
-        Map<String, String> key2LabelType = new HashMap<>();
-        key2LabelType.put("feature", OCTANE_ENTITY_FEATURE);
-        key2LabelType.put("story", OCTANE_ENTITY_USER_STORY);
-        key2LabelType.put("product_area", OCTANE_ENTITY_APPLICATION_MODULE);
-        QueryPhrase typeCondition = new InQueryPhrase("entity_name", key2LabelType.keySet());
 
+        QueryPhrase typeCondition = new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes());
         String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
         String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
-        List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).map(key -> key2LabelType.get(key)).sorted().collect(Collectors.toList());
+        List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toList());
 
         return foundTypes;
     }

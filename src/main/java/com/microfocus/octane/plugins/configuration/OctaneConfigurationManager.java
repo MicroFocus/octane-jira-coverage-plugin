@@ -20,6 +20,7 @@ import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.apache.commons.lang.StringUtils;
@@ -197,7 +198,7 @@ public class OctaneConfigurationManager {
         newWorkspaceConfiguration.setWorkspaceId(model.getId());
         newWorkspaceConfiguration.setWorkspaceName(model.getWorkspaceName());
         newWorkspaceConfiguration.setOctaneUdf(model.getOctaneUdf());
-        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().sorted().collect(Collectors.toList()));
+        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().map(label-> OctaneEntityTypeManager.getByLabel(label).getTypeName()).collect(Collectors.toList()));
         newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()));
         newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects().stream().sorted().collect(Collectors.toList()));
         newWorkspaceConfiguration.setSpaceConfiguration(spConfig);
