@@ -22,7 +22,6 @@ import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContex
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-import com.google.gson.Gson;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
@@ -127,7 +126,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
                 OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
 
-                getCoverageAndfillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
+                getCoverageAndFillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -149,7 +148,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             if (!workItems.getData().isEmpty()) {
                 OctaneEntity octaneEntity = workItems.getData().get(0);
                 OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getString("subtype"));
-                getCoverageAndfillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
+                getCoverageAndFillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
 
                 return true;
             }
@@ -163,7 +162,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
-    private void getCoverageAndfillContextMap(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap) {
+    private void getCoverageAndFillContextMap(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap) {
         GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceConfiguration.getWorkspaceId());
 
         int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
