@@ -26,6 +26,8 @@ import com.google.gson.Gson;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
 import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
@@ -49,8 +51,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
     private OctaneRestService octaneRestService;
     private NumberFormat countFormat = NumberFormat.getInstance();
     private NumberFormat percentFormatter = NumberFormat.getPercentInstance();
-    private Map<String, TypeDescriptor> typeDescriptors = new HashMap<>();
-    private Map<String, TestStatusDescriptor> testStatusByNameDescriptors = new HashMap<>();
+
     private Map<String, TestStatusDescriptor> testStatusByLogicalNameDescriptors = new HashMap<>();
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
 
@@ -59,14 +60,6 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         percentFormatter.setMinimumFractionDigits(1);
         percentFormatter.setMinimumFractionDigits(1);
 
-        //TYPE
-        TypeDescriptor applicationModuleType = new TypeDescriptor("application_module", "AM", "#43e4ff", "product_area", "tests-in-pa");
-        TypeDescriptor featureType = new TypeDescriptor("feature", "F", "#e57828", "work_item", "tests_in_backlog");
-        TypeDescriptor storyType = new TypeDescriptor("story", "US", "#ffb000", "work_item", "tests_in_backlog");
-        typeDescriptors.put(applicationModuleType.getTypeName(), applicationModuleType);
-        typeDescriptors.put(featureType.getTypeName(), featureType);
-        typeDescriptors.put(storyType.getTypeName(), storyType);
-
 
         //TEST TYPES
         TestStatusDescriptor passedStatus = new TestStatusDescriptor("passed", "list_node.run_status.passed", "Passed", "rgb(26, 172, 96)", 1);
@@ -74,15 +67,6 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         TestStatusDescriptor plannedStatus = new TestStatusDescriptor("planned", "list_node.run_status.planned", "Planned", "#dddddd" /*"rgb(47, 214, 195)"*/, 3);
         TestStatusDescriptor skippedStatus = new TestStatusDescriptor("skipped", "list_node.run_status.skipped", "Skipped", "rgb(82, 22, 172)", 4);
         TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("needsAttention", "list_node.run_status.requires_attention", "Requires Attention", "rgb(252, 219, 31)", 5);
-        TestStatusDescriptor testNoRunStatus = new TestStatusDescriptor("testNoRun", null, "Tests did not run", "#cccccc", 6);
-
-        //BY NAME
-        testStatusByNameDescriptors.put(passedStatus.getName(), passedStatus);
-        testStatusByNameDescriptors.put(failedStatus.getName(), failedStatus);
-        testStatusByNameDescriptors.put(plannedStatus.getName(), plannedStatus);
-        testStatusByNameDescriptors.put(skippedStatus.getName(), skippedStatus);
-        testStatusByNameDescriptors.put(needAttentionStatus.getName(), needAttentionStatus);
-        testStatusByNameDescriptors.put(testNoRunStatus.getName(), testNoRunStatus);
 
         //BY LOGICAL NAME
         testStatusByLogicalNameDescriptors.put(passedStatus.getLogicalName(), passedStatus);
@@ -90,7 +74,6 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         testStatusByLogicalNameDescriptors.put(plannedStatus.getLogicalName(), plannedStatus);
         testStatusByLogicalNameDescriptors.put(skippedStatus.getLogicalName(), skippedStatus);
         testStatusByLogicalNameDescriptors.put(needAttentionStatus.getLogicalName(), needAttentionStatus);
-
     }
 
     @Override
@@ -141,16 +124,10 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             //CHECK Application modules
             OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
             if (!applicationModules.getData().isEmpty()) {
-
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
-                TypeDescriptor typeDescriptor = typeDescriptors.get(octaneEntity.getType());
-                String path = octaneEntity.getString("path");
+                OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
 
-                GroupEntityCollection coverage = octaneRestService.getCoverageForApplicationModule(path, workspaceConfiguration.getWorkspaceId());
-                int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
-                List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
-                        .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
-                fillContextMapWithEntity(contextMap, workspaceConfiguration, typeDescriptor, octaneEntity, groups, total);
+                getCoverageAndfillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -168,18 +145,12 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             //CHECK WORKING ITEM
             QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
             OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "work_items",
-                    Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name", "last_runs"));
+                    Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name"));
             if (!workItems.getData().isEmpty()) {
                 OctaneEntity octaneEntity = workItems.getData().get(0);
+                OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getString("subtype"));
+                getCoverageAndfillContextMap(octaneEntity,typeDescriptor,workspaceConfiguration,contextMap);
 
-                TypeDescriptor typeDescriptor = typeDescriptors.get(octaneEntity.getString("subtype"));
-                String lastRuns = octaneEntity.getString("last_runs");
-                Map<String, Double> name2countStatuses = new Gson().fromJson(lastRuns, Map.class);
-                int total = name2countStatuses.values().stream().mapToInt(a -> a.intValue()).sum();
-                List<MapBasedObject> groups = name2countStatuses.entrySet().stream().filter(entry -> entry.getValue() > 0)
-                        .map(entry -> convertGroupEntityToUiEntity(entry.getKey(), entry.getValue().intValue(), total))
-                        .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
-                fillContextMapWithEntity(contextMap, workspaceConfiguration, typeDescriptor, octaneEntity, groups, total);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -192,8 +163,14 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
-    private void fillContextMapWithEntity(Map<String, Object> contextMap, WorkspaceConfiguration workspaceConfiguration, TypeDescriptor typeDescriptor, OctaneEntity octaneEntity, List<MapBasedObject> groups, int total) {
-        //TODO revert comment
+    private void getCoverageAndfillContextMap(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap) {
+        GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceConfiguration.getWorkspaceId());
+
+        int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
+        List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
+                .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
+
+
         octaneEntity.put("url", typeDescriptor.buildEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
                 workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
         octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
@@ -208,24 +185,17 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
     }
 
-    private MapBasedObject convertGroupEntityToUiEntity(String statusName, int count, int totalCount) {
-        TestStatusDescriptor testStatusDescriptor = testStatusByNameDescriptors.get(statusName);
-        return convertGroupEntityToUiEntity(testStatusDescriptor.getTitle(), testStatusDescriptor.getOrder(), testStatusDescriptor.getColor(), count, totalCount);
-    }
 
     private MapBasedObject convertGroupEntityToUiEntity(GroupEntity groupEntity, int totalCount) {
         TestStatusDescriptor testStatusDescriptor = testStatusByLogicalNameDescriptors.get(groupEntity.getValue().getId());
-        return convertGroupEntityToUiEntity(testStatusDescriptor.getTitle(), testStatusDescriptor.getOrder(), testStatusDescriptor.getColor(), groupEntity.getCount(), totalCount);
-    }
 
-    private MapBasedObject convertGroupEntityToUiEntity(String groupName, int order, String color, int count, int totalCount) {
         MapBasedObject outputEntity = new MapBasedObject();
-        outputEntity.put("color", color);
-        outputEntity.put("order", order);
-        outputEntity.put("count", countFormat.format(count));
-        outputEntity.put("name", groupName);
+        outputEntity.put("color", testStatusDescriptor.getColor());
+        outputEntity.put("order", testStatusDescriptor.getOrder());
+        outputEntity.put("count", countFormat.format(groupEntity.getCount()));
+        outputEntity.put("name", testStatusDescriptor.getTitle());
 
-        float percentage = 1f * count / totalCount;
+        float percentage = 1f * groupEntity.getCount() / totalCount;
         String percentageAsString = percentFormatter.format(percentage);//String.format("%.1f", percentage);
         outputEntity.put("percentage", percentageAsString);
         return outputEntity;
@@ -268,52 +238,5 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         }
     }
 
-    public class TypeDescriptor {
-        private String typeName;
-        private String typeKey;
-        private String typeColor;
-        private String nameForNavigation;
-        private String testTabName;
 
-        public TypeDescriptor(String typeName, String typeKey, String typeColor, String nameForNavigation, String testTabName) {
-            this.typeName = typeName;
-            this.typeKey = typeKey;
-            this.typeColor = typeColor;
-            this.nameForNavigation = nameForNavigation;
-            this.testTabName = testTabName;
-        }
-
-        public String getTypeKey() {
-            return typeKey;
-        }
-
-        public String getTypeName() {
-            return typeName;
-        }
-
-        public String getTypeColor() {
-            return typeColor;
-        }
-
-        public String getNameForNavigation() {
-            return nameForNavigation;
-        }
-
-        public String getTestTabName() {
-            return testTabName;
-        }
-
-        public String buildEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
-            String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
-                    baseUrl, spaceId, workspaceId,
-                    this.getNameForNavigation(), entityId);
-            return octaneEntityUrl;
-        }
-
-        public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
-            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
-        }
-
-
-    }
 }

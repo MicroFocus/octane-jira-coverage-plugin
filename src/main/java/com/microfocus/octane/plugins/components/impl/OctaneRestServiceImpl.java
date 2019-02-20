@@ -24,8 +24,10 @@ import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedListener;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.RestConnector;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.*;
@@ -80,15 +82,25 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     }
 
     @Override
-    public GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath, long workspaceId) {
+    public GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
+
+        String entityCondition = null;
+        if (typeDescriptor.isHierarchicalEntity()) {
+            String path = octaneEntity.getString("path");
+            entityCondition = String.format("path='%s*'", path);
+        } else {
+            String id = octaneEntity.getString("id");
+            entityCondition = String.format("id='%s'", id);
+        }
+
         String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
         Map<String, String> headers = new HashMap<>();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
         String queryParam = OctaneQueryBuilder.create()
                 .addGroupBy("status")
-                .addQueryCondition(new RawTextQueryPhrase(String.format("(test_of_last_run={(product_areas={(path='%s*')})})", applicationModulePath)))
+                .addQueryCondition(new RawTextQueryPhrase(String.format("(test_of_last_run={(%s={(%s)})})", typeDescriptor.getTestReferenceField(), entityCondition)))
                 .addQueryCondition(new InQueryPhrase("subtype", Arrays.asList("run_automated", "gherkin_automated_run", "run_manual")))
                 .addQueryCondition(new LogicalQueryPhrase("latest_pipeline_run", true))
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}")).build();
@@ -98,7 +110,6 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
         GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
         return col;
-
     }
 
     @Override

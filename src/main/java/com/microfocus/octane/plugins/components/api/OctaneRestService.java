@@ -15,6 +15,8 @@
 
 package com.microfocus.octane.plugins.components.api;
 
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
@@ -29,7 +31,7 @@ public interface OctaneRestService {
     String OCTANE_ENTITY_USER_STORY = "User Story";
     String OCTANE_ENTITY_APPLICATION_MODULE = "Application module";
 
-    GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath, long workspaceId);
+    GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
 
     OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
 
