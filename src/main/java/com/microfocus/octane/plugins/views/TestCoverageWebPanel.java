@@ -93,6 +93,9 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                 if (!found && workspaceConfig.getOctaneEntityTypes().contains("application_module")) {
                     found = tryGetApplicationModuleEntity(workspaceConfig, contextMap, jiraKeyCondition);
                 }
+                if (!found && workspaceConfig.getOctaneEntityTypes().contains("requirement_document")) {
+                    found = tryGetRequirementEntity(workspaceConfig, contextMap, jiraKeyCondition);
+                }
                 if (!found) {
                     contextMap.put("status", "noData");
                 } else {
@@ -124,6 +127,27 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
             if (!applicationModules.getData().isEmpty()) {
                 OctaneEntity octaneEntity = applicationModules.getData().get(0);
+                OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
+
+                getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
+                return true;
+            }
+        } catch (RestStatusException e) {
+            if (UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
+                //field is not defined - skip
+            } else {
+                throw e;
+            }
+        }
+        return false;
+    }
+
+    private boolean tryGetRequirementEntity(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+        try {
+            //CHECK requirements
+            OctaneEntityCollection requirements = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "requirement_documents", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
+            if (!requirements.getData().isEmpty()) {
+                OctaneEntity octaneEntity = requirements.getData().get(0);
                 OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
 
                 getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
