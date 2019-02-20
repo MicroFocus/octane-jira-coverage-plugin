@@ -88,25 +88,22 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
                 QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(currentIssue.getKey(), currentIssue.getId().toString()));
                 boolean found = false;
-                /*for (AggregateDescriptor aggDescriptor : OctaneEntityTypeManager.getAggregators()) {
-                    for (OctaneEntityTypeDescriptor entityDesc:aggDescriptor.getDescriptors()) {
+                for (AggregateDescriptor aggDescriptor : OctaneEntityTypeManager.getAggregators()) {
+                    boolean isMatch = false;
+                    for (OctaneEntityTypeDescriptor entityDesc : aggDescriptor.getDescriptors()) {
                         if (workspaceConfig.getOctaneEntityTypes().contains(entityDesc.getTypeName())) {
-                            found = tryGetWorkItemEntity(workspaceConfig, contextMap, jiraKeyCondition);
-                            continue;
+                            isMatch = true;
+                            break;
                         }
                     }
-                }*/
+                    if (isMatch) {
+                        found = tryGetCoverageForDescriptor(workspaceConfig, contextMap, jiraKeyCondition, aggDescriptor);
+                        if (found) {
+                            break;
+                        }
+                    }
+                }
 
-
-                if (workspaceConfig.getOctaneEntityTypes().contains("feature") || workspaceConfig.getOctaneEntityTypes().contains("story")) {
-                    found = tryGetWorkItemEntity(workspaceConfig, contextMap, jiraKeyCondition);
-                }
-                if (!found && workspaceConfig.getOctaneEntityTypes().contains("application_module")) {
-                    found = tryGetApplicationModuleEntity(workspaceConfig, contextMap, jiraKeyCondition);
-                }
-                if (!found && workspaceConfig.getOctaneEntityTypes().contains("requirement_document")) {
-                    found = tryGetRequirementEntity(workspaceConfig, contextMap, jiraKeyCondition);
-                }
                 if (!found) {
                     contextMap.put("status", "noData");
                 } else {
@@ -132,59 +129,36 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return contextMap;
     }
 
-    private boolean tryGetApplicationModuleEntity(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
+    private boolean tryGetCoverageForDescriptor(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition, AggregateDescriptor aggrDescriptor) {
         try {
-            //CHECK Application modules
-            OctaneEntityCollection applicationModules = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "application_modules", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
-            if (!applicationModules.getData().isEmpty()) {
-                OctaneEntity octaneEntity = applicationModules.getData().get(0);
-                OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
+            boolean subtypedEntity = false;
+            List<QueryPhrase> conditions = new ArrayList<>();
+            conditions.add(jiraKeyCondition);
 
-                getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
-                return true;
-            }
-        } catch (RestStatusException e) {
-            if (UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
-                //field is not defined - skip
+            List<String> fields = new ArrayList<>();
+            fields.add("name");
+            if (aggrDescriptor.getDescriptors().size() > 1) {
+                fields.add("subtype");
+                List<String> typeNames = aggrDescriptor.getDescriptors().stream().map(OctaneEntityTypeDescriptor::getTypeName).collect(Collectors.toList());
+                QueryPhrase subTypeCondition = new InQueryPhrase("subtype", typeNames);
+                conditions.add(subTypeCondition);
+                subtypedEntity = true;
             } else {
-                throw e;
+                if (aggrDescriptor.getDescriptors().get(0).isHierarchicalEntity()) {
+                    fields.add("path");
+                }
             }
-        }
-        return false;
-    }
-
-    private boolean tryGetRequirementEntity(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
-        try {
-            //CHECK requirements
-            OctaneEntityCollection requirements = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "requirement_documents", Arrays.asList(jiraKeyCondition), Arrays.asList("path", "name"));
-            if (!requirements.getData().isEmpty()) {
-                OctaneEntity octaneEntity = requirements.getData().get(0);
-                OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
+            OctaneEntityCollection entities = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), aggrDescriptor.getCollectionName(), Arrays.asList(jiraKeyCondition), fields);
+            if (!entities.getData().isEmpty()) {
+                OctaneEntity octaneEntity = entities.getData().get(0);
+                OctaneEntityTypeDescriptor typeDescriptor;
+                if (subtypedEntity) {
+                    typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getString("subtype"));
+                } else {
+                    typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
+                }
 
                 getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
-                return true;
-            }
-        } catch (RestStatusException e) {
-            if (UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
-                //field is not defined - skip
-            } else {
-                throw e;
-            }
-        }
-        return false;
-    }
-
-    private boolean tryGetWorkItemEntity(WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap, QueryPhrase jiraKeyCondition) {
-        try {
-            //CHECK WORKING ITEM
-            QueryPhrase subTypeCondition = new InQueryPhrase("subtype", Arrays.asList("story", "feature"));
-            OctaneEntityCollection workItems = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), "work_items",
-                    Arrays.asList(jiraKeyCondition, subTypeCondition), Arrays.asList("subtype", "name"));
-            if (!workItems.getData().isEmpty()) {
-                OctaneEntity octaneEntity = workItems.getData().get(0);
-                OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getString("subtype"));
-                getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
-
                 return true;
             }
         } catch (RestStatusException e) {
@@ -204,7 +178,6 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
                 .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
 
-
         octaneEntity.put("url", typeDescriptor.buildEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
                 workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
         octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
@@ -216,9 +189,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         contextMap.put("status", "hasData");
         contextMap.put("octaneEntity", octaneEntity);
         contextMap.put("hasData", true);
-
     }
-
 
     private MapBasedObject convertGroupEntityToUiEntity(GroupEntity groupEntity, int totalCount) {
         TestStatusDescriptor testStatusDescriptor = testStatusByLogicalNameDescriptors.get(groupEntity.getValue().getId());
@@ -254,7 +225,6 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             return title;
         }
 
-
         public String getName() {
             return name;
         }
@@ -271,6 +241,4 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
             return order;
         }
     }
-
-
 }
