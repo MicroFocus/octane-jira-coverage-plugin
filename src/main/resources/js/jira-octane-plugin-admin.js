@@ -17,12 +17,6 @@ octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/
 })(AJS.$ || jQuery);
 
 function loadTable() {
-
-    var NameReadView = AJS.RestfulTable.CustomReadView.extend({
-        render: function (self) {
-            return $("<strong />").text(self.value);
-        }
-    });
     var ListReadView = AJS.RestfulTable.CustomReadView.extend({
         render: function (self) {
             var output = _.reduce(self.value, function (memo, current) {
@@ -64,7 +58,7 @@ function loadTable() {
             self: octanePluginContext.octaneBaseUrl + "workspace-config/self"
         },
         columns: [
-            {id: "id", header: "Workspace Id", readView: NameReadView},
+            {id: "id", header: "Workspace Id"},
             {id: "workspaceName", header: "Workspace Name"},
             {id: "octaneUdf", header: "Mapping Field"},
             {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
