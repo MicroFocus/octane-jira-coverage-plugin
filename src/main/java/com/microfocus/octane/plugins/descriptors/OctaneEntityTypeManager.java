@@ -15,6 +15,7 @@
 
 package com.microfocus.octane.plugins.descriptors;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,20 +34,15 @@ public class OctaneEntityTypeManager {
 
     static {
         //TYPE
-        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM","Application Module" ,"#43e4ff", "product_area", "tests-in-pa", "product_areas", true);
-        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "Feature","#e57828", "work_item", "tests_in_backlog", "covered_content", false);
-        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "User Story","#ffb000", "work_item", "tests_in_backlog", "covered_content", false);
-        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "Requirement","#0b8eac", "requirement", "tests_in_requirement", "covered_requirement", true);
+        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas", true);
+        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content", false);
+        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content", false);
+        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement", true);
 
-        typeDescriptorsByName.put(applicationModuleType.getTypeName(), applicationModuleType);
-        typeDescriptorsByName.put(featureType.getTypeName(), featureType);
-        typeDescriptorsByName.put(storyType.getTypeName(), storyType);
-        typeDescriptorsByName.put(requirementType.getTypeName(), requirementType);
-
-        typeDescriptorsByLabel.put(applicationModuleType.getLabel(), applicationModuleType);
-        typeDescriptorsByLabel.put(featureType.getLabel(), featureType);
-        typeDescriptorsByLabel.put(storyType.getLabel(), storyType);
-        typeDescriptorsByLabel.put(requirementType.getLabel(), requirementType);
+        Arrays.asList(applicationModuleType, featureType, storyType, requirementType).forEach(descriptor -> {
+            typeDescriptorsByName.put(descriptor.getTypeName(), descriptor);
+            typeDescriptorsByLabel.put(descriptor.getLabel(), descriptor);
+        });
     }
 
     public static OctaneEntityTypeDescriptor getByTypeName(String key) {
