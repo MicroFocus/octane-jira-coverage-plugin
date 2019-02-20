@@ -14,11 +14,14 @@
  */
 package com.microfocus.octane.plugins.configuration;
 
+import com.microfocus.octane.plugins.rest.ProxyConfiguration;
+
 import java.util.List;
 
 public class ConfigurationCollection {
 
     private List<SpaceConfiguration> spaces;
+    private ProxyConfiguration proxy;
 
     public List<SpaceConfiguration> getSpaces() {
         return spaces;
@@ -26,5 +29,13 @@ public class ConfigurationCollection {
 
     public void setSpaces(List<SpaceConfiguration> spaces) {
         this.spaces = spaces;
+    }
+
+    public ProxyConfiguration getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(ProxyConfiguration proxy) {
+        this.proxy = proxy;
     }
 }

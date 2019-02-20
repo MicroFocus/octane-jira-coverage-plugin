@@ -14,7 +14,7 @@
     color: black;
 }
 
-#status{
+#spaceStatus{
     margin-left: 5px;
 }
 
@@ -57,5 +57,9 @@
 
 #workspace-field-group{
     margin-bottom: 15px;
+}
+
+#show-proxy-settings{
+    float: right;
 }
 

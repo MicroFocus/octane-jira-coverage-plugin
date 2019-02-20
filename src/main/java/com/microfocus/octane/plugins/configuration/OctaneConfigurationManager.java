@@ -17,9 +17,12 @@ package com.microfocus.octane.plugins.configuration;
 
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
+import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.tools.JsonHelper;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +94,10 @@ public class OctaneConfigurationManager {
         return configuration.getSpaces().get(0);
     }
 
+    public ProxyConfiguration getProxySettings() {
+        return configuration.getProxy();
+    }
+
     public boolean isValidConfiguration() {
         return validConfiguration;
     }
@@ -151,6 +158,32 @@ public class OctaneConfigurationManager {
                 log.error(String.format("Failed on onOctaneConfigurationChanged for listener %s: %s", hl.getClass().getSimpleName(), e.getMessage()));
             }
         }
+    }
+
+
+    public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
+        ProxyConfiguration proxy = getProxySettings();
+        if (proxy == null) {
+            proxy = new ProxyConfiguration();
+        }
+
+        proxy.setHost(proxyOutgoing.getHost());
+        Integer port = null;
+        if (StringUtils.isNotEmpty(proxyOutgoing.getHost()) && StringUtils.isNotEmpty(proxyOutgoing.getPort())) {
+            try {
+                port = Integer.parseInt(proxyOutgoing.getPort());
+            } catch (NumberFormatException e) {
+                //do nothing
+            }
+        }
+        proxy.setPort(port);
+        proxy.setUsername(proxyOutgoing.getUsername());
+        if (!proxyOutgoing.getPassword().equals(PASSWORD_REPLACE)) {
+            proxy.setPassword(proxyOutgoing.getPassword());
+        }
+
+        configuration.setProxy(proxy);
+        persistConfiguration();
     }
 
     public WorkspaceConfiguration saveWorkspaceConfiguration(WorkspaceConfigurationOutgoing model) {

@@ -11,6 +11,7 @@ octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/
         loadSpaceConfiguration();
         addButtonRegistrations();
         configureAddDialog();
+        configureProxyDialog();
     });
 
 })(AJS.$ || jQuery);
@@ -114,6 +115,56 @@ function removeRow(row){
 function addButtonRegistrations() {
     AJS.$("#save-space-configuration").click(function () {
         updateSpaceConfig();
+    });
+}
+
+function configureProxyDialog(){
+    AJS.$("#show-proxy-settings").click(function (e) {
+        e.preventDefault();
+        setProxyDialogStatusText("");
+        $.ajax({
+            url: octanePluginContext.octaneBaseUrl + "proxy",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json"
+        }).done(function (data) {
+            $("#proxyHost").val(data.host)
+            $("#proxyPort").val(data.port)
+            $("#proxyUser").val(data.username)
+            $("#proxyPassword").val(data.password)
+
+            AJS.dialog2("#proxy-dialog").show();
+        });
+    });
+
+    AJS.$("#proxy-submit-button").click(function (e) {
+        e.preventDefault();
+        setProxyDialogStatusText("");
+        var data = {
+            host: $("#proxyHost").attr("value"),
+            port: $("#proxyPort").attr("value"),
+            username: $("#proxyUser").attr("value"),
+            password: $("#proxyPassword").attr("value"),
+        }
+
+        //validation
+        if(data.port && isNaN(data.port)){
+            setProxyDialogStatusText("Port value must be a number.", "statusFailed");
+            return;
+        }
+
+        var myJSON = JSON.stringify(data);
+        $.ajax({url: octanePluginContext.octaneBaseUrl + "proxy", type: "PUT", data: myJSON, dataType: "json", contentType: "application/json"
+        }).done(function (msg) {
+            AJS.dialog2("#proxy-dialog").hide();
+        }).fail(function (request, status, error) {
+            setProxyDialogStatusText(request.responseText, "statusFailed");
+        });
+    });
+
+    AJS.$("#proxy-cancel-button").click(function (e) {
+        e.preventDefault();
+        AJS.dialog2("#proxy-dialog").hide();
     });
 }
 
@@ -274,19 +325,18 @@ function loadSpaceConfiguration() {
     });
 }
 
-function buildSpaceConfigAsJson() {
+
+function updateSpaceConfig() {
+
+    setSpaceStatusText("Space configuration is saving ...");
+
     var data = {
         location: $("#location").attr("value"),
         clientId: $("#clientId").attr("value"),
         clientSecret: $("#clientSecret").attr("value"),
     }
-    var myJSON = JSON.stringify(data);
-    return myJSON;
-}
 
-function updateSpaceConfig() {
-    setSpaceStatusText("Space configuration is saving ...");
-    var data = buildSpaceConfigAsJson();
+    var data = JSON.stringify(data);
     $.ajax({url: octanePluginContext.octaneBaseUrl, type: "PUT", data: data, dataType: "json", contentType: "application/json"
     }).done(function (msg) {
         setSpaceStatusText("Space configuration is saved successfully", "statusValid");
@@ -295,12 +345,16 @@ function updateSpaceConfig() {
     });
 }
 
+function setProxyDialogStatusText(statusText, statusClass, isHtml) {
+    setStatusText("#proxyStatus", statusText, statusClass, isHtml)
+}
+
 function setWorkspaceDialogStatusText(statusText, statusClass, isHtml) {
-    setStatusText("#dialog-status", statusText, statusClass, isHtml)
+    setStatusText("#workspaceStatus", statusText, statusClass, isHtml)
 }
 
 function setSpaceStatusText(statusText, statusClass, isHtml) {
-    setStatusText("#status", statusText, statusClass, isHtml)
+    setStatusText("#spaceStatus", statusText, statusClass, isHtml)
 }
 
 function setStatusText(selector, statusText, statusClass, isHtml) {

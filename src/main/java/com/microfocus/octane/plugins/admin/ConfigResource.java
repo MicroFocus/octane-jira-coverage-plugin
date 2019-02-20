@@ -29,6 +29,7 @@ import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
+import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.net.ssl.SSLHandshakeException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -211,7 +213,54 @@ public class ConfigResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@Context HttpServletRequest request) {
+    @Path("/proxy")
+    public Response getProxy(@Context HttpServletRequest request) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+        ProxyConfigurationOutgoing outgoing = new ProxyConfigurationOutgoing();
+        ProxyConfiguration config = OctaneConfigurationManager.getInstance().getProxySettings();
+        if (config != null) {
+            outgoing.setHost(config.getHost());
+            outgoing.setPort(config.getPort() == null ? "" : config.getPort().toString());
+            outgoing.setUsername(config.getUsername());
+            outgoing.setPassword(OctaneConfigurationManager.PASSWORD_REPLACE);
+        }
+
+        return Response.ok(outgoing).build();
+    }
+
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/proxy")
+    public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing, @Context HttpServletRequest request) {
+        if (!hasPermissions(request)) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        Integer port = null;
+        if (StringUtils.isNotEmpty(proxyOutgoing.getHost())) {
+
+            try {
+                port = Integer.parseInt(proxyOutgoing.getPort());
+                if (!(port >= 0 && port <= 65535)) {
+                    return Response.status(Status.CONFLICT).entity("Port does not range from 0 to 65,535.").build();
+                }
+
+            } catch (NumberFormatException e) {
+                return Response.status(Status.CONFLICT).entity("Port must be numeric value.").build();
+            }
+
+        }
+
+        OctaneConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
+        return Response.ok().build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSpaceConfiguration(@Context HttpServletRequest request) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
@@ -226,7 +275,7 @@ public class ConfigResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response put(final SpaceConfigurationOutgoing spaceModel, @Context HttpServletRequest request) {
+    public Response saveSpaceConfiguration(final SpaceConfigurationOutgoing spaceModel, @Context HttpServletRequest request) {
         UserProfile username = userManager.getRemoteUser(request);
         if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
             return Response.status(Status.UNAUTHORIZED).build();
@@ -235,7 +284,7 @@ public class ConfigResource {
         String errorMsg = checkConfiguration(spaceModel);
 
         if (errorMsg != null) {
-            return Response.status(Status.CONFLICT).entity("Failed to save : " + errorMsg).build();
+            return Response.status(Status.CONFLICT).entity("Failed to validate configuration : " + errorMsg).build();
         } else {
             OctaneConfigurationManager.getInstance().saveSpaceConfiguration(spaceModel);
         }
@@ -290,9 +339,11 @@ public class ConfigResource {
                     if (exc.getMessage().contains("platform.not_authorized")) {
                         errorMsg = "Validate credentials";
                     } else if (exc.getMessage().contains("type shared_space does not exist")) {
-                        errorMsg = "Sharedspace '" + locationParts.getSpaceId() + "' is not available";
+                        errorMsg = "Sharedspace '" + locationParts.getSpaceId() + "' is not available.";
+                    } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
+                        errorMsg = "Network exception, possibly proxy settings are missing.";
                     } else {
-                        errorMsg = "Unexpected " + exc.getClass().getName() + " : " + exc.getMessage();//"Validate that location is correct.";
+                        errorMsg = "Unexpected " + exc.getClass().getName() + " : " + exc.getMessage() + " . Cause : " + exc.getCause();//"Validate that location is correct.";
                     }
                 }
             }
