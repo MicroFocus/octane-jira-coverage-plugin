@@ -25,13 +25,6 @@ public class OctaneEntityTypeManager {
     private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByName = new HashMap<>();
     private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByLabel = new HashMap<>();
 
-//key2LabelType.put("requirement_document", OCTANE_ENTITY_REQ_DOC);
-    //String OCTANE_ENTITY_REQ_DOC = "Requirement";
-    //String OCTANE_ENTITY_FEATURE = "Feature";
-    //String OCTANE_ENTITY_USER_STORY = "User Story";
-    //String OCTANE_ENTITY_APPLICATION_MODULE = "Application Module";
-
-
     static {
         //TYPE
         OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "application_modules", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas", true);
