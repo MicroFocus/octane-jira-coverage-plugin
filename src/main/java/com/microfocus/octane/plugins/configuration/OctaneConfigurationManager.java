@@ -46,21 +46,12 @@ public class OctaneConfigurationManager {
     private ConfigurationCollection configuration;
     private boolean validConfiguration = true;
 
-    //private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
-    //private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
-    //private static final String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
-    //private static final String OCTANE_UDF_FIELD_KEY = PLUGIN_PREFIX + "octaneUdf";
-    //private static final String JIRA_ISSUE_TYPES_KEY = PLUGIN_PREFIX + "jiraIssueTypes";
-    //private static final String JIRA_PROJECTS_KEY = PLUGIN_PREFIX + "jiraProjects";
-
-
-    public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
+    //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
     public static final String PASSWORD_REPLACE = "__secret__password__"; // NON-NLS
 
     private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
 
     private List<OctaneConfigurationChangedListener> listeners = new ArrayList<OctaneConfigurationChangedListener>();
-
 
     private static OctaneConfigurationManager instance = new OctaneConfigurationManager();
 
@@ -112,6 +103,26 @@ public class OctaneConfigurationManager {
             spaceConfiguration.setWorkspaces(new ArrayList<>());
             configuration = new ConfigurationCollection();
             configuration.setSpaces(Arrays.asList(spaceConfiguration));
+
+            try {
+                //check if exist configuration from version 1.2, there we saved each field value in different property
+                String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
+                String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
+                String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
+                //String OCTANE_UDF_FIELD_KEY = PLUGIN_PREFIX + "octaneUdf";
+                //String JIRA_ISSUE_TYPES_KEY = PLUGIN_PREFIX + "jiraIssueTypes";
+                //String JIRA_PROJECTS_KEY = PLUGIN_PREFIX + "jiraProjects";
+                String location = (String) settings.get(OCTANE_LOCATION_KEY);
+                if (StringUtils.isNotEmpty(location)) {
+                    spaceConfiguration.setLocationParts(parseUiLocation(location));
+                    spaceConfiguration.setLocation(location);
+                    spaceConfiguration.setClientId((String) settings.get(CLIENT_ID_KEY));
+                    spaceConfiguration.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
+                }
+            } catch (Exception e) {
+                //do nothing
+            }
+
             persistConfiguration();
         } else {
             configuration = JsonHelper.deserialize(confStr, ConfigurationCollection.class);
@@ -197,7 +208,7 @@ public class OctaneConfigurationManager {
         newWorkspaceConfiguration.setWorkspaceId(model.getId());
         newWorkspaceConfiguration.setWorkspaceName(model.getWorkspaceName());
         newWorkspaceConfiguration.setOctaneUdf(model.getOctaneUdf());
-        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().map(label-> OctaneEntityTypeManager.getByLabel(label).getTypeName()).collect(Collectors.toList()));
+        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName()).collect(Collectors.toList()));
         newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()));
         newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects().stream().sorted().collect(Collectors.toList()));
         newWorkspaceConfiguration.setSpaceConfiguration(spConfig);
