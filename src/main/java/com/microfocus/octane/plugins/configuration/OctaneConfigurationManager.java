@@ -44,6 +44,7 @@ public class OctaneConfigurationManager {
     private static final String CONFIGURATION_KEY = PLUGIN_PREFIX + "configuration";
 
     private ConfigurationCollection configuration;
+    private boolean validConfiguration = true;
 
     //private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
     //private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
@@ -78,8 +79,6 @@ public class OctaneConfigurationManager {
     public void addListener(OctaneConfigurationChangedListener toAdd) {
         listeners.add(toAdd);
     }
-
-    private boolean validConfiguration = true;
 
     public SpaceConfiguration getConfiguration() {
         if (configuration == null) {
