@@ -15,6 +15,7 @@
 
 package com.microfocus.octane.plugins.rest;
 
+import com.google.common.base.Charsets;
 import com.microfocus.octane.plugins.components.api.Constants;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.StringUtils;
@@ -33,10 +34,10 @@ import java.util.Map.Entry;
 
 public class RestConnector {
 
-    public static String HEADER_ACCEPT = "Accept";
-    public static String HEADER_APPLICATION_JSON = "application/json";
-    public static String HEADER_APPLICATION_XML = "application/xml";
-    public static String HEADER_CONTENT_TYPE = "Content-Type";
+    public final static String HEADER_ACCEPT = "Accept";
+    public final static String HEADER_APPLICATION_JSON = "application/json";
+    public final static String HEADER_APPLICATION_XML = "application/xml";
+    public final static String HEADER_CONTENT_TYPE = "Content-Type";
 
     protected Map<String, String> cookies = new HashMap<>();
 
@@ -286,7 +287,7 @@ public class RestConnector {
             }
 
             OutputStream out = con.getOutputStream();
-            out.write(data.getBytes());
+            out.write(data.getBytes(Charsets.UTF_8));
             out.flush();
             out.close();
         }
@@ -324,7 +325,7 @@ public class RestConnector {
                 container.write(buf, 0, read);
             }
 
-            ret.setResponseData(container.toString());
+            ret.setResponseData(container.toString(Charsets.UTF_8.name()));
         }
 
         try {

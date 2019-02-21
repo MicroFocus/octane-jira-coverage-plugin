@@ -43,7 +43,7 @@ public class OctaneConfigurationManager {
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
     private static final String CONFIGURATION_KEY = PLUGIN_PREFIX + "configuration";
 
-    private static ConfigurationCollection configuration;
+    private ConfigurationCollection configuration;
 
     //private static final String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
     //private static final String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
@@ -79,7 +79,7 @@ public class OctaneConfigurationManager {
         listeners.add(toAdd);
     }
 
-    private static boolean validConfiguration = true;
+    private boolean validConfiguration = true;
 
     public SpaceConfiguration getConfiguration() {
         if (configuration == null) {
@@ -130,7 +130,7 @@ public class OctaneConfigurationManager {
             String confStr = JsonHelper.serialize(configuration);
             int HARD_LIMIT_SIZE = 99000;
             if (confStr.length() >= HARD_LIMIT_SIZE) {
-                new RuntimeException("Configuration file exceeds hard limit size of " + HARD_LIMIT_SIZE + " characters");
+                throw new RuntimeException("Configuration file exceeds hard limit size of " + HARD_LIMIT_SIZE + " characters");
             }
             PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
             settings.put(CONFIGURATION_KEY, confStr);

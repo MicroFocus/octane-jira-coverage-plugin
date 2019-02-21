@@ -147,7 +147,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                     fields.add("path");
                 }
             }
-            OctaneEntityCollection entities = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), aggrDescriptor.getCollectionName(), Arrays.asList(jiraKeyCondition), fields);
+            OctaneEntityCollection entities = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields);
             if (!entities.getData().isEmpty()) {
                 OctaneEntity octaneEntity = entities.getData().get(0);
                 OctaneEntityTypeDescriptor typeDescriptor;
@@ -205,7 +205,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return outputEntity;
     }
 
-    public class TestStatusDescriptor {
+    public static class TestStatusDescriptor {
         private String logicalName;
         private String title;
         private String color;
