@@ -15,10 +15,8 @@
 
 package com.microfocus.octane.plugins.rest.query;
 
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -30,8 +28,7 @@ import java.util.stream.Collectors;
 /**
  * Created by berkovir on 06/12/2016.
  */
-public class OctaneQueryBuilder implements Serializable {
-
+public class OctaneQueryBuilder {
 
     private StringBuilder sb;
     private Integer pageSize;
@@ -49,7 +46,10 @@ public class OctaneQueryBuilder implements Serializable {
         if (queryConditions == null) {
             queryConditions = new ArrayList<>();
         }
-        queryConditions.add(condition);
+        if (condition != null) {
+            queryConditions.add(condition);
+        }
+
         return this;
     }
 
@@ -57,7 +57,10 @@ public class OctaneQueryBuilder implements Serializable {
         if (queryConditions == null) {
             queryConditions = new ArrayList<>();
         }
-        queryConditions.addAll(conditions);
+        if (conditions != null) {
+            queryConditions.addAll(conditions);
+        }
+
         return this;
     }
 
@@ -225,11 +228,6 @@ public class OctaneQueryBuilder implements Serializable {
         if (groupBy != null && !groupBy.isEmpty()) {
             sb.append("&").append("group_by=").append(StringUtils.join(groupBy, ","));
         }
-    }
-
-    public OctaneQueryBuilder clone() {
-        OctaneQueryBuilder qb = (OctaneQueryBuilder) SerializationUtils.clone(this);
-        return qb;
     }
 
     public static String encodeParam(String param) {

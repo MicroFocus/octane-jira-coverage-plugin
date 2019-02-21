@@ -15,6 +15,8 @@ Here are the SDK commands you'll use :
 * atlas-mvn package -- after atlas-run or atlas-debug, reinstalls the plugin into the running product instance
 * atlas-package     -- packages the plugin artifacts 
 * atlas-help        -- prints description for all commands in the SDK
+* atlas-mvn package spotbugs:check --spotbug check
+
 
 
 Full documentation is always available at:

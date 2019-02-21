@@ -15,17 +15,24 @@
 
 package com.microfocus.octane.plugins.components.api;
 
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface OctaneRestService {
 
-    GroupEntityCollection getCoverageForApplicationModule(String applicationModulePath);
+    long SPACE_CONTEXT = -1;
 
-    OctaneEntityCollection getEntitiesByCondition(String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
+    GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
+
+    OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
+
+    List<String> getSupportedOctaneTypes(long workspaceId, String udfName);
 
     void reloadConfiguration();
 }

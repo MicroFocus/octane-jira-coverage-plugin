@@ -15,79 +15,66 @@
 
 package com.microfocus.octane.plugins.configuration;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+
+import java.util.List;
 
 
-public class OctaneConfigurationOutgoing implements Cloneable {
-
+public class SpaceConfiguration {
 
     private String location;
+    private LocationParts locationParts;
     private String clientId;
     private String clientSecret;
-    private String octaneUdf;
-    private String jiraIssueTypes;
-    private String jiraProjects;
 
+    private String id;
 
-    @JsonProperty("location")
+    private List<WorkspaceConfiguration> workspaces;
+
     public String getLocation() {
         return location;
     }
 
-    @JsonProperty("location")
     public void setLocation(String location) {
         this.location = location;
     }
 
-    @JsonProperty("clientSecret")
     public String getClientSecret() {
         return clientSecret;
     }
 
-    @JsonProperty("clientSecret")
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
     }
 
-    @JsonProperty("clientId")
     public String getClientId() {
         return clientId;
     }
 
-    @JsonProperty("clientId")
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
-    @JsonProperty("octaneUdf")
-    public String getOctaneUdf() {
-        return octaneUdf;
+    public String getId() {
+        return id;
     }
 
-    @JsonProperty("octaneUdf")
-    public void setOctaneUdf(String octaneUdf) {
-        this.octaneUdf = octaneUdf;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    @JsonProperty("jiraIssueTypes")
-    public String getJiraIssueTypes() {
-        return jiraIssueTypes;
+    public List<WorkspaceConfiguration> getWorkspaces() {
+        return workspaces;
     }
 
-    @JsonProperty("jiraIssueTypes")
-    public void setJiraIssueTypes(String jiraIssueTypes) {
-        this.jiraIssueTypes = jiraIssueTypes;
+    public void setWorkspaces(List<WorkspaceConfiguration> workspaces) {
+        this.workspaces = workspaces;
     }
 
-    @JsonProperty("jiraProjects")
-    public String getJiraProjects() {
-        return jiraProjects;
+    public LocationParts getLocationParts() {
+        return locationParts;
     }
 
-    @JsonProperty("jiraProjects")
-    public void setJiraProjects(String jiraProjects) {
-        this.jiraProjects = jiraProjects;
+    public void setLocationParts(LocationParts locationParts) {
+        this.locationParts = locationParts;
     }
-
-
 }

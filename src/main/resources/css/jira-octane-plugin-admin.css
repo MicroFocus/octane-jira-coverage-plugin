@@ -14,11 +14,52 @@
     color: black;
 }
 
-#octane-admin .text {
-    max-width: 400px;
+#spaceStatus{
+    margin-left: 5px;
 }
 
-#button-group {
-    max-width: 400px;
-    width: 400px;
+.simple-list {
+    list-style: none;
+    padding: 0;
 }
+
+.formtitle {
+
+}
+
+#configuration-rest-table .aui-restfultable-operations{
+    width: 10px;
+}
+
+#refreshOctaneEntityTypesSpinner{
+    display: inline-block;
+    height: 10px;
+    width: 20px;
+    margin: 0 5px 0 -30px;
+}
+
+#config-dialog div.description{
+    margin-top: 2px;
+}
+
+#config-dialog .select2-choice {
+    background-color: #fff;
+    border-color: rgb(193, 199, 208);
+    color: rgb(23, 43, 77);
+}
+
+#config-dialog .select2-container-disabled .select2-choice{
+    color: #97a0af;
+    background-color: rgb(244, 245, 247);
+    padding-left: 5px;
+    cursor: not-allowed;
+}
+
+#workspace-field-group{
+    margin-bottom: 15px;
+}
+
+#show-proxy-settings{
+    float: right;
+}
+

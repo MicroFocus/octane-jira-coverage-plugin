@@ -15,6 +15,7 @@
 
 package com.microfocus.octane.plugins.rest;
 
+import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +33,11 @@ public class ProxyHelper {
         log.info("get proxy configuration for " + targetUrl.getHost());
         ProxyConfiguration result = null;
 
-
-        if (isProxyNeeded(targetUrl)) {
+        ProxyConfiguration proxyConfig = OctaneConfigurationManager.getInstance().getProxySettings();
+        if (proxyConfig != null && StringUtils.isNotEmpty(proxyConfig.getHost())) {
+            return proxyConfig;
+        } else if (isProxyNeededInJVM(targetUrl)) {
             String protocol = targetUrl.getProtocol().toLowerCase();
-
             result = ProxyConfiguration.create()
                     .setHost(getProxyProperty(protocol + ".proxyHost", null))
                     .setPort(Integer.parseInt(getProxyProperty(protocol + ".proxyPort", null)))
@@ -57,7 +59,7 @@ public class ProxyHelper {
         return System.getProperty(propKey) != null ? System.getProperty(propKey).trim() : def;
     }
 
-    private static boolean isProxyNeeded(URL targetHostUrl) {
+    private static boolean isProxyNeededInJVM(URL targetHostUrl) {
         boolean result = false;
         String proxyHost = getProxyProperty(targetHostUrl.getProtocol() + ".proxyHost", "");
         String nonProxyHostsStr = getProxyProperty(targetHostUrl.getProtocol() + ".nonProxyHosts", "");

@@ -14,37 +14,48 @@
  */
 
 
-package com.microfocus.octane.plugins.rest;
+package com.microfocus.octane.plugins.admin;
 
-public class ProxyConfiguration {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+public class ProxyConfigurationOutgoing {
+
+    @XmlElement(name = "host")
     private String host;
 
-    private Integer port;
+    @XmlElement(name = "port")
+    private String port;
 
+    @XmlElement(name = "username")
     private String username;
 
+    @XmlElement(name = "password")
     private String password;
 
 
-    public static ProxyConfiguration create() {
-        return new ProxyConfiguration();
+    public static ProxyConfigurationOutgoing create() {
+        return new ProxyConfigurationOutgoing();
     }
 
     public String getHost() {
         return host;
     }
 
-    public ProxyConfiguration setHost(String host) {
+    public ProxyConfigurationOutgoing setHost(String host) {
         this.host = host;
         return this;
     }
 
-    public Integer getPort() {
+    public String getPort() {
         return port;
     }
 
-    public ProxyConfiguration setPort(Integer port) {
+    public ProxyConfigurationOutgoing setPort(String port) {
         this.port = port;
         return this;
     }
@@ -53,7 +64,7 @@ public class ProxyConfiguration {
         return username;
     }
 
-    public ProxyConfiguration setUsername(String username) {
+    public ProxyConfigurationOutgoing setUsername(String username) {
         this.username = username;
         return this;
     }
@@ -62,7 +73,7 @@ public class ProxyConfiguration {
         return password;
     }
 
-    public ProxyConfiguration setPassword(String password) {
+    public ProxyConfigurationOutgoing setPassword(String password) {
         this.password = password;
         return this;
     }
