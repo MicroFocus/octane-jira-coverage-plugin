@@ -60,13 +60,12 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         percentFormatter.setMinimumFractionDigits(1);
         percentFormatter.setMinimumFractionDigits(1);
 
-
         //TEST TYPES
-        TestStatusDescriptor passedStatus = new TestStatusDescriptor("passed", "list_node.run_status.passed", "Passed", "rgb(26, 172, 96)", 1);
-        TestStatusDescriptor failedStatus = new TestStatusDescriptor("failed", "list_node.run_status.failed", "Failed", "rgb(229, 0, 76)", 2);
-        TestStatusDescriptor plannedStatus = new TestStatusDescriptor("planned", "list_node.run_status.planned", "Planned", "#dddddd" /*"rgb(47, 214, 195)"*/, 3);
-        TestStatusDescriptor skippedStatus = new TestStatusDescriptor("skipped", "list_node.run_status.skipped", "Skipped", "rgb(82, 22, 172)", 4);
-        TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("needsAttention", "list_node.run_status.requires_attention", "Requires Attention", "rgb(252, 219, 31)", 5);
+        TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "Passed", "rgb(26, 172, 96)", 1);
+        TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "Failed", "rgb(229, 0, 76)", 2);
+        TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "Planned", "#dddddd" /*"rgb(47, 214, 195)"*/, 3);
+        TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "Skipped", "rgb(82, 22, 172)", 4);
+        TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "Requires Attention", "rgb(252, 219, 31)", 5);
 
         //BY LOGICAL NAME
         testStatusByLogicalNameDescriptors.put(passedStatus.getLogicalName(), passedStatus);
@@ -207,14 +206,12 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
     }
 
     public class TestStatusDescriptor {
-        private String name;
         private String logicalName;
         private String title;
         private String color;
         private int order;
 
-        public TestStatusDescriptor(String name, String logicalName, String title, String color, int order) {
-            this.name = name;
+        public TestStatusDescriptor(String logicalName, String title, String color, int order) {
             this.logicalName = logicalName;
             this.title = title;
             this.color = color;
@@ -223,10 +220,6 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
         public String getTitle() {
             return title;
-        }
-
-        public String getName() {
-            return name;
         }
 
         public String getLogicalName() {
