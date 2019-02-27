@@ -28,7 +28,9 @@ public interface OctaneRestService {
 
     long SPACE_CONTEXT = -1;
 
-    GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
+    GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, String lastRunStartedFilter);
+
+    GroupEntityCollection getAllTestsBySubtype(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
 
     OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
 

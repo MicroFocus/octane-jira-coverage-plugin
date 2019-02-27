@@ -1,0 +1,129 @@
+#coverage-panel.details {
+    margin-top: 3px;
+}
+
+#octane-entity{
+    margin-bottom: 10px;
+}
+
+.octane-entity-icon{
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    vertical-align: middle;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    margin-top: -2px;
+}
+
+.octane-entity-icon-text {
+    display: inline-block;
+    position: relative;
+    font-size: 14px;
+    color: #ffffff;
+    top: 4px;
+}
+.octane-entity-url{
+    margin-left: 5px;
+}
+
+.octane-entity-url2name-splitter {
+    color: #cccccc;
+    font-size: 20px;
+    line-height: 35px;
+}
+
+#octane-entity-name{
+    position: relative;
+    top: 4px;
+    display: inline-block;
+    white-space: nowrap;
+    width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.octane-test-status-icon {
+    float: left;
+    width: 5px;
+    height: 18px;
+}
+.octane-test-status-name {
+    margin-left: 9px;
+    min-width: 120px;
+}
+.octane-test-status-count {
+    display: inline-block;
+    width: 45px;
+    text-align: right;
+}
+.octane-test-status-percentage {
+    margin-left: 20px;
+    color: #888888;
+}
+
+.octane-test-status-total-count {
+    display: inline-block;
+    width: 35px;
+    text-align: right;
+}
+
+#total-runs-row {
+    border-bottom: 1px solid #dfe1e5;
+    padding-bottom: 3px;
+    margin-left: 10px;
+    width: 190px;
+}
+
+#total-tests-row{
+    margin-left: 10px;
+}
+
+#total-runs-label{
+    font-weight: bolder;
+}
+
+#total-tests-label{
+    color: #777777;
+}
+
+#total-tests-value{
+    color: #777777;
+}
+
+#view-tests-in-alm{
+    margin-left: 10px;
+}
+
+#show-start-date-picker.filtered{
+    color: red;
+}
+
+#run-start-date-picker{
+    width: 0;
+    border: none;
+    padding: 0;
+    margin: 0;
+
+}
+
+#custom-datepicker-buttons{
+    padding: 4px;
+    margin-top: 4px;
+    background: #f4f5f7;
+    border-top: 1px solid #dfe1e5;
+}
+
+#custom-datepicker-close-button{
+    float: right;
+    display: inline-block;
+}
+
+#reloadSpinner{
+    float: right;
+    margin-top: -15px;
+    margin-right: 46px;
+}
+
+

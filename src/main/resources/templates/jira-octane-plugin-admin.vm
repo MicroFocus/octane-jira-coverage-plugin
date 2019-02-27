@@ -5,9 +5,9 @@
     $webResourceManager.requireResourcesForContext("jira-octane-plugin-admin-resource-context")
 </head>
 <body>
-<h2>ALM Octane Configuration</h2>
-<br/>
-<input type="button" class="aui-button" id="show-proxy-settings" value="Proxy Settings">
+
+<h2>ALM Octane Configuration <input type="button" class="aui-button" id="show-proxy-settings" value="Proxy Settings"></h2>
+
 <h3 class="formtitle">Space</h3>
 <form id="octane-admin" class="aui">
     <div class="form-body">
@@ -20,12 +20,12 @@
         </div>
         <div class="field-group">
             <label for="clientId">Client ID</label>
-            <input type="text" id="clientId" name="clientId" class="text medium-long-field">
+            <input type="text" id="clientId" name="clientId" class="text medium-long-field" autocomplete="off">
             <div class="description">Client ID used for logging into the ALM Octane server</div>
         </div>
         <div class="field-group">
             <label for="clientSecret" >Client secret</label>
-            <input type="password" id="clientSecret" name="clientSecret" class="text medium-long-field">
+            <input type="password" id="clientSecret" name="clientSecret" class="text medium-long-field" autocomplete="off">
             <div class="description">Client secret used for logging into the ALM Octane server</div>
         </div>
 

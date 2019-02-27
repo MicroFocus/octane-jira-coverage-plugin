@@ -1,5 +1,5 @@
 var octanePluginContext = {};
-octanePluginContext.octaneBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
+octanePluginContext.octaneAdminBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 
 (function ($) { // this closure helps us keep our variables to ourselves.
     // This pattern is known as an "iife" - immediately invoked function expression
@@ -54,8 +54,8 @@ function loadTable() {
     octanePluginContext.configRestTable = new AJS.RestfulTable({
         el: jQuery("#configuration-rest-table"),
         resources: {
-            all: octanePluginContext.octaneBaseUrl + "workspace-config/all",
-            self: octanePluginContext.octaneBaseUrl + "workspace-config/self"
+            all: octanePluginContext.octaneAdminBaseUrl + "workspace-config/all",
+            self: octanePluginContext.octaneAdminBaseUrl + "workspace-config/self"
         },
         columns: [
             {id: "id", header: "Workspace Id"},
@@ -117,7 +117,7 @@ function configureProxyDialog(){
         e.preventDefault();
         setProxyDialogStatusText("");
         $.ajax({
-            url: octanePluginContext.octaneBaseUrl + "proxy",
+            url: octanePluginContext.octaneAdminBaseUrl + "proxy",
             type: "GET",
             dataType: "json",
             contentType: "application/json"
@@ -148,7 +148,7 @@ function configureProxyDialog(){
         }
 
         var myJSON = JSON.stringify(data);
-        $.ajax({url: octanePluginContext.octaneBaseUrl + "proxy", type: "PUT", data: myJSON, dataType: "json", contentType: "application/json"
+        $.ajax({url: octanePluginContext.octaneAdminBaseUrl + "proxy", type: "PUT", data: myJSON, dataType: "json", contentType: "application/json"
         }).done(function (msg) {
             AJS.dialog2("#proxy-dialog").hide();
         }).fail(function (request, status, error) {
@@ -175,7 +175,7 @@ function configureAddDialog() {
         }
 
         $.ajax({
-            url: octanePluginContext.octaneBaseUrl + "workspace-config/supported-octane-types?workspace-id=" + workspaceId + "&udf-name=" + udfName,
+            url: octanePluginContext.octaneAdminBaseUrl + "workspace-config/supported-octane-types?workspace-id=" + workspaceId + "&udf-name=" + udfName,
             type: "GET",
             dataType: "json",
             contentType: "application/json"
@@ -268,7 +268,7 @@ function configureAddDialog() {
 
 function showWorkspaceConfigDialog(){
 
-    var dataUrl = octanePluginContext.octaneBaseUrl + "workspace-config/additional-data";
+    var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspace-config/additional-data";
     if(octanePluginContext.currentRow){//is edit mode
         var model = octanePluginContext.currentRow.model.attributes;
         dataUrl = dataUrl + "?update-workspace-id=" + model.id;
@@ -310,7 +310,7 @@ function showWorkspaceConfigDialog(){
 }
 
 function loadSpaceConfiguration() {
-    $.ajax({url: octanePluginContext.octaneBaseUrl, dataType: "json"})
+    $.ajax({url: octanePluginContext.octaneAdminBaseUrl, dataType: "json"})
         .done(function (config) { // when the configuration is returned...
         // ...populate the form.
         $("#clientId").val(config.clientId);
@@ -331,7 +331,7 @@ function updateSpaceConfig() {
     }
 
     var data = JSON.stringify(data);
-    $.ajax({url: octanePluginContext.octaneBaseUrl, type: "PUT", data: data, dataType: "json", contentType: "application/json"
+    $.ajax({url: octanePluginContext.octaneAdminBaseUrl, type: "PUT", data: data, dataType: "json", contentType: "application/json"
     }).done(function (msg) {
         setSpaceStatusText("Space configuration is saved successfully", "statusValid");
     }).fail(function (request, status, error) {

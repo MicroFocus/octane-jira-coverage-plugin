@@ -42,14 +42,19 @@ public class OctaneConfigurationManager {
 
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
     private static final String CONFIGURATION_KEY = PLUGIN_PREFIX + "configuration";
+    private static final String USER_FILTER_KEY = PLUGIN_PREFIX + "user.filter";
 
     private ConfigurationCollection configuration;
     private boolean validConfiguration = true;
+
+    private static int CONFIGURATION_HARD_LIMIT_SIZE = 99000;
 
     //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
     public static final String PASSWORD_REPLACE = "__secret__password__"; // NON-NLS
 
     private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
+
+    private static Map<String, String> username2Filter;
 
     private List<OctaneConfigurationChangedListener> listeners = new ArrayList<OctaneConfigurationChangedListener>();
 
@@ -104,7 +109,7 @@ public class OctaneConfigurationManager {
             configuration = new ConfigurationCollection();
             configuration.setSpaces(Arrays.asList(spaceConfiguration));
 
-            try {
+            /*try {
                 //check if exist configuration from version 1.2, there we saved each field value in different property
                 String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
                 String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
@@ -121,7 +126,7 @@ public class OctaneConfigurationManager {
                 }
             } catch (Exception e) {
                 //do nothing
-            }
+            }*/
 
             persistConfiguration();
         } else {
@@ -138,9 +143,8 @@ public class OctaneConfigurationManager {
 
         try {
             String confStr = JsonHelper.serialize(configuration);
-            int HARD_LIMIT_SIZE = 99000;
-            if (confStr.length() >= HARD_LIMIT_SIZE) {
-                throw new RuntimeException("Configuration file exceeds hard limit size of " + HARD_LIMIT_SIZE + " characters");
+            if (confStr.length() >= CONFIGURATION_HARD_LIMIT_SIZE) {
+                throw new RuntimeException("Configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
             }
             PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
             settings.put(CONFIGURATION_KEY, confStr);
@@ -170,7 +174,6 @@ public class OctaneConfigurationManager {
             }
         }
     }
-
 
     public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
         ProxyConfiguration proxy = getProxySettings();
@@ -283,4 +286,46 @@ public class OctaneConfigurationManager {
         }
         return query_pairs;
     }
+
+    public void setUserFilter(String username, String filter) {
+        String existing = getUserFilter(username);
+        if (!StringUtils.equals(existing, filter)) {
+            if (StringUtils.isEmpty(filter)) {
+                username2Filter.remove(username);
+            } else {
+                username2Filter.put(username, filter);
+            }
+
+            //persist
+            try {
+                String confStr = JsonHelper.serialize(username2Filter);
+                if (confStr.length() >= CONFIGURATION_HARD_LIMIT_SIZE) {
+                    throw new RuntimeException("User filter configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
+                }
+                PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+                settings.put(USER_FILTER_KEY, confStr);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to persist user filter configuration :" + e.getMessage());
+            }
+        }
+    }
+
+    public String getUserFilter(String username) {
+        if (username2Filter == null) {
+            PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+            String str = ((String) settings.get(USER_FILTER_KEY));
+            if (str == null) {
+                username2Filter = new HashMap<>();
+            } else {
+                try {
+                    username2Filter = JsonHelper.deserialize(str, Map.class);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to deserialize user filter configuration :" + e.getMessage());
+                }
+            }
+        }
+        return username2Filter.get(username);
+    }
+
+
 }

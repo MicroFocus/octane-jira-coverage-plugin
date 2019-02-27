@@ -22,7 +22,7 @@ public class GroupEntity {
 
     private int count;
 
-    private OctaneEntity value;
+    private Object value;
 
     public int getCount() {
         return count;
@@ -32,11 +32,11 @@ public class GroupEntity {
         this.count = count;
     }
 
-    public OctaneEntity getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(OctaneEntity value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 }

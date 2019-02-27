@@ -29,17 +29,13 @@ import com.microfocus.octane.plugins.descriptors.AggregateDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
-import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
-import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
-import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,30 +45,11 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
     private static final Logger log = LoggerFactory.getLogger(TestCoverageWebPanel.class);
     private OctaneConfigurationManager configurationManager = OctaneConfigurationManager.getInstance();
     private OctaneRestService octaneRestService;
-    private NumberFormat countFormat = NumberFormat.getInstance();
-    private NumberFormat percentFormatter = NumberFormat.getPercentInstance();
 
-    private Map<String, TestStatusDescriptor> testStatusByLogicalNameDescriptors = new HashMap<>();
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
 
     public TestCoverageWebPanel(OctaneRestService octaneRestService) {
         this.octaneRestService = octaneRestService;
-        percentFormatter.setMinimumFractionDigits(1);
-        percentFormatter.setMinimumFractionDigits(1);
-
-        //TEST TYPES
-        TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "Passed", "rgb(26, 172, 96)", 1);
-        TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "Failed", "rgb(229, 0, 76)", 2);
-        TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "Planned", "#dddddd" /*"rgb(47, 214, 195)"*/, 3);
-        TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "Skipped", "rgb(82, 22, 172)", 4);
-        TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "Requires Attention", "rgb(252, 219, 31)", 5);
-
-        //BY LOGICAL NAME
-        testStatusByLogicalNameDescriptors.put(passedStatus.getLogicalName(), passedStatus);
-        testStatusByLogicalNameDescriptors.put(failedStatus.getLogicalName(), failedStatus);
-        testStatusByLogicalNameDescriptors.put(plannedStatus.getLogicalName(), plannedStatus);
-        testStatusByLogicalNameDescriptors.put(skippedStatus.getLogicalName(), skippedStatus);
-        testStatusByLogicalNameDescriptors.put(needAttentionStatus.getLogicalName(), needAttentionStatus);
     }
 
     @Override
@@ -157,7 +134,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
                     typeDescriptor = OctaneEntityTypeManager.getByTypeName(octaneEntity.getType());
                 }
 
-                getCoverageAndFillContextMap(octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
+                CoverageUiHelper.getCoverageAndFillContextMap(octaneRestService, octaneEntity, typeDescriptor, workspaceConfiguration, contextMap);
                 return true;
             }
         } catch (RestStatusException e) {
@@ -170,68 +147,4 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         return false;
     }
 
-    private void getCoverageAndFillContextMap(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap) {
-        GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceConfiguration.getWorkspaceId());
-
-        int total = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).mapToInt(o -> o.getCount()).sum();
-        List<MapBasedObject> groups = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).map(gr -> convertGroupEntityToUiEntity(gr, total))
-                .sorted(Comparator.comparing(a -> (Integer) a.get("order"))).collect(Collectors.toList());
-
-        octaneEntity.put("url", typeDescriptor.buildEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
-                workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
-        octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(workspaceConfiguration.getSpaceConfiguration().getLocationParts().getBaseUrl(),
-                workspaceConfiguration.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfiguration.getWorkspaceId(), octaneEntity.getId()));
-        octaneEntity.put("typeAbbreviation", typeDescriptor.getTypeAbbreviation());
-        octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
-        contextMap.put("total", total);
-        contextMap.put("groups", groups);
-        contextMap.put("status", "hasData");
-        contextMap.put("octaneEntity", octaneEntity);
-        contextMap.put("hasData", true);
-    }
-
-    private MapBasedObject convertGroupEntityToUiEntity(GroupEntity groupEntity, int totalCount) {
-        TestStatusDescriptor testStatusDescriptor = testStatusByLogicalNameDescriptors.get(groupEntity.getValue().getId());
-
-        MapBasedObject outputEntity = new MapBasedObject();
-        outputEntity.put("color", testStatusDescriptor.getColor());
-        outputEntity.put("order", testStatusDescriptor.getOrder());
-        outputEntity.put("count", countFormat.format(groupEntity.getCount()));
-        outputEntity.put("name", testStatusDescriptor.getTitle());
-
-        float percentage = 1f * groupEntity.getCount() / totalCount;
-        String percentageAsString = percentFormatter.format(percentage);//String.format("%.1f", percentage);
-        outputEntity.put("percentage", percentageAsString);
-        return outputEntity;
-    }
-
-    public static class TestStatusDescriptor {
-        private String logicalName;
-        private String title;
-        private String color;
-        private int order;
-
-        public TestStatusDescriptor(String logicalName, String title, String color, int order) {
-            this.logicalName = logicalName;
-            this.title = title;
-            this.color = color;
-            this.order = order;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getLogicalName() {
-            return logicalName;
-        }
-
-        public String getColor() {
-            return color;
-        }
-
-        public int getOrder() {
-            return order;
-        }
-    }
 }

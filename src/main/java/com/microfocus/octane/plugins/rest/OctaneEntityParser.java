@@ -116,9 +116,15 @@ public class OctaneEntityParser {
         int count = entObj.getInt("count");
         groupEntity.setCount(count);
         if (!entObj.isNull("value")) {
-            JSONObject jsonObject = entObj.getJSONObject("value");
-            OctaneEntity entity = parseEntity(jsonObject);
-            groupEntity.setValue(entity);
+            Object value = null;
+            JSONObject jsonObject = entObj.optJSONObject("value");
+            if (jsonObject != null) {
+                value = parseEntity(jsonObject);
+            } else {
+                value = entObj.optString("value");
+            }
+
+            groupEntity.setValue(value);
         }
 
         return groupEntity;

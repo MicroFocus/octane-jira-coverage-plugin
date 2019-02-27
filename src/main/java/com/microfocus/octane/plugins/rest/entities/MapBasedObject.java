@@ -15,6 +15,10 @@
 
 package com.microfocus.octane.plugins.rest.entities;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +27,11 @@ import java.util.Map;
 /**
  * Created by berkovir on 28/05/2015.
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class MapBasedObject {
+
+    @XmlElement(name = "fields")
     private Map<String, Object> fields = new HashMap<String, Object>();
 
     public void put(String fieldName, Object fieldValue) {

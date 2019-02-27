@@ -28,6 +28,7 @@ import com.microfocus.octane.plugins.configuration.LocationParts;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
@@ -134,7 +135,11 @@ public class ConfigResource {
                 .setWorkspaceName(wc.getWorkspaceName())
                 .setOctaneUdf(wc.getOctaneUdf())
                 .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
-                        .map(typeName->OctaneEntityTypeManager.getByTypeName(typeName).getLabel()).sorted().collect(Collectors.toList()))
+                        .map(typeName -> {
+                            OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
+                            return desc == null ? "" : desc.getLabel();
+                        })
+                        .sorted().collect(Collectors.toList()))
                 .setJiraIssueTypes(wc.getJiraIssueTypes())
                 .setJiraProjects(wc.getJiraProjects());
 
