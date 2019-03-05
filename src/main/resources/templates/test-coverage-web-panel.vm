@@ -1,13 +1,13 @@
 <script language="JavaScript" type="text/javascript">
 
 </script>
-<span id="reloadSpinner"></span>
-<div id="coverage-panel">
+<div id="octane-coverage-panel" class="ghx-container">
     #if($status=="hasData")
         <ul class="item-details">
             <!-- octane  entity-->
             <div id="octane-entity">
                 <input id="filterQueryString" type="hidden" value="$filterQueryString">
+
                 <span class="octane-entity-icon" style="background-color: $octaneEntity.get("typeColor");">
                     <span class="octane-entity-icon-text">$octaneEntity.get("typeAbbreviation")</span>
                 </span>
@@ -16,10 +16,11 @@
                 </span>
                 <span class="octane-entity-url2name-splitter">|</span>
                 <span id="octane-entity-name" title="$octaneEntity.getName()">$octaneEntity.getName()</span>
-                <button class="aui-button" onclick="showRunStartDatePicker()" title="Filter shown runs by their start date">
+                <!--<button class="aui-button" onclick="showRunStartDatePicker()" title="Filter shown runs by their start date">
                     <span id="show-start-date-picker" class="aui-icon aui-icon-small aui-iconfont-calendar #if($lastRunStartedFilter) aui-iconfont-calendar-filled #else aui-iconfont-calendar #end" >Configure</span>
                     <input class="aui-date-picker"  id="run-start-date-picker" type="date" value="$lastRunStartedFilter" />
-                </button>
+                    <span id="octaneDataReloadSpinner"></span>
+                </button>-->
             </div>
 
             <!-- test status-->
@@ -40,10 +41,10 @@
                     </dl>
 
                 #end
-                <dl id="total-runs-row"><dt id="total-runs-label">Total Runs:</dt>
+                <dl id="octane-total-runs-row"><dt id="octane-total-runs-label">Total Runs:</dt>
                     <dd><span class="octane-test-status-total-count">$totalRuns</span></dd>
                 </dl>
-                <dl id="total-tests-row"><dt id="total-tests-label">Total Tests:</dt>
+                <dl id="octane-total-tests-row"><dt id="octane-total-tests-label">Total Tests:</dt>
                     <dd id="total-tests-value">
                         <span class="octane-test-status-total-count">$totalTests</span>
                     </dd>
@@ -60,6 +61,11 @@
     #elseif($status=="noValidConfiguration")
         <div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
     #end
+
+    #if($perf)
+        <p>Perf : $perf</p>
+    #end
+
 </div>
 
 

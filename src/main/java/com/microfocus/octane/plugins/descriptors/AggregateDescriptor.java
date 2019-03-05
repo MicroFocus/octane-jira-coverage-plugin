@@ -34,4 +34,8 @@ public class AggregateDescriptor {
     public String getCollectionName() {
         return collectionName;
     }
+
+    public boolean isSubtyped(){
+        return getDescriptors().size() > 1;
+    }
 }

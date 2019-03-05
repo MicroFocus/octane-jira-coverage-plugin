@@ -19,6 +19,9 @@
     <dependency>com.atlassian.auiplugin:aui-restfultable</dependency>
     <dependency>com.atlassian.auiplugin:dialog2</dependency>
     <dependency>com.atlassian.auiplugin:aui-select2</dependency>
+    <dependency>com.atlassian.auiplugin:aui-flag</dependency>
+    <dependency>com.atlassian.auiplugin:aui-form-validation</dependency>
+
 
 
     <resource type="download" name="jira-octane-plugin-admin.js" location="/js/jira-octane-plugin-admin.js"/>
@@ -28,12 +31,12 @@
 
 
   <web-resource key="test-coverage-panel-resources" name="test-coverage-panel Web Resources">
-    <context>test-coverage-panel</context>
+    <context>jira-octane-plugin-test-coverage-panel</context>
     <context>jira.view.issue</context>
-    <dependency>com.atlassian.auiplugin:ajs</dependency>
-    <dependency>com.atlassian.auiplugin:aui-date-picker</dependency>
-
-    <resource type="download" name="jira-octane-plugin-coverage-panel.js" location="/js/jira-octane-plugin-coverage-panel.js"/>
+    <context>atl.general</context>
+    <!--<dependency>com.atlassian.auiplugin:ajs</dependency>-->
+    <!--<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>-->
+    <!--<resource type="download" name="jira-octane-plugin-coverage-panel.js" location="/js/jira-octane-plugin-coverage-panel.js"/>-->
     <resource type="download" name="jira-octane-plugin-coverage-panel.css" location="/css/jira-octane-plugin-coverage-panel.css"/>
   </web-resource>
 
@@ -45,12 +48,25 @@
     <condition class="com.microfocus.octane.plugins.views.TestCoverageWebPanelCondition">
     </condition>
   </web-panel>
+  <web-panel name="TestCoverageWebPanelDetailTab" i18n-name-key="test-coverage-web-panel.name" key="test-coverage-web-panel-detail-tab" location="atl.gh.issue.details.tab" weight="1000">
+    <description key="test-coverage-web-panel.description">The panel shows test coverage information in ALM Octane for current item</description>
+    <context-provider class="com.microfocus.octane.plugins.views.TestCoverageWebPanel"/>
+    <resource name="view" type="velocity" location="templates/test-coverage-web-panel.vm"/>
+
+    <resource name="iconOctane16" type="download" location="images/octane.png"/>
+    <label key="test-coverage-web-panel.title" />
+    <tooltip key="test-coverage-web-panel.description" />
+
+    <condition class="com.microfocus.octane.plugins.views.TestCoverageWebPanelCondition">
+    </condition>
+  </web-panel>
+
 
   <servlet key="admin-servlet" class="com.microfocus.octane.plugins.admin.AdminServlet">
     <url-pattern>/admin/octane</url-pattern>
   </servlet>
   <web-item key="jira-menu-item" name="ALM Octane Configuration0" section="system.admin/globalsettings" weight="10" application="jira">
-    <description>Link to xproduct-admin page.</description>
+    <description>Link to admin page.</description>
     <label key="ALM Octane Configuration" />
     <link linkId="alm-octane-config-link">/plugins/servlet/admin/octane</link>
   </web-item>
@@ -64,5 +80,10 @@
     <!--http://localhost:2990/jira/rest/octane-admin/1.0/-->
     <description>Provides REST resources for the coverage panel.</description>
     <package>com.microfocus.octane.plugins.views</package>
+  </rest>
+  <rest key="octane-params-rest" path="/octane-params" version="1.0">
+    <!--http://localhost:2990/jira/rest/octane-admin/1.0/-->
+    <description>Provides REST resources for user params.</description>
+    <package>com.microfocus.octane.plugins.configuration</package>
   </rest>
 </atlassian-plugin>

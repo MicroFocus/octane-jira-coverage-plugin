@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 public class OctaneConfigurationManager {
 
+    public static final String SHOW_PERF_PARAMETER = "showPerf";
     private static final Logger log = LoggerFactory.getLogger(OctaneConfigurationManager.class);
     private PluginSettingsFactory pluginSettingsFactory;
 
@@ -55,6 +56,7 @@ public class OctaneConfigurationManager {
     private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
 
     private static Map<String, String> username2Filter;
+    private static Map<String, Map<String, Object>> username2parameters = new HashMap<>();
 
     private List<OctaneConfigurationChangedListener> listeners = new ArrayList<OctaneConfigurationChangedListener>();
 
@@ -109,25 +111,6 @@ public class OctaneConfigurationManager {
             configuration = new ConfigurationCollection();
             configuration.setSpaces(Arrays.asList(spaceConfiguration));
 
-            /*try {
-                //check if exist configuration from version 1.2, there we saved each field value in different property
-                String OCTANE_LOCATION_KEY = PLUGIN_PREFIX + "octaneUrl";
-                String CLIENT_ID_KEY = PLUGIN_PREFIX + "clientId";
-                String CLIENT_SECRET_KEY = PLUGIN_PREFIX + "clientSecret";
-                //String OCTANE_UDF_FIELD_KEY = PLUGIN_PREFIX + "octaneUdf";
-                //String JIRA_ISSUE_TYPES_KEY = PLUGIN_PREFIX + "jiraIssueTypes";
-                //String JIRA_PROJECTS_KEY = PLUGIN_PREFIX + "jiraProjects";
-                String location = (String) settings.get(OCTANE_LOCATION_KEY);
-                if (StringUtils.isNotEmpty(location)) {
-                    spaceConfiguration.setLocationParts(parseUiLocation(location));
-                    spaceConfiguration.setLocation(location);
-                    spaceConfiguration.setClientId((String) settings.get(CLIENT_ID_KEY));
-                    spaceConfiguration.setClientSecret((String) settings.get(CLIENT_SECRET_KEY));
-                }
-            } catch (Exception e) {
-                //do nothing
-            }*/
-
             persistConfiguration();
         } else {
             configuration = JsonHelper.deserialize(confStr, ConfigurationCollection.class);
@@ -148,6 +131,7 @@ public class OctaneConfigurationManager {
             }
             PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
             settings.put(CONFIGURATION_KEY, confStr);
+            validConfiguration = true;
         } catch (IOException e) {
             throw new RuntimeException("Failed to persist configuration :" + e.getMessage());
         }
@@ -325,6 +309,28 @@ public class OctaneConfigurationManager {
             }
         }
         return username2Filter.get(username);
+    }
+
+    public void setUserParameter(String username, String parameterName, Object parameterValue) {
+        if (!username2parameters.containsKey(username)) {
+            username2parameters.put(username, new HashMap<>());
+        }
+
+        if (parameterValue == null) {
+            username2parameters.get(username).remove(parameterName, parameterValue);
+        } else {
+            username2parameters.get(username).put(parameterName, parameterValue);
+        }
+
+    }
+
+    public Object getUserParameter(String username, String parameterValue, Object defaultValue) {
+        Object value = defaultValue;
+        Map<String, Object> params = username2parameters.get(username);
+        if (params != null && params.containsKey(parameterValue)) {
+            value = params.get(parameterValue);
+        }
+        return value;
     }
 
 

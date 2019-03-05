@@ -15,20 +15,22 @@ function initDatePicker() {
 
 function datePickerOnSelect(newDate) {
     closeDatePickerDialog();
+    console.log(newDate);
+    $('#run-start-date-picker').removeAttr("value");
 
-    $("#run-start-date-picker").val(newDate);
     if (newDate) {//has filter
+        $("#run-start-date-picker").attr("value", newDate);
         $('#show-start-date-picker').removeClass("aui-iconfont-calendar");
         $('#show-start-date-picker').addClass("aui-iconfont-calendar-filled");
     } else {
         $('#show-start-date-picker').addClass("aui-iconfont-calendar");
         $('#show-start-date-picker').removeClass("aui-iconfont-calendar-filled");
-        clearDatePickerSelection();
+        removeDatePicker();
     }
 
     //build url with query string
     $("#reloadSpinner").spin();
-    var query = $("#filterQueryString").attr("value") + "&filter-date=" + newDate
+    var query = $("#filterQueryString").attr("value") + "&filter-date=" + newDate;
     var url = octanePluginContext.coverageBaseUrl + "coverage?" + query;
 
     //do request
@@ -62,7 +64,7 @@ function datePickerOnSelect(newDate) {
 }
 
 function addButtonsToDatePicker() {
-    var datePickerPopupEl = getDatepicketPopupElement();
+    var datePickerPopupEl = getDatePickerPopupElement();
     if (!datePickerPopupEl.find('#custom-datepicker-buttons').length) {
         var closeButton = $('<button id="custom-datepicker-close-button">Close</button>').click(function (e) {
             closeDatePickerDialog();
@@ -75,27 +77,48 @@ function addButtonsToDatePicker() {
     }
 }
 
-function getDatepicketPopupElement() {
+function getDatePickerPopupElement() {
+    console.log(("getDatepicketPopupElement"));
     var uuid = AJS.$('#run-start-date-picker').attr("data-aui-dp-uuid");
+
+    //jira version 7 - search direct popup
+
     var popupEl = AJS.$('.hasDatepicker[data-aui-dp-popup-uuid="' + uuid + '"]');
+
+    //jira version 8  -search by parent
+    if (popupEl.length === 0) {
+        popupEl = AJS.$('.aui-datepicker-dialog[id="' + uuid + '"] .hasDatepicker');
+        console.log(("jira 8"));
+    } else {
+        console.log(("jira 7"));
+    }
+
     return popupEl;
 }
 
-function closeDatePickerDialog() {
-    var popupEl = getDatepicketPopupElement();
-    var datepickerDialogEl = popupEl.parent().parent();
-    datepickerDialogEl.css("display", "none");
-
-    $('#run-start-date-picker').removeClass("active");
+function getDatePickerParentElement(){
+    console.log(("getDatePickerParentElement"));
+    var parent = getDatePickerPopupElement().parent();
+    if(parent.hasClass("aui-datepicker-dialog")){
+        return parent; //version 8
+    }else{
+        return parent.parent();//version 7
+    }
 }
 
-function clearDatePickerSelection() {
+function closeDatePickerDialog() {
+    //var datepickerDialogEl = getDatePickerParentElement();
+    //$('#run-start-date-picker').removeClass("active");
+    removeDatePicker();
+}
+
+function removeDatePicker() {
     //remove dialog from dom
-    var popupEl = getDatepicketPopupElement();
-    var datepickerDialogEl = popupEl.parent().parent().remove();
+    var datepickerDialogEl = getDatePickerParentElement().remove();
+    datepickerDialogEl.css("display", "none");
 
     //remove data-aui-dp-uuid and value from input element
-    $('#run-start-date-picker').removeAttr("value");
+
     $('#run-start-date-picker').removeAttr("data-aui-dp-uuid");
 }
 

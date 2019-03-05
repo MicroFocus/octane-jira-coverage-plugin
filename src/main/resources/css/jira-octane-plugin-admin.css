@@ -1,30 +1,7 @@
-.statusValid {
-    color: green;
-}
-
-.statusFailed {
-    color: red;
-}
-
-.statusWarning {
-    color: brown;
-}
-
-.noStatus {
-    color: black;
-}
-
-#spaceStatus{
-    margin-left: 5px;
-}
 
 .simple-list {
     list-style: none;
     padding: 0;
-}
-
-.formtitle {
-
 }
 
 #configuration-rest-table .aui-restfultable-operations{
@@ -63,3 +40,32 @@
     float: right;
 }
 
+#config-dialog .field-group .error{
+    font-size: 12px;
+}
+
+#reloadSpinner{
+    display: inline-block;
+    margin-left: 20px;
+}
+
+#octaneEntityTypes{
+    padding-right: unset;
+}
+
+#octaneEntityTypes+.aui-icon-notification{
+    display: none;
+}
+
+.space-save-status{
+    margin-left:10px;
+}
+
+
+.space-save-status.aui-iconfont-successful-build{
+    color: #36b37e;
+}
+
+.space-save-status.aui-iconfont-error{
+    color: #ff5630;
+}

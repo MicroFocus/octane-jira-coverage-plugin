@@ -1,3 +1,8 @@
+
+#octane-coverage-panel{
+    overflow-x: hidden;
+}
+
 #coverage-panel.details {
     margin-top: 3px;
 }
@@ -39,7 +44,7 @@
     top: 4px;
     display: inline-block;
     white-space: nowrap;
-    width: 140px;
+    width: 155px;
     overflow: hidden;
     text-overflow: ellipsis
 }
@@ -50,7 +55,7 @@
     height: 18px;
 }
 .octane-test-status-name {
-    margin-left: 9px;
+    margin-left: 12px;
     min-width: 120px;
 }
 .octane-test-status-count {
@@ -59,32 +64,33 @@
     text-align: right;
 }
 .octane-test-status-percentage {
-    margin-left: 20px;
+    margin-left: 15px;
     color: #888888;
 }
 
 .octane-test-status-total-count {
     display: inline-block;
-    width: 35px;
+    width: 32px;
     text-align: right;
 }
 
-#total-runs-row {
+#octane-total-runs-row {
     border-bottom: 1px solid #dfe1e5;
     padding-bottom: 3px;
-    margin-left: 10px;
-    width: 190px;
+    margin-left: 13px;
+    margin-top: 10px;
+    width: 180px;
 }
 
-#total-tests-row{
-    margin-left: 10px;
+#octane-total-tests-row{
+    margin-left: 13px;
 }
 
-#total-runs-label{
+#octane-total-runs-label{
     font-weight: bolder;
 }
 
-#total-tests-label{
+#octane-total-tests-label{
     color: #777777;
 }
 
@@ -93,7 +99,7 @@
 }
 
 #view-tests-in-alm{
-    margin-left: 10px;
+    margin-left: 13px;
 }
 
 #show-start-date-picker.filtered{
@@ -120,7 +126,7 @@
     display: inline-block;
 }
 
-#reloadSpinner{
+#octaneDataReloadSpinner{
     float: right;
     margin-top: -15px;
     margin-right: 46px;

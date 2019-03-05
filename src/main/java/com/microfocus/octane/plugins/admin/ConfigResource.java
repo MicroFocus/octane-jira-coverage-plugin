@@ -193,6 +193,24 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
+        //validation
+        String errorMsg = null;
+        if (model.getId() == 0) {
+            errorMsg = "Workspace id is misssing.";
+        } else if (StringUtils.isEmpty(model.getWorkspaceName())) {
+            errorMsg = "Workspace name is misssing.";
+        } else if (model.getOctaneEntityTypes().size() == 0) {
+            errorMsg = "Octane entity types are missing";
+        } else if (model.getJiraProjects().size() == 0) {
+            errorMsg = "Jira projects are missing";
+        } else if (model.getJiraIssueTypes().size() == 0) {
+            errorMsg = "Jira issue types are missing";
+        }
+        if (errorMsg != null) {
+            return Response.status(Status.CONFLICT).entity("Failed to validate workspace configuration : " + errorMsg).build();
+        }
+
+        //save
         WorkspaceConfiguration wc = OctaneConfigurationManager.getInstance().saveWorkspaceConfiguration(model);
         return Response.ok(convert(wc)).build();
     }
@@ -248,17 +266,15 @@ public class ConfigResource {
 
         Integer port = null;
         if (StringUtils.isNotEmpty(proxyOutgoing.getHost())) {
-
             try {
                 port = Integer.parseInt(proxyOutgoing.getPort());
                 if (!(port >= 0 && port <= 65535)) {
-                    return Response.status(Status.CONFLICT).entity("Port does not range from 0 to 65,535.").build();
+                    return Response.status(Status.CONFLICT).entity("Port must range from 0 to 65,535.").build();
                 }
 
             } catch (NumberFormatException e) {
                 return Response.status(Status.CONFLICT).entity("Port must be numeric value.").build();
             }
-
         }
 
         OctaneConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
@@ -344,13 +360,16 @@ public class ConfigResource {
                     }
                 } catch (Exception exc) {
                     if (exc.getMessage().contains("platform.not_authorized")) {
-                        errorMsg = "Validate credentials";
+                        errorMsg = "Ensure your credentials are correct";
                     } else if (exc.getMessage().contains("type shared_space does not exist")) {
                         errorMsg = "Sharedspace '" + locationParts.getSpaceId() + "' is not available.";
                     } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
                         errorMsg = "Network exception, possibly proxy settings are missing.";
                     } else {
-                        errorMsg = "Unexpected " + exc.getClass().getName() + " : " + exc.getMessage() + " . Cause : " + exc.getCause();//"Validate that location is correct.";
+                        errorMsg = "Unexpected " + exc.getClass().getName() + " : " + exc.getMessage();
+                        if (exc.getCause() != null) {
+                            errorMsg += " . Cause : " + exc.getCause();//"Validate that location is correct.";
+                        }
                     }
                 }
             }

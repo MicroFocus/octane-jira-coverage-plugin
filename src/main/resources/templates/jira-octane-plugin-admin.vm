@@ -30,10 +30,11 @@
         </div>
 
          <div class="field-group">
-            <div id="button-group">
+            <div id="button-group" style="position: relative;">
                 <input type="button" class="aui-button" id="save-space-configuration" value="Save">
-                <span id="spaceStatus"></span>
+                <span class="aui-icon aui-icon-small space-save-status"></span>
             </div>
+             <div><span id="reloadSpinner"></span></div>
         </div>
 
     </div>
@@ -50,36 +51,38 @@
         </h2>
     </header>
     <div class="aui-dialog2-content">
-        <form class="aui">
+        <form class="aui" autocomplete="off">
             <div class="field-group" id="workspace-field-group">
-                <label  for="workspaceSelector">Workspace</label>
-                <input type='hidden' name='workspaceSelector' id='workspaceSelector' class="text medium-long-field"/>
+                <label for="workspaceSelector">Workspace<span class="aui-icon icon-required">(required)</span></label>
+                <input type='hidden' name='workspaceSelector' id='workspaceSelector' class="text medium-long-field required affect-octane-entity-types"/>
+                <div class="error" id="workspaceSelectorError"></div>
                 <div class="description"></div>
             </div>
             <div class="field-group">
-                <label for="octaneUdf">Mapping field</label>
-                <input type="text" id="octaneUdf" name="octaneUdf" class="text medium-long-field">
+                <label for="octaneUdf">Mapping field<span class="aui-icon icon-required">(required)</span></label>
+                <input type="text" id="octaneUdf" name="octaneUdf" class="text medium-long-field required affect-octane-entity-types">
+                <div class="error"  id="octaneUdfError"></div>
                 <div class="description">ALM Octane user-defined field for mapping Jira issues.</div>
             </div>
             <div class="field-group">
-                <label for="octaneEntityTypes">Entity types</label>
-                <input type="text" id="octaneEntityTypes" name="octaneUdf" class="text medium-long-field" disabled>
+                <label for="octaneEntityTypes">Entity types<span class="aui-icon icon-required">(required)</span></label>
+                <input type="text" id="octaneEntityTypes" name="octaneUdf" class="text medium-long-field required" disabled data-aui-validation-field data-aui-validation-required="required">
                 <span id="refreshOctaneEntityTypesSpinner"></span>
                 <button id="refreshOctaneEntityTypesButton" class="aui-button aui-button-subtle" resolved=""><span class="aui-icon aui-icon-small aui-iconfont-refresh"></span></button>
+                <div class="error"  id="octaneEntityTypesError"></div>
                 <div class="description">ALM Octane entity types that have the 'Mapping field' defined.</div>
             </div>
             <div class="field-group">
-                <label for="jiraProjectsSelector">Jira project keys</label>
-                <input type='hidden' name='jiraProjectsSelector' id='jiraProjectsSelector' class="text medium-long-field"/>
+                <label for="jiraProjectsSelector">Jira project keys<span class="aui-icon icon-required">(required)</span></label>
+                <input type='hidden' name='jiraProjectsSelector' id='jiraProjectsSelector' class="text medium-long-field required"/>
+                <div class="error"  id="jiraProjectsSelectorError"></div>
                 <div class="description">Supported Jira projects. Each Jira project can be selected for one ALM Octane workspace only.</div>
             </div>
             <div class="field-group">
-                <label for="jiraIssueTypesSelector">Jira issue types</label>
+                <label for="jiraIssueTypesSelector">Jira issue types<span class="aui-icon icon-required">(required)</span></label>
                 <input type='hidden' name='jiraIssueTypesSelector' id='jiraIssueTypesSelector' class="text medium-long-field"/>
-                <div class="description">Supported Jira issue types. If empty, all issue types are supported.</div>
-            </div>
-            <div class="field-group">
-                <div id="workspaceStatus"></div>
+                <div class="error"  id="jiraIssueTypesSelectorError"></div>
+                <div class="description">Supported Jira issue types.</div>
             </div>
         </form>
     </div>
@@ -116,11 +119,13 @@
             <div class="field-group">
                 <label  for="proxyHost">Host</label>
                 <input type="text" id="proxyHost" name="proxyHost" class="text " >
+                <div class="error" id="proxyHostError"></div>
                 <div class="description">Proxy server host name (without http://)</div>
             </div>
             <div class="field-group">
                 <label  for="proxyPort">Port</label>
                 <input type="text" id="proxyPort" name="proxyPort" class="text " maxlength="5">
+                <div class="error" id="proxyPortError"></div>
                 <div class="description"></div>
             </div>
             <div class="field-group">
@@ -132,9 +137,6 @@
                 <label  for="proxyPassword">Password</label>
                 <input type="password" id="proxyPassword" name="proxyPassword" class="text ">
                 <div class="description"></div>
-            </div>
-            <div class="field-group">
-                <div id="proxyStatus"></div>
             </div>
         </form>
     </div>

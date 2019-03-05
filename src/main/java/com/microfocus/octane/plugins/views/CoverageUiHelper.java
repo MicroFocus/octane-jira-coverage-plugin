@@ -15,10 +15,7 @@
 
 package com.microfocus.octane.plugins.views;
 
-import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.user.ApplicationUser;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
@@ -62,9 +59,10 @@ public class CoverageUiHelper {
 
     public static void getCoverageAndFillContextMap(OctaneRestService octaneRestService, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap) {
 
-        ApplicationUser appuser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+        //ApplicationUser appuser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+        //String lastRunStartedFilter = OctaneConfigurationManager.getInstance().getUserFilter(appuser.getUsername());
+        String lastRunStartedFilter = null;
 
-        String lastRunStartedFilter = OctaneConfigurationManager.getInstance().getUserFilter(appuser.getUsername());
         //runs
         List<MapBasedObject> coverageGroups = getCoverageGroups(octaneRestService, octaneEntity, typeDescriptor, workspaceConfiguration.getWorkspaceId(), lastRunStartedFilter);
 
@@ -84,10 +82,14 @@ public class CoverageUiHelper {
                 octaneEntity.getId(), octaneEntity.isFieldSetAndNotEmpty("path") ? octaneEntity.get("path") : "",
                 typeDescriptor.getTypeName(),
                 workspaceConfiguration.getWorkspaceId()));
+    }
 
+    public static void getAllTestsAndFillContextMap(OctaneRestService octaneRestService, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, WorkspaceConfiguration workspaceConfiguration, Map<String, Object> contextMap) {
         //tests
         GroupEntityCollection allTests = octaneRestService.getAllTestsBySubtype(octaneEntity, typeDescriptor, workspaceConfiguration.getWorkspaceId());
-        contextMap.put("totalTests", allTests.getGroups().stream().mapToInt(GroupEntity::getCount).sum());
+        long total = allTests.getGroups().stream().mapToLong(GroupEntity::getCount).sum();
+        contextMap.put("totalTests", total);
+        //contextMap.put("atl.gh.issue.details.tab.count", total);
     }
 
     private static MapBasedObject convertGroupEntityToUiEntity(TestStatusDescriptor testStatusDescriptor, int groupCount, int totalCount) {
