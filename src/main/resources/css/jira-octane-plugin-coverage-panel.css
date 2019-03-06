@@ -11,7 +11,7 @@
     margin-bottom: 10px;
 }
 
-.octane-entity-icon{
+#octane-entity-icon{
     display: inline-block;
     position: relative;
     text-align: center;
@@ -22,14 +22,14 @@
     margin-top: -2px;
 }
 
-.octane-entity-icon-text {
+#octane-entity-icon-text {
     display: inline-block;
     position: relative;
     font-size: 14px;
     color: #ffffff;
     top: 4px;
 }
-.octane-entity-url{
+#octane-entity-url{
     margin-left: 5px;
 }
 
@@ -68,38 +68,19 @@
     color: #888888;
 }
 
-.octane-test-status-total-count {
-    display: inline-block;
-    width: 32px;
-    text-align: right;
+#octane-total-runs{
+    color: #777777;
+    font-weight: bolder;
+    margin-bottom: 10px;
 }
 
-#octane-total-runs-row {
-    border-bottom: 1px solid #dfe1e5;
-    padding-bottom: 3px;
-    margin-left: 13px;
-    margin-top: 10px;
-    width: 180px;
-}
-
-#octane-total-tests-row{
-    margin-left: 13px;
-}
-
-#octane-total-runs-label{
+#octane-total-tests{
     font-weight: bolder;
 }
 
-#octane-total-tests-label{
-    color: #777777;
-}
-
-#total-tests-value{
-    color: #777777;
-}
-
 #view-tests-in-alm{
-    margin-left: 13px;
+    margin-top: 13px;
+    display: block;
 }
 
 #show-start-date-picker.filtered{
@@ -111,7 +92,6 @@
     border: none;
     padding: 0;
     margin: 0;
-
 }
 
 #custom-datepicker-buttons{

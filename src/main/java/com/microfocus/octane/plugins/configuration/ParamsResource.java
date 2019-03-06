@@ -20,11 +20,6 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
-import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
-import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
-import com.microfocus.octane.plugins.views.CoverageUiHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +29,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
@@ -54,16 +48,16 @@ public class ParamsResource {
     }
 
     @GET
-    @Path("show-perf")
-    //http://localhost:2990/jira/rest/octane-params/1.0/show-perf?visible=true
-    public Response showPerfInfo(@Context HttpServletRequest request,
+    @Path("show-debug")
+    //http://localhost:2990/jira/rest/octane-params/1.0/show-debug?visible=true
+    public Response showDebugInfo(@Context HttpServletRequest request,
                                  @QueryParam("visible") boolean visible) {
         UserProfile userProfile = userManager.getRemoteUser(request);
         if (userProfile == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        OctaneConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), OctaneConfigurationManager.SHOW_PERF_PARAMETER, visible);
-        return Response.ok("done").build();
+        OctaneConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), OctaneConfigurationManager.SHOW_DEBUG_PARAMETER, visible);
+        return Response.ok("Done show-debug : " + visible).build();
     }
 }

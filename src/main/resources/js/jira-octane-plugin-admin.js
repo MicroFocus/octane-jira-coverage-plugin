@@ -8,6 +8,7 @@
     // wait for the DOM (i.e., document "skeleton") to load. This likely isn't necessary for the current case,
     // but may be helpful for AJAX that provides secondary content.
     $(document).ready(function () {
+        window.onbeforeunload = null;//Disable “Changes you made may not be saved” pop-up window
         configureWorkspaceConfigurationTable();
         loadSpaceConfiguration();
         configureSpaceButtons();

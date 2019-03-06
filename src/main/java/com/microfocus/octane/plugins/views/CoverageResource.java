@@ -20,11 +20,6 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
-import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
-import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +29,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
+import java.util.Map;
 
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
@@ -56,24 +51,12 @@ public class CoverageResource {
     }
 
     @GET
-    public Response getCoverageWithFilter(@Context HttpServletRequest request,
-                                          @QueryParam("filter-date") String filterDate,
-                                          @QueryParam("entity-id") String entityId,
-                                          @QueryParam("entity-path") String entityPath,
-                                          @QueryParam("entity-type") String entityType,
-                                          @QueryParam("workspace-id") long workspaceId) {
+    public Response getCoverage(@Context HttpServletRequest request, @QueryParam("project-key") String projectKey, @QueryParam("issue-key") String issueKey, @QueryParam("issue-id") String issueId) {
         UserProfile userProfile = userManager.getRemoteUser(request);
         if (userProfile == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-        //OctaneConfigurationManager.getInstance().setUserFilter(userProfile.getUsername(), filterDate);//persist filter
-
-        OctaneEntity entity = new OctaneEntity(entityType);
-        entity.put("id", entityId);
-        entity.put("path", entityPath);
-
-        OctaneEntityTypeDescriptor typeDescriptor = OctaneEntityTypeManager.getByTypeName(entityType);
-        List<MapBasedObject> groups = CoverageUiHelper.getCoverageGroups(octaneRestService, entity, typeDescriptor, workspaceId, filterDate);
-        return Response.ok(groups).build();
+        Map<String, Object> contextMap = CoverageUiHelper.buildCoverageContextMap(octaneRestService, projectKey, issueKey, issueId);
+        return Response.ok(contextMap).build();
     }
 }

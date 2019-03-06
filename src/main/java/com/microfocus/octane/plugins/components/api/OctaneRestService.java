@@ -30,7 +30,7 @@ public interface OctaneRestService {
 
     GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, String lastRunStartedFilter);
 
-    GroupEntityCollection getAllTestsBySubtype(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
+    int getTotalTestsCount(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
 
     OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
 

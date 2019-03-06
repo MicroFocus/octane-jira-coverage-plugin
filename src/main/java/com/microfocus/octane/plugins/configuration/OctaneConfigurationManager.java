@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 public class OctaneConfigurationManager {
 
-    public static final String SHOW_PERF_PARAMETER = "showPerf";
+    public static final String SHOW_DEBUG_PARAMETER = "showDebug";
     private static final Logger log = LoggerFactory.getLogger(OctaneConfigurationManager.class);
     private PluginSettingsFactory pluginSettingsFactory;
 

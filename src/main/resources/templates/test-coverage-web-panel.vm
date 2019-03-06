@@ -1,71 +1,78 @@
 <script language="JavaScript" type="text/javascript">
+    $(document).ready(function() {
+        console.log("RADI document ready");
+        load(1);
+    });
 
+    function load(counter) {
+        console.log("RADI load " + counter);
+        var panelEl = $("#octane-coverage-panel:not(.resolved)");
+
+        if (!panelEl.length) {
+            setTimeout(function () {
+                load(counter + 1);
+            }, 100);
+        } else {
+            console.log("RADI load successfully " + counter);
+            var projectKey = panelEl.attr("project-key");
+            var issueKey = panelEl.attr("issue-key");
+            var issueId = panelEl.attr("issue-id");
+            $("#octane-coverage-panel").addClass("resolved");
+            loadOctaneCoverageWidget(projectKey, issueKey, issueId);
+        }
+    };
 </script>
-<div id="octane-coverage-panel" class="ghx-container">
-    #if($status=="hasData")
+
+<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey"  class="ghx-container">
+    <div id="octane-entity-section" class="hidden">
         <ul class="item-details">
             <!-- octane  entity-->
             <div id="octane-entity">
-                <input id="filterQueryString" type="hidden" value="$filterQueryString">
-
-                <span class="octane-entity-icon" style="background-color: $octaneEntity.get("typeColor");">
-                    <span class="octane-entity-icon-text">$octaneEntity.get("typeAbbreviation")</span>
+                <span id="octane-entity-icon">
+                    <span id="octane-entity-icon-text"></span>
                 </span>
-                <span class="octane-entity-url">
-                    <a target="_blank" href="$octaneEntity.get("url")">$octaneEntity.getId()</a>
+                <span id="octane-entity-url">
+                    <a target="_blank"></a>
                 </span>
                 <span class="octane-entity-url2name-splitter">|</span>
-                <span id="octane-entity-name" title="$octaneEntity.getName()">$octaneEntity.getName()</span>
-                <!--<button class="aui-button" onclick="showRunStartDatePicker()" title="Filter shown runs by their start date">
-                    <span id="show-start-date-picker" class="aui-icon aui-icon-small aui-iconfont-calendar #if($lastRunStartedFilter) aui-iconfont-calendar-filled #else aui-iconfont-calendar #end" >Configure</span>
-                    <input class="aui-date-picker"  id="run-start-date-picker" type="date" value="$lastRunStartedFilter" />
-                    <span id="octaneDataReloadSpinner"></span>
-                </button>-->
+                <span id="octane-entity-name"></span>
             </div>
 
             <!-- test status-->
+            <div id="octane-total-runs"></div>
             <li>
                 #foreach( $group in $runGroups )
-                    <dl id="$group.get("id")" class="$group.get("className")">
+                    <dl id="$group.get("id")" class="hidden">
                         <dt>
                             <div>
                                 <div class="octane-test-status-icon" style="background:$group.get("color")"/>
-                                <div class="octane-test-status-name" >$group.get("name"):</div>
+                                <div class="octane-test-status-name" >$group.get("name")</div>
                             </div>
                         </dt>
                         <dd>
-                            <span class="octane-test-status-count">$group.get("countStr")</span>
-                            <span class="octane-test-status-percentage">$group.get("percentage")</span>
+                            <span class="octane-test-status-count"></span>
+                            <span class="octane-test-status-percentage"></span>
                         </dd>
 
                     </dl>
 
                 #end
-                <dl id="octane-total-runs-row"><dt id="octane-total-runs-label">Total Runs:</dt>
-                    <dd><span class="octane-test-status-total-count">$totalRuns</span></dd>
-                </dl>
-                <dl id="octane-total-tests-row"><dt id="octane-total-tests-label">Total Tests:</dt>
-                    <dd id="total-tests-value">
-                        <span class="octane-test-status-total-count">$totalTests</span>
-                    </dd>
-
-                </dl>
             </li>
-            <a target="_blank" id="view-tests-in-alm" href="$octaneEntity.get("testTabUrl")">View tests in ALM Octane</a>
+            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> tests in ALM Octane</a>
 
         </ul>
-
-    #elseif($status=="noData")
-        <div>No available data</div>
-
-    #elseif($status=="noValidConfiguration")
+    </div>
+    <div id="octane-no-data-section" class="hidden">
+        <div>No corresponding entity in ALM Octane</div>
+    </div>
+    <div id="octane-no-valid-configuration-section" class="hidden">
         <div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
-    #end
-
-    #if($perf)
-        <p>Perf : $perf</p>
-    #end
-
+    </div>
+    <div id="octane-debug-section" class="hidden">
+    </div>
+    <div id="octane-loading-section">
+        <p>Loading ...<span class="aui-icon aui-icon-wait" style="margin-left: 10px;"></span></p>
+    </div>
 </div>
 
 
