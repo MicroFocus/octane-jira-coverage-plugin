@@ -25,10 +25,10 @@ public class OctaneEntityTypeManager {
 
     static {
         //TYPE
-        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas", true);
-        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content", false);
-        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content", false);
-        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement", true);
+        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas");
+        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content");
+        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content");
+        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement");
 
         Arrays.asList(applicationModuleType, featureType, storyType, requirementType).forEach(descriptor -> {
             typeDescriptorsByName.put(descriptor.getTypeName(), descriptor);

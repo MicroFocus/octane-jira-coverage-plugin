@@ -57,10 +57,9 @@ public class OctaneEntityTypeDescriptor {
      */
     private boolean hierarchicalEntity;
 
-    public OctaneEntityTypeDescriptor(String typeName, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, boolean hierarchicalEntity) {
+    public OctaneEntityTypeDescriptor(String typeName, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField) {
         this.typeName = typeName;
         this.label = label;
-        this.hierarchicalEntity = hierarchicalEntity;
         this.typeAbbreviation = typeAbbreviation;
         this.typeColor = typeColor;
         this.nameForNavigation = nameForNavigation;
@@ -99,13 +98,8 @@ public class OctaneEntityTypeDescriptor {
         return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
     }
 
-
     public String getTestReferenceField() {
         return testReferenceField;
-    }
-
-    public boolean isHierarchicalEntity() {
-        return hierarchicalEntity;
     }
 
     public String getLabel() {
