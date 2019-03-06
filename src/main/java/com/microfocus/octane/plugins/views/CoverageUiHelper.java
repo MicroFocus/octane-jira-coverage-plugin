@@ -110,16 +110,14 @@ public class CoverageUiHelper {
 
             List<String> fields = new ArrayList<>();
             fields.add("name");
+            fields.add("path");
             if (aggrDescriptor.isSubtyped()) {
                 fields.add("subtype");
                 List<String> typeNames = aggrDescriptor.getDescriptors().stream().map(OctaneEntityTypeDescriptor::getTypeName).collect(Collectors.toList());
                 QueryPhrase subTypeCondition = new InQueryPhrase("subtype", typeNames);
                 conditions.add(subTypeCondition);
-            } else {
-                if (aggrDescriptor.getDescriptors().get(0).isHierarchicalEntity()) {
-                    fields.add("path");
-                }
             }
+
             OctaneEntityCollection entities = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields);
             if (!entities.getData().isEmpty()) {
                 OctaneEntity octaneEntity = entities.getData().get(0);
@@ -140,6 +138,7 @@ public class CoverageUiHelper {
         Map<String, Object> contextMap = new HashMap<>();
         Map<String, Object> debugMap = new HashMap<>();
         LinkedHashMap<String, Long> perfMap = new LinkedHashMap<>();
+        contextMap.put("issueKey", issueKey);
 
         long startTotal = System.currentTimeMillis();
         if (configurationManager.isValidConfiguration()) {

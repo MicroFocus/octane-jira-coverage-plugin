@@ -93,8 +93,8 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
                 .addGroupBy("status")
-                .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity, typeDescriptor))))
-                .addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "test_suite")))
+                .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity))))
+                .addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "run_suite")))
                 .addQueryCondition(new LogicalQueryPhrase("latest_pipeline_run", true))
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"));
         if (StringUtils.isNotEmpty(lastRunStartedFilter)) {
@@ -117,7 +117,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
         String queryParam = OctaneQueryBuilder.create()
-                .addQueryCondition(new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity, typeDescriptor)))
+                .addQueryCondition(new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity)))
                 .addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "test_suite")))
                 .addPageSize(1)
                 .addSelectedFields("id")
@@ -128,14 +128,9 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         return col.getTotalCount();
     }
 
-    private QueryPhrase createGetEntityCondition(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor) {
-        if (typeDescriptor.isHierarchicalEntity()) {
-            String path = octaneEntity.getString("path");
-            return new LogicalQueryPhrase("path", path + "*");
-        } else {
-            String id = octaneEntity.getString("id");
-            return new LogicalQueryPhrase("id", id);
-        }
+    private QueryPhrase createGetEntityCondition(OctaneEntity octaneEntity) {
+        String path = octaneEntity.getString("path");
+        return new LogicalQueryPhrase("path", path + "*");
     }
 
     @Override
@@ -160,6 +155,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         return col;
     }
 
+    @Override
     public List<String> getSupportedOctaneTypes(long workspaceId, String udfName) {
         long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
         String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");

@@ -1,20 +1,24 @@
-
-
-function loadOctaneCoverageWidget(projectKey, issueKey, issueId){
-    var query = "&project-key=" + projectKey +"&issue-key=" + issueKey+"&issue-id=" + issueId;
+function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
+    var query = "&project-key=" + projectKey + "&issue-key=" + issueKey + "&issue-id=" + issueId;
     var url = AJS.contextPath() + "/rest/octane-coverage/1.0/coverage?" + query;
     console.log("loadOctaneCoverageWidget :" + url);
 
     //do request
     $.ajax({url: url, type: "GET", dataType: "json", contentType: "application/json"
     }).done(function (data) {
+        var panelEl = $("#octane-coverage-panel");
+        var issueKeyFromHtml = panelEl.attr("issue-key");
+        var issueKeyFromData = data.issueKey;
+        if (issueKeyFromHtml !== issueKeyFromData) {
+            console.log("issueKeyFromHtml(" + issueKeyFromHtml + ")!==issueKeyFromData(" + issueKeyFromData + ") => return");
+            return;
+        }
 
-        console.log(data);
         $("#octane-loading-section").addClass("hidden");
 
-        if(data.status === 'noData'){
+        if (data.status === 'noData') {
             $("#octane-no-data-section").removeClass("hidden");
-        } else if(data.status === 'noValidConfiguration'){
+        } else if (data.status === 'noValidConfiguration') {
             $("#octane-no-valid-configuration-section").removeClass("hidden");
         } else if (data.status === 'hasData') {
             $("#octane-entity-section").removeClass("hidden");
