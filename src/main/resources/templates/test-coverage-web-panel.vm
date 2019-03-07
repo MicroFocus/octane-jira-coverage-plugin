@@ -63,7 +63,7 @@
         </ul>
     </div>
     <div id="octane-no-data-section" class="hidden">
-        <div>No corresponding entity in ALM Octane</div>
+        <div>No corresponding entity is mapped in ALM Octane.</div>
     </div>
     <div id="octane-no-valid-configuration-section" class="hidden">
         <div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>

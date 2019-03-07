@@ -23,6 +23,7 @@ import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface OctaneRestService {
 
@@ -35,6 +36,8 @@ public interface OctaneRestService {
     OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields);
 
     List<String> getSupportedOctaneTypes(long workspaceId, String udfName);
+
+    Set<String> getPossibleJiraFields(long workspaceId);
 
     void reloadConfiguration();
 }

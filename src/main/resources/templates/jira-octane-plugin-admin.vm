@@ -41,7 +41,7 @@
 </form>
 
 <h3 class="formtitle">Workspaces</h3>
-<p><button id="show-add-dialog" class="aui-button aui-button-link">Create</button> a new ALM Octane workspace configuration</p>
+<p><button id="show-add-dialog" class="aui-button aui-button-link">Create</button> a new ALM Octane workspace configuration.</p>
 <table id="configuration-rest-table"></table>
 
 <section id="config-dialog" class="aui-dialog2 aui-dialog2-large aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
@@ -61,6 +61,7 @@
             <div class="field-group">
                 <label for="octaneUdf">Mapping field<span class="aui-icon icon-required">(required)</span></label>
                 <input type="text" id="octaneUdf" name="octaneUdf" class="text medium-long-field required affect-octane-entity-types">
+                <span id="octane-possible-fields-tooltip" class="aui-icon aui-icon-small aui-iconfont-info-circle" style="margin-left: 9px;" title=""></span>
                 <div class="error"  id="octaneUdfError"></div>
                 <div class="description">ALM Octane user-defined field for mapping Jira issues.</div>
             </div>

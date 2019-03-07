@@ -34,7 +34,9 @@ import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
+import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
+import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +90,8 @@ public class ConfigResource {
             }
         }
 
-        OctaneEntityCollection workspaces = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", null, Arrays.asList("id", "name"));
+        List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
+        OctaneEntityCollection workspaces = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
         Collection<Select2ResultItem> select2workspaces = workspaces.getData()
                 .stream()
                 .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
@@ -175,16 +178,16 @@ public class ConfigResource {
         return Response.ok(names).build();
     }
 
-    /*@PUT
-    @Path("/workspace-config/self/{id}")
-    public Response updateWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id, WorkspaceConfigurationOutgoing modelForUpdate) {
+    @GET
+    @Path("/workspace-config/possible-jira-fields")
+    public Response getPossibleJiraFields(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId) {
         if (!hasPermissions(request)) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        WorkspaceConfiguration wc = OctaneConfigurationManager.getInstance().saveWorkspaceConfiguration(modelForUpdate);
-        return Response.ok(convert(wc)).build();
-    }*/
+        Set<String> names = octaneRestService.getPossibleJiraFields(workspaceId);
+        return Response.ok(names).build();
+    }
 
     @POST
     @Path("/workspace-config/self")
@@ -307,7 +310,7 @@ public class ConfigResource {
         String errorMsg = checkConfiguration(spaceModel);
 
         if (errorMsg != null) {
-            return Response.status(Status.CONFLICT).entity("Failed to validate configuration : " + errorMsg).build();
+            return Response.status(Status.CONFLICT).entity("Failed to validate configuration. " + errorMsg).build();
         } else {
             OctaneConfigurationManager.getInstance().saveSpaceConfiguration(spaceModel);
         }
@@ -343,7 +346,7 @@ public class ConfigResource {
                     restConnector.setCredentials(spaceModel.getClientId(), secret);
                     boolean isConnected = restConnector.login();
                     if (!isConnected) {
-                        errorMsg = "Failed to authenticate";
+                        errorMsg = "Failed to authenticate.";
                     } else {
                         String getWorspacesUrl = String.format(Constants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, locationParts.getSpaceId(), "workspaces");
                         String queryString = OctaneQueryBuilder.create().addSelectedFields("id").addPageSize(1).build();
@@ -355,18 +358,18 @@ public class ConfigResource {
                             JSONObject jsonObj = new JSONObject(entitiesCollectionStr);
                             OctaneEntityCollection workspaces = OctaneEntityParser.parseCollection(jsonObj);
                         } catch (JSONException e) {
-                            errorMsg = "Incorrect sharedspace id";
+                            errorMsg = "Incorrect shared space ID.";
                         }
                     }
                 } catch (Exception exc) {
                     if (exc.getMessage().contains("platform.not_authorized")) {
-                        errorMsg = "Ensure your credentials are correct";
+                        errorMsg = "Ensure your credentials are correct.";
                     } else if (exc.getMessage().contains("type shared_space does not exist")) {
-                        errorMsg = "Sharedspace '" + locationParts.getSpaceId() + "' is not available.";
+                        errorMsg = "Shared space '" + locationParts.getSpaceId() + "' does not exist.";
                     } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
-                        errorMsg = "Network exception, possibly proxy settings are missing.";
+                        errorMsg = "Network exception, proxy settings may be missing.";
                     } else {
-                        errorMsg = "Unexpected " + exc.getClass().getName() + " : " + exc.getMessage();
+                        errorMsg = "Exception " + exc.getClass().getName() + " : " + exc.getMessage();
                         if (exc.getCause() != null) {
                             errorMsg += " . Cause : " + exc.getCause();//"Validate that location is correct.";
                         }

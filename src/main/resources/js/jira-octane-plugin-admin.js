@@ -70,7 +70,7 @@
             allowReorder: false,
             allowCreate: false,
             allowDelete: false,
-            noEntriesMsg: "No workspace configuration is defined",
+            noEntriesMsg: "No workspace configuration is defined.",
             loadingMsg: "Loading ...",
             views: {
                 row: MyRow
@@ -138,7 +138,7 @@
             if (data.host) {
                 var validationFailed = false;
                 validationFailed = !validateConditionAndUpdateErrorField(data.host.toLowerCase().indexOf("http") !== 0,
-                    "The host name should not start with http", "#proxyHostError") || validationFailed;
+                    "Enter host name without http://", "#proxyHostError") || validationFailed;
                 validationFailed =
                     !validateConditionAndUpdateErrorField((data.port && !isNaN(data.port)), "Port value must be a number.", "#proxyPortError") ||
                     !validateConditionAndUpdateErrorField((data.port >= 0 && data.port <= 65535), "Port must range from 0 to 65,535.", "#proxyPortError") ||
@@ -163,6 +163,38 @@
             e.preventDefault();
             AJS.dialog2("#proxy-dialog").hide();
         });
+    }
+
+    function reloadPossibleJiraFields() {
+        function setTitle(text, filled) {
+            console.log("setTitle : " + text);
+            $("#octane-possible-fields-tooltip").attr("title", text);
+            AJS.$("#octane-possible-fields-tooltip").tooltip();
+            $("#octane-possible-fields-tooltip").toggleClass("aui-iconfont-info-filled", filled);
+
+        }
+
+        var workspaceId = $("#workspaceSelector").val();
+        if (workspaceId) {
+            setTitle("Searching...", false);
+            $.ajax({
+                url: octanePluginContext.octaneAdminBaseUrl + "workspace-config/possible-jira-fields?workspace-id=" + workspaceId,
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json"
+            }).done(function (data) {
+                if (data && data.length) {
+                    setTitle("Suggested ALM Octane fields: " + data.join(",  "), true);
+                } else {
+                    setTitle("No suggested fields are found.");
+                }
+            }).fail(function (request, status, error) {
+                setTitle.text("Failed to fetch suggested fields from ALM Octane: " + request.responseText, true);
+                console.error(request.responseText);
+            });
+        } else {
+            setTitle("Select a workspace to show the list of suggested mapping fields that include 'jira' in their name.", false);
+        }
     }
 
     function configureWorkspaceConfigurationDialog() {
@@ -194,6 +226,10 @@
                 $("#refreshOctaneEntityTypesSpinner").spinStop();
             });
         }
+
+        $("#workspaceSelector").change(function () {
+            reloadPossibleJiraFields();
+        });
 
         $("#config-dialog .affect-octane-entity-types").change(function () {
             reloadOctaneSupportedEntityTypes();
@@ -246,6 +282,8 @@
             AJS.$("#workspaceSelector").select2("destroy");
             AJS.$("#jiraIssueTypesSelector").select2("destroy");
             AJS.$("#jiraProjectsSelector").select2("destroy");
+
+            $("#octane-possible-fields").text("");
         }
 
         AJS.$("#dialog-submit-button").click(function (e) {
@@ -331,7 +369,13 @@
                     multiple: true,
                     data: octanePluginContext.createDialogData.projects,
                 });
+                AJS.$("#newSelector").auiSelect2({
+                    multiple: false,
+                    maximumselectionsize:1,
+                    tags:["red", "green", "blue"]
+                });
 
+                reloadPossibleJiraFields();
                 AJS.dialog2("#config-dialog").show();
             });
     }

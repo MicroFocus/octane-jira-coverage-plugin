@@ -174,6 +174,27 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     }
 
     @Override
+    public Set<String> getPossibleJiraFields(long workspaceId){
+        //https://mqalb011sngx.saas.hpe.com/api/shared_spaces/3004/workspaces/2002/metadata/fields?&query=%22field_type=%27string%27;is_user_defined=true;(entity_name+IN+%27feature%27,%27application_module%27,%27requirement_document%27,%27story%27)%22
+        long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
+        String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
+        Map<String, String> headers = new HashMap<>();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+
+        String queryCondition = OctaneQueryBuilder.create()
+                .addQueryCondition(new LogicalQueryPhrase("field_type", "string"))
+                .addQueryCondition(new LogicalQueryPhrase("is_user_defined", true))
+                .addQueryCondition(new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes()))
+                .build();
+
+        String collectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+        OctaneEntityCollection fields = OctaneEntityParser.parseCollection(collectionStr);
+        Set<String> foundJiraNames = fields.getData().stream().map(e -> e.getString("name")).filter(n->n.toLowerCase().contains("jira")).collect(Collectors.toSet());
+
+        return foundJiraNames;
+    }
+
+    @Override
     public void onOctaneConfigurationChanged() {
         reloadConfiguration();
     }
