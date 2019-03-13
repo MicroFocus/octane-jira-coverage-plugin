@@ -368,6 +368,8 @@ public class ConfigResource {
                         errorMsg = "Shared space '" + locationParts.getSpaceId() + "' does not exist.";
                     } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
                         errorMsg = "Network exception, proxy settings may be missing.";
+                    } else if (exc.getMessage().startsWith("Connection timed out")) {
+                        errorMsg = "Timed out exception, proxy settings may be misconfigured.";
                     } else {
                         errorMsg = "Exception " + exc.getClass().getName() + " : " + exc.getMessage();
                         if (exc.getCause() != null) {

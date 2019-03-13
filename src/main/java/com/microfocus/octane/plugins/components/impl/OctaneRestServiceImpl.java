@@ -95,7 +95,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
                 .addGroupBy("status")
                 .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity))))
                 .addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "run_suite")))
-                .addQueryCondition(new LogicalQueryPhrase("latest_pipeline_run", true))
+                //.addQueryCondition(new LogicalQueryPhrase("latest_pipeline_run", true))
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"));
         if (StringUtils.isNotEmpty(lastRunStartedFilter)) {
             //(started>'2019-02-24T00:00:00Z')

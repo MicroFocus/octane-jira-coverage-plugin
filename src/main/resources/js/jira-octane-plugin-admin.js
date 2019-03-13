@@ -16,7 +16,6 @@
         configureProxyDialog();
     });
 
-
     function configureWorkspaceConfigurationTable() {
         var ListReadView = AJS.RestfulTable.CustomReadView.extend({
             render: function (self) {
@@ -137,10 +136,9 @@
             //validation
             if (data.host) {
                 var validationFailed = false;
-                validationFailed = !validateConditionAndUpdateErrorField(data.host.toLowerCase().indexOf("http") !== 0,
-                    "Enter host name without http://", "#proxyHostError") || validationFailed;
-                validationFailed =
-                    !validateConditionAndUpdateErrorField((data.port && !isNaN(data.port)), "Port value must be a number.", "#proxyPortError") ||
+                validationFailed = !validateConditionAndUpdateErrorField(data.host.toLowerCase().indexOf("http") !== 0, "Enter host name without http://", "#proxyHostError") ||
+                    !validateConditionAndUpdateErrorField(!(/:\d+/.test(data.host)), "Enter host name without port", "#proxyHostError") || validationFailed;
+                validationFailed = !validateConditionAndUpdateErrorField((data.port && !isNaN(data.port)), "Port value must be a number.", "#proxyPortError") ||
                     !validateConditionAndUpdateErrorField((data.port >= 0 && data.port <= 65535), "Port must range from 0 to 65,535.", "#proxyPortError") ||
                     validationFailed;
 
@@ -167,7 +165,6 @@
 
     function reloadPossibleJiraFields() {
         function setTitle(text, filled) {
-            console.log("setTitle : " + text);
             $("#octane-possible-fields-tooltip").attr("title", text);
             AJS.$("#octane-possible-fields-tooltip").tooltip();
             $("#octane-possible-fields-tooltip").toggleClass("aui-iconfont-info-filled", filled);
@@ -274,6 +271,7 @@
         function closeDialog() {
             AJS.dialog2("#config-dialog").hide();
             octanePluginContext.saveClicked = false;
+            enableWorkspaceSubmitButton(true);
 
             AJS.$('#workspaceSelector').val(null).trigger('change');
             AJS.$('#jiraIssueTypesSelector').val(null).trigger('change');
@@ -292,6 +290,8 @@
             if (!validateRequiredFieldsFilled()) {
                 return;
             }
+
+            enableWorkspaceSubmitButton(false);
 
             //build model
             var modelForUpdate = {};
@@ -321,6 +321,7 @@
                 showWorkspaceStatus("Workspace configuration is saved successfully", true);
             }).fail(function (request, status, error) {
                 showWorkspaceStatus(request.responseText, false);
+                enableWorkspaceSubmitButton(true);
             });
         });
 
@@ -407,15 +408,18 @@
             $('.space-save-status').removeClass("aui-iconfont-error");
 
             $("#reloadSpinner").spin();
+            enableSpaceSaveButton(false);
 
             $.ajax({url: octanePluginContext.octaneAdminBaseUrl, type: "PUT", data: dataJson, dataType: "json", contentType: "application/json"
             }).done(function (msg) {
+                enableSpaceSaveButton(true);
                 showSpaceStatus("Space configuration is saved successfully", true);
                 $('.space-save-status').addClass("aui-iconfont-successful-build");
                 $("#reloadSpinner").spinStop();
 
             }).fail(function (request, status, error) {
                 console.log(status);
+                enableSpaceSaveButton(true);
                 var msg = request.responseText;
                 if(!msg && status && status === 'timeout'){
                     msg = "Timeout : possibly proxy settings are missing.";
@@ -424,7 +428,6 @@
                 showSpaceStatus(msg, false);
                 $('.space-save-status').addClass("aui-iconfont-error");
                 $("#reloadSpinner").spinStop();
-
             });
         }
     }
@@ -434,6 +437,24 @@
     var spaceErrorFlags = [];
     var workspaceErrorFlags = [];
     var proxyErrorFlags = [];
+
+    function enableWorkspaceSubmitButton(enable) {
+        enableButton("#dialog-submit-button", enable);
+    }
+
+    function enableSpaceSaveButton(enable) {
+        enableButton("#save-space-configuration", enable);
+    }
+
+    function enableButton(selector, enable) {
+        if (enable) {
+            AJS.$(selector).removeAttr("aria-disabled");
+            AJS.$(selector).removeAttr("disabled");
+        } else {
+            AJS.$(selector).prop("aria-disabled", "true");
+            AJS.$(selector).prop("disabled", true);
+        }
+    }
 
     function setProxyStatus(statusText, isSuccess) {
         showStatusFlag(statusText, isSuccess, proxyErrorFlags);

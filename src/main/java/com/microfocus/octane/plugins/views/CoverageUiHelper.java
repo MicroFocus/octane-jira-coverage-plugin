@@ -31,6 +31,7 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,17 +49,17 @@ public class CoverageUiHelper {
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
     private static final Logger log = LoggerFactory.getLogger(CoverageUiHelper.class);
 
+    //TEST TYPES
+    private static final TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "run_status_passed", "Passed", "#1aac60", 1);
+    private static final TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "run_status_failed", "Failed", "#e5004c", 2);
+    private static final TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "run_status_planned", "Planned", "#dddddd", 3);
+    private static final TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "run_status_skipped", "Skipped", "#5216ac", 4);
+    private static final TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "run_status_requires_attention", "Requires Attention", "#fcdb1f", 5);
+
+
     static {
-
         percentFormatter.setMinimumFractionDigits(1);
         percentFormatter.setMinimumFractionDigits(1);
-
-        //TEST TYPES
-        TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "run_status_passed", "Passed", "#1aac60", 1);
-        TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "run_status_failed", "Failed", "#e5004c", 2);
-        TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "run_status_planned", "Planned", "#dddddd", 3);
-        TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "run_status_skipped", "Skipped", "#5216ac", 4);
-        TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "run_status_requires_attention", "Requires Attention", "#fcdb1f", 5);
 
         //BY LOGICAL NAME
         testStatusDescriptors.put(passedStatus.getLogicalName(), passedStatus);
@@ -94,6 +95,21 @@ public class CoverageUiHelper {
     private static List<MapBasedObject> getCoverageGroups(OctaneRestService octaneRestService, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceId, null);
         Map<String, GroupEntity> id2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
+        coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
+
+        //Octane may return on coverage group without status - it will be assigned to skipped status
+        //if already skipped group exist - we will add count to it
+        //if skipped group not exist - we will create new one
+        Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
+        if (groupWithoutStatusOpt.isPresent()) {
+            if (id2group.containsKey(skippedStatus.getLogicalName())) {
+                GroupEntity grEntity = id2group.get(skippedStatus.getLogicalName());
+                grEntity.setCount(grEntity.getCount() + groupWithoutStatusOpt.get().getCount());
+            } else {
+                id2group.put(skippedStatus.getLogicalName(), groupWithoutStatusOpt.get());
+            }
+        }
+
         int total = id2group.values().stream().mapToInt(o -> o.getCount()).sum();
         List<MapBasedObject> groups = id2group.entrySet().stream()
                 .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptors.get(entry.getKey()), entry.getValue().getCount(), total))
@@ -209,7 +225,17 @@ public class CoverageUiHelper {
                 debugMap.put("error", String.format("RestStatusException %s, Error : %s ", e.getResponse().getStatusCode(), e.getMessage()));
             } catch (Exception e) {
                 log.error(String.format("Failed to fill ContextMap (%s) : %s", e.getClass().getName(), e.getMessage()));
-                debugMap.put("error", String.format("Error %s : %s %s", e.getClass().getName(), e.getMessage(), e.getCause() != null ? ", cause : " + e.getCause().getMessage() : ""));
+
+                String stackTrace = ExceptionUtils.getStackTrace(e);
+                int MAX_STACK_LENGTH = 600;
+                if (stackTrace != null && stackTrace.length() > MAX_STACK_LENGTH) {
+                    stackTrace = stackTrace.substring(0, MAX_STACK_LENGTH);
+                }
+
+                log.error("Error StackTrace : %s", stackTrace);
+
+                debugMap.put("error", String.format("%s : %s, cause : %s, stacktrace : %s", e.getClass().getName(),
+                        e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : null, stackTrace));
             }
         }
 
