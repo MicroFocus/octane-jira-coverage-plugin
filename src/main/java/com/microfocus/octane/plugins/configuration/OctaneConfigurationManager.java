@@ -317,7 +317,7 @@ public class OctaneConfigurationManager {
         }
 
         if (parameterValue == null) {
-            username2parameters.get(username).remove(parameterName, parameterValue);
+            username2parameters.get(username).remove(parameterName);
         } else {
             username2parameters.get(username).put(parameterName, parameterValue);
         }

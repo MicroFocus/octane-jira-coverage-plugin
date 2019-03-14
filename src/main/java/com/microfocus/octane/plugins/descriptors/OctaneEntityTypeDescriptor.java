@@ -52,10 +52,6 @@ public class OctaneEntityTypeDescriptor {
      */
     private String testReferenceField;
 
-    /**
-     * indicate how to get coverage by entity id or by path for hierarchical entity
-     */
-    private boolean hierarchicalEntity;
 
     public OctaneEntityTypeDescriptor(String typeName, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField) {
         this.typeName = typeName;
