@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microfocus.octane.plugins</groupId>
     <artifactId>jira-octane-plugin</artifactId>
-    <version>1.0.3.1</version>
+    <version>1.0.3.2</version>
     <organization>
         <name>Micro Focus ALM Octane Jira Plugin</name>
         <url>http://www.microfocus.com/</url>
