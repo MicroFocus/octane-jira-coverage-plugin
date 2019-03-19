@@ -25,7 +25,8 @@ Note:
  
 ## Widget Summary:
 The widget shows the number of tests related to the entity, and the summary of the last runs of these tests.
-Each test can be executed using more than one configuration, for example using different browsers. The widget shows the last run status for each of the configurations. As a result, an entity might have (for example) 1 test and 3 test runs, since each run reflects a different configuration.
+
+Each test can be executed using more than one configuration, for example using different browsers. The widget shows a summary of the last run status of all the configurations. As a result, an entity might have (for example) 1 test and 3 test runs, since each run reflects a different configuration.
 You can drill from the widget to the entity in ALM Octane, and to its related test details. 
 
 
