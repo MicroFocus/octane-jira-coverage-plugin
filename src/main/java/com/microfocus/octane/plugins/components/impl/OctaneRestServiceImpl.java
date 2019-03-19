@@ -94,7 +94,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
                 .addGroupBy("status")
                 .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity))))
-                .addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "run_suite")))
+                //.addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "run_suite")))
                 //.addQueryCondition(new LogicalQueryPhrase("latest_pipeline_run", true))
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"));
         if (StringUtils.isNotEmpty(lastRunStartedFilter)) {
@@ -118,7 +118,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         String queryParam = OctaneQueryBuilder.create()
                 .addQueryCondition(new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity)))
-                .addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "test_suite")))
+                //.addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "test_suite")))
                 .addPageSize(1)
                 .addSelectedFields("id")
                 .build();

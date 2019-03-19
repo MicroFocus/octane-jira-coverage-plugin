@@ -186,8 +186,12 @@
                     setTitle("No suggested fields are found.");
                 }
             }).fail(function (request, status, error) {
-                setTitle.text("Failed to fetch suggested fields from ALM Octane: " + request.responseText, true);
-                console.error(request.responseText);
+                var msg = request.responseText;
+                if(request.responseText && request.responseText.includes('platform.workspace_not_found')){
+                    msg = "Workspace " + workspaceId + "  is not accessible.";
+                    AJS.flag({type: 'error', close: 'auto', body: msg});
+                }
+                setTitle("Failed to fetch suggested fields from ALM Octane: " + msg, true);
             });
         } else {
             setTitle("Select a workspace to show the list of suggested mapping fields that include 'jira' in their name.", false);
