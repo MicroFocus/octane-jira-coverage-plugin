@@ -1,13 +1,13 @@
-#ALM Octane Test Coverage Plugin for Atlassian Jira
+# ALM Octane Test Coverage Plugin for Atlassian Jira
 
  
-##Overview:
+## Overview:
 The test coverage plugin enables you to see quality from ALM Octane within JIRA, for JIRA entities that have parallel ALM Octane features and users stories. 
 To do this, you need to have a user-defined field (UDF) in the feature or user story in ALM Octane which contains its corresponding JIRA ID. After you configure the plugin, JIRA shows the ALM Octane test coverage and latest run statuses. For example, this is useful if you manage development in JIRA, and QA in ALM Octane.
 
 The plugin is for JIRA on-premises versions 7.x and 8.x.
  
-##Configuration:
+## Configuration:
 The plugin configuration is for one ALM Octane space. You can configure multiple workspaces in this space. 
  
 1. Create a UDF of type string in your ALM Octane features and user stories, containing the entity’s JIRA ID.
@@ -23,14 +23,14 @@ Note:
 * If you experience connection problems, add a proxy in the upper right corner of the screen.
 * You can edit a workspace configuration using the ellipses (…) at the right of the workspace configuration table. 
  
-##Widget Summary:
+## Widget Summary:
 The widget shows the number of tests related to the entity, and the summary of the last runs of these tests.
 Each test can be executed using more than one configuration, for example using different browsers. The widget shows the last run status for each of the configurations. As a result, an entity might have (for example) 1 test and 3 test runs, since each run reflects a different configuration.
 You can drill from the widget to the entity in ALM Octane, and to its related test details. 
 
 
 
-##Dev
+## Dev
 
 The plugin is build by using [Atlassian Sdk](https://developer.atlassian.com/server/framework/atlassian-sdk/).
 
