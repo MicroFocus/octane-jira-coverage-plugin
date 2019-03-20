@@ -7,13 +7,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microfocus.octane.plugins</groupId>
     <artifactId>jira-octane-plugin</artifactId>
-    <version>1.0.3.3</version>
+    <version>1.0.3.4</version>
     <organization>
-        <name>Micro Focus ALM Octane Jira Plugin</name>
-        <url>http://www.microfocus.com/</url>
+        <name>Micro Focus ALM Octane</name>
+        <url>https://www.microfocus.com/en-us/products/alm-octane/overview</url>
     </organization>
-    <name>jira-octane-plugin</name>
-    <description>This is the com.microfocus.octane.plugins:jira-octane-plugin plugin for Atlassian JIRA.</description>
+    <name>ALM Octane Quality Insight Plugin for Jira</name>
+    <description>The test coverage plugin enables you to see quality from ALM Octane within JIRA, for JIRA issues that have parallel ALM Octane features and users stories.</description>
     <packaging>atlassian-plugin</packaging>
     <dependencies>
         <dependency>
