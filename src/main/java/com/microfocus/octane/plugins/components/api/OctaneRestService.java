@@ -29,7 +29,9 @@ public interface OctaneRestService {
 
     long SPACE_CONTEXT = -1;
 
-    GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, String lastRunStartedFilter);
+    GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
+
+    GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
 
     int getTotalTestsCount(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId);
 

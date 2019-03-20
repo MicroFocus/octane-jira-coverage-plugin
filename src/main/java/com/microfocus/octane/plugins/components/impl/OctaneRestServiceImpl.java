@@ -84,7 +84,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
     }
 
     @Override
-    public GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, String lastRunStartedFilter) {
+    public GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
 
         String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
@@ -94,13 +94,28 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
                 .addGroupBy("status")
                 .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity))))
-                //.addQueryCondition(new NegativeQueryPhrase(new LogicalQueryPhrase("subtype", "run_suite")))
-                //.addQueryCondition(new LogicalQueryPhrase("latest_pipeline_run", true))
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"));
-        if (StringUtils.isNotEmpty(lastRunStartedFilter)) {
-            //(started>'2019-02-24T00:00:00Z')
-            queryBuilder.addQueryCondition(new LogicalQueryPhrase("started", lastRunStartedFilter + "T00:00:00Z", ComparisonOperator.GreaterOrEqual));
-        }
+
+        String queryParam = queryBuilder.build();
+
+        String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
+        return col;
+    }
+
+    @Override
+    public GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
+        //https://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?&query=%22test_of_last_run={covered_requirement={path=%270000000001OT0002K9*%27}};!test_of_last_run={null};status={null}%22&group_by=native_status
+
+        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
+        Map<String, String> headers = new HashMap<>();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+
+        OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
+                .addGroupBy("native_status")
+                .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity))))
+                .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"))
+                .addQueryCondition(new RawTextQueryPhrase("status={null}"));
 
         String queryParam = queryBuilder.build();
 

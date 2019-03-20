@@ -93,8 +93,8 @@ public class CoverageUiHelper {
     }
 
     private static List<MapBasedObject> getCoverageGroups(OctaneRestService octaneRestService, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
-        GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceId, null);
-        Map<String, GroupEntity> id2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
+        GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceId);
+        Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
         coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
 
         //Octane may return on coverage group without status - it will be assigned to skipped status
@@ -102,21 +102,63 @@ public class CoverageUiHelper {
         //if skipped group not exist - we will create new one
         Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
         if (groupWithoutStatusOpt.isPresent()) {
-            if (id2group.containsKey(skippedStatus.getLogicalName())) {
-                GroupEntity grEntity = id2group.get(skippedStatus.getLogicalName());
-                grEntity.setCount(grEntity.getCount() + groupWithoutStatusOpt.get().getCount());
+            GroupEntityCollection coverageOfRunsWithoutStatus = octaneRestService.getNativeStatusCoverageForRunsWithoutStatus(octaneEntity, typeDescriptor, workspaceId);
+            int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(o -> o.getCount()).sum();
+            Map<String, Integer> runsWithoutStatusMap = new HashMap<>();
+            //validate that count in group without status equals to received runsWithoutStatusCount
+            if (groupWithoutStatusOpt.get().getCount() == runsWithoutStatusCount) {
+                coverageOfRunsWithoutStatus.getGroups().stream().forEach(gr -> {
+                    OctaneEntity listEntity = (OctaneEntity) gr.getValue();
+                    String convertedStatus = convertNativeStatusToStatus(listEntity.getId());
+                    appendCountToExistingGroupOrCreateNewOne(statusId2group, convertedStatus, gr.getCount());
+                });
             } else {
-                id2group.put(skippedStatus.getLogicalName(), groupWithoutStatusOpt.get());
+                //if we receive different numbers -> put all not-statused items to skipped
+                appendCountToExistingGroupOrCreateNewOne(statusId2group, skippedStatus.getLogicalName(), groupWithoutStatusOpt.get().getCount());
             }
         }
 
-        int total = id2group.values().stream().mapToInt(o -> o.getCount()).sum();
-        List<MapBasedObject> groups = id2group.entrySet().stream()
+        int total = statusId2group.values().stream().mapToInt(o -> o.getCount()).sum();
+        List<MapBasedObject> groups = statusId2group.entrySet().stream()
                 .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptors.get(entry.getKey()), entry.getValue().getCount(), total))
                 .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
                 .collect(Collectors.toList());
 
         return groups;
+    }
+
+    private static void appendCountToExistingGroupOrCreateNewOne(Map<String, GroupEntity> statusId2group, String groupName, int count) {
+        if (statusId2group.containsKey(groupName)) {
+            GroupEntity grEntity = statusId2group.get(groupName);
+            grEntity.setCount(grEntity.getCount() + count);
+        } else {
+            GroupEntity newGrEntity = new GroupEntity();
+            newGrEntity.setCount(count);
+
+            OctaneEntity listEntity = new OctaneEntity("list_node");
+            listEntity.put("id", groupName);
+            listEntity.put("logical_name", groupName);
+
+            newGrEntity.setValue(listEntity);
+
+            statusId2group.put(groupName, newGrEntity);
+        }
+    }
+
+    private static String convertNativeStatusToStatus(String nativeStatus) {
+
+        switch (nativeStatus) {
+            case "list_node.run_native_status.planned":
+                return plannedStatus.getLogicalName();
+            case "list_node.run_native_status.passed":
+                return passedStatus.getLogicalName();
+            case "list_node.run_native_status.failed":
+                return failedStatus.getLogicalName();
+            case "list_node.run_native_status.skipped":
+                return skippedStatus.getLogicalName();
+            default:
+                return needAttentionStatus.getLogicalName();
+        }
     }
 
     private static OctaneEntity tryFindMatchingOctaneEntity(OctaneRestService octaneRestService, WorkspaceConfiguration workspaceConfiguration, QueryPhrase jiraKeyCondition, AggregateDescriptor aggrDescriptor) {
