@@ -41,7 +41,7 @@
   </web-resource>
 
   <web-panel name="TestCoverageWebPanel" i18n-name-key="test-coverage-web-panel.name" key="test-coverage-web-panel" location="atl.jira.view.issue.right.context" weight="1">
-    <description key="test-coverage-web-panel.description">The panel shows test coverage information in ALM Octane for current item</description>
+    <description key="test-coverage-web-panel.description">The widget shows the number of tests related to the entity, and the summary of the last runs of these tests for current issue.</description>
     <context-provider class="com.microfocus.octane.plugins.views.TestCoverageWebPanel"/>
     <resource name="view" type="velocity" location="templates/test-coverage-web-panel.vm"/>
     <label key="test-coverage-web-panel.title"/>
@@ -49,7 +49,7 @@
     </condition>
   </web-panel>
   <web-panel name="TestCoverageWebPanelDetailTab" i18n-name-key="test-coverage-web-panel.name" key="test-coverage-web-panel-detail-tab" location="atl.gh.issue.details.tab" weight="1000">
-    <description key="test-coverage-web-panel.description">The panel shows test coverage information in ALM Octane for current item</description>
+    <description key="test-coverage-web-panel.description">The widget shows the number of tests related to the entity, and the summary of the last runs of these tests for current issue.</description>
     <context-provider class="com.microfocus.octane.plugins.views.TestCoverageWebPanel"/>
     <resource name="view" type="velocity" location="templates/test-coverage-web-panel.vm"/>
 
@@ -65,8 +65,8 @@
   <servlet key="admin-servlet" class="com.microfocus.octane.plugins.admin.AdminServlet">
     <url-pattern>/admin/octane</url-pattern>
   </servlet>
-  <web-item key="jira-menu-item" name="ALM Octane Configuration0" section="system.admin/globalsettings" weight="10" application="jira">
-    <description>Link to admin page.</description>
+  <web-item key="jira-menu-item" name="ALM Octane Configuration" section="system.admin/globalsettings" weight="10" application="jira">
+    <description>Link to configuration page.</description>
     <label key="ALM Octane Configuration" />
     <link linkId="alm-octane-config-link">/plugins/servlet/admin/octane</link>
   </web-item>
