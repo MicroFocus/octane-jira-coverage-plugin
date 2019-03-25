@@ -12,8 +12,8 @@
         <name>Micro Focus ALM Octane</name>
         <url>https://www.microfocus.com/en-us/products/alm-octane/overview</url>
     </organization>
-    <name>ALM Octane Quality Insight Plugin for Jira</name>
-    <description>The test coverage plugin enables you to see quality from ALM Octane within JIRA, for JIRA issues that have parallel ALM Octane features and users stories.</description>
+    <name>ALM Octane Jira Quality Insight Plugin</name>
+    <description>This ALM Octane plugin provides quality status directly on native Jira Epics, Stories, Issues or custom types.  Jira users are able to quickly understand issue test status, and are provided a direct link to quality centric views for related tests, test trends, CI history and other associated information / dashboards.</description>
     <packaging>atlassian-plugin</packaging>
     <dependencies>
         <dependency>
