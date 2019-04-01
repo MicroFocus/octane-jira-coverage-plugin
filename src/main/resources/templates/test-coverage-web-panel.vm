@@ -5,34 +5,26 @@
     });
 
     function load(counter) {
-        var panelEl = $("#octane-coverage-panel");
-        var panelExist = panelEl.length;
-        var panelResolved = panelExist && panelEl.hasClass("resolved");
-        if (!panelExist) {
-            if (counter < 20) {//max counter : 20times*250ms=5secs
+        var panelEl = $("#octane-coverage-panel:not(.resolved)");
+
+        if (!panelEl.length) {
+            if(counter < 30) {
                 setTimeout(function () {
                     load(counter + 1);
-                }, 250);
-            } else {
-                console.log("octane plugin counter is not resolved " + counter);
+                }, 150);
             }
-            return;
-        }
-        if (!panelResolved) {
-            $("#octane-coverage-panel").addClass("resolved");
-            console.log("octane plugin resolved successfully " + counter);
+        } else {
+            console.log("load successfully " + counter);
             var projectKey = panelEl.attr("project-key");
             var issueKey = panelEl.attr("issue-key");
             var issueId = panelEl.attr("issue-id");
-
+            $("#octane-coverage-panel").addClass("resolved");
             loadOctaneCoverageWidget(projectKey, issueKey, issueId);
-        } else {
-            console.log("octane plugin already resolved");
         }
     };
 </script>
 
-<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey" render-id="$renderId" class="ghx-container">
+<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey"  class="ghx-container">
     <div id="octane-entity-section" class="hidden">
         <ul class="item-details">
             <!-- octane  entity-->
