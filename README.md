@@ -41,9 +41,11 @@ Here are the SDK commands you'll use :
 
 * atlas-run         -- installs this plugin into the product and starts it on localhost
 * atlas-debug       -- same as atlas-run, but allows a debugger to attach at port 5005
-* atlas-mvn package -- after atlas-run or atlas-debug, reinstalls the plugin into the running product instance
 * atlas-package     -- packages the plugin artifacts 
 * atlas-help        -- prints description for all commands in the SDK
+
+//deprecated
+* atlas-mvn package -- after atlas-run or atlas-debug, reinstalls the plugin into the running product instance
 * atlas-mvn package spotbugs:check --spotbug check
 
 

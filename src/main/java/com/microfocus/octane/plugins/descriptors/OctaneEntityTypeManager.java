@@ -21,18 +21,22 @@ public class OctaneEntityTypeManager {
 
     private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByName = new HashMap<>();
     private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByLabel = new HashMap<>();
+    private static Map<String, OctaneEntityTypeDescriptor> typeDescriptorsByAlias = new HashMap<>();
     private static List<AggregateDescriptor> aggregators = new ArrayList<>();
 
     static {
         //TYPE
-        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas");
-        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content");
-        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content");
-        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement");
+        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("product_area", "application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas");
+        OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", null, "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content");
+        OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", null, "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content");
+        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", null, "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement");
 
         Arrays.asList(applicationModuleType, featureType, storyType, requirementType).forEach(descriptor -> {
             typeDescriptorsByName.put(descriptor.getTypeName(), descriptor);
             typeDescriptorsByLabel.put(descriptor.getLabel(), descriptor);
+            if (descriptor.getAlias() != null) {
+                typeDescriptorsByAlias.put(descriptor.getAlias(), descriptor);
+            }
         });
 
         aggregators.add(new AggregateDescriptor("work_items", Arrays.asList(featureType, storyType)));
@@ -41,7 +45,11 @@ public class OctaneEntityTypeManager {
     }
 
     public static OctaneEntityTypeDescriptor getByTypeName(String key) {
-        return typeDescriptorsByName.get(key);
+        OctaneEntityTypeDescriptor desc = typeDescriptorsByName.get(key);
+        if (desc == null) {
+            desc = typeDescriptorsByAlias.get(key);
+        }
+        return desc;
     }
 
     public static OctaneEntityTypeDescriptor getByLabel(String label) {

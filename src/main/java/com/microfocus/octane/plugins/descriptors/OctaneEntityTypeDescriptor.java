@@ -22,6 +22,11 @@ public class OctaneEntityTypeDescriptor {
      */
     private String typeName;
 
+    /***
+     * Alias
+     */
+    private String alias;
+
     /**
      * Short type key , for example US, F, etc
      */
@@ -53,8 +58,9 @@ public class OctaneEntityTypeDescriptor {
     private String testReferenceField;
 
 
-    public OctaneEntityTypeDescriptor(String typeName, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField) {
+    public OctaneEntityTypeDescriptor(String typeName, String alias, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField) {
         this.typeName = typeName;
+        this.alias = alias;
         this.label = label;
         this.typeAbbreviation = typeAbbreviation;
         this.typeColor = typeColor;
@@ -100,5 +106,10 @@ public class OctaneEntityTypeDescriptor {
 
     public String getLabel() {
         return label;
+    }
+
+
+    public String getAlias() {
+        return alias;
     }
 }

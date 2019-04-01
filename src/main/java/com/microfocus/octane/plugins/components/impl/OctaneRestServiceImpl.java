@@ -32,7 +32,6 @@ import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.*;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -162,8 +161,8 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         }
 
         Map<String, String> headers = new HashMap<>();
+        addOctaneClientType(headers);
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
-        headers.put("HPECLIENTTYPE", "HPE_CI_CLIENT");
 
         String responseStr = restConnector.httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
@@ -175,6 +174,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
         String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
         Map<String, String> headers = new HashMap<>();
+        addOctaneClientType(headers);
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
         QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", udfName);
@@ -188,12 +188,17 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
         return foundTypes;
     }
 
+    private void addOctaneClientType(Map<String, String> headers) {
+        headers.put("HPECLIENTTYPE", "HPE_CI_CLIENT");
+    }
+
     @Override
-    public Set<String> getPossibleJiraFields(long workspaceId){
+    public Set<String> getPossibleJiraFields(long workspaceId) {
         //https://mqalb011sngx.saas.hpe.com/api/shared_spaces/3004/workspaces/2002/metadata/fields?&query=%22field_type=%27string%27;is_user_defined=true;(entity_name+IN+%27feature%27,%27application_module%27,%27requirement_document%27,%27story%27)%22
         long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
         String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
         Map<String, String> headers = new HashMap<>();
+        addOctaneClientType(headers);
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
         String queryCondition = OctaneQueryBuilder.create()
@@ -204,7 +209,7 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         String collectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(collectionStr);
-        Set<String> foundJiraNames = fields.getData().stream().map(e -> e.getString("name")).filter(n->n.toLowerCase().contains("jira")).collect(Collectors.toSet());
+        Set<String> foundJiraNames = fields.getData().stream().map(e -> e.getString("name")).filter(n -> n.toLowerCase().contains("jira")).collect(Collectors.toSet());
 
         return foundJiraNames;
     }
