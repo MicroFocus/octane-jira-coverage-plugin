@@ -1,5 +1,6 @@
-# ALM Octane Test Coverage Plugin for Atlassian Jira
+# ALM Octane Quality Insight Plugin for Atlassian Jira
 
+[Official documentation](https://admhelp.microfocus.com/octane/en/all/jira-octane-plugin.htm)
  
 ## Overview:
 The test coverage plugin enables you to see quality from ALM Octane within JIRA, for JIRA issues that have parallel ALM Octane features and users stories. 
