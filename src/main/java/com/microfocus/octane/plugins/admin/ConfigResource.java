@@ -49,6 +49,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -364,12 +365,14 @@ public class ConfigResource {
                 } catch (Exception exc) {
                     if (exc.getMessage().contains("platform.not_authorized")) {
                         errorMsg = "Ensure your credentials are correct.";
-                    } else if (exc.getMessage().contains("type shared_space does not exist")) {
+                    } else if (exc.getMessage().contains("type shared_space does not exist") || exc.getMessage().contains("SharedSpaceNotFoundException")) {
                         errorMsg = "Shared space '" + locationParts.getSpaceId() + "' does not exist.";
                     } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
                         errorMsg = "Network exception, proxy settings may be missing.";
                     } else if (exc.getMessage().startsWith("Connection timed out")) {
                         errorMsg = "Timed out exception, proxy settings may be misconfigured.";
+                    } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
+                        errorMsg = "Location is not available.";
                     } else {
                         errorMsg = "Exception " + exc.getClass().getName() + " : " + exc.getMessage();
                         if (exc.getCause() != null) {
