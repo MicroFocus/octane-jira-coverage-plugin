@@ -44,9 +44,9 @@
 <p><button id="show-add-dialog" class="aui-button aui-button-link">Create</button> a new ALM Octane workspace configuration.</p>
 <table id="configuration-rest-table"></table>
 
-<section id="config-dialog" class="aui-dialog2 aui-dialog2-large aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
+<section id="workspace-config-dialog" class="aui-dialog2 aui-dialog2-large aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
     <header class="aui-dialog2-header">
-        <h2 class="aui-dialog2-header-main" id="config-dialog-title">
+        <h2 class="aui-dialog2-header-main" id="workspace-config-dialog-title">
             Create
         </h2>
     </header>

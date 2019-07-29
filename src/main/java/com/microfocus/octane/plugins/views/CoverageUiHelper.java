@@ -104,7 +104,6 @@ public class CoverageUiHelper {
         if (groupWithoutStatusOpt.isPresent()) {
             GroupEntityCollection coverageOfRunsWithoutStatus = octaneRestService.getNativeStatusCoverageForRunsWithoutStatus(octaneEntity, typeDescriptor, workspaceId);
             int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(o -> o.getCount()).sum();
-            Map<String, Integer> runsWithoutStatusMap = new HashMap<>();
             //validate that count in group without status equals to received runsWithoutStatusCount
             if (groupWithoutStatusOpt.get().getCount() == runsWithoutStatusCount) {
                 coverageOfRunsWithoutStatus.getGroups().stream().forEach(gr -> {

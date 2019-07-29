@@ -31,21 +31,17 @@
             renderOperations: function () {
                 var instance = this;
 
-
-                var editButton = $('<aui-item-link >Edit</aui-item-link>').click(function (e) {
+                var editButtonEl = $('<button class=\"aui-button aui-button-link\">Edit</button>').click(function (e) {
                     octanePluginContext.currentRow = instance;
                     showWorkspaceConfigDialog();
                 });
-                var deleteButton = $('<aui-item-link >Remove</aui-item-link>').click(function (e) {
+
+                var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
                     removeRow(instance);
                 });
 
-                //add action button
-                var dropdownId = "split-container-dropdown" + instance.model.id;
-                var topLevelEl = $('<div class="aui-buttons">' +
-                    '<button class="aui-button aui-dropdown2-trigger aui-button-split-more aui-button-subtle aui-button-compact" aria-controls="' + dropdownId + '">...</button></div>');
-                var bottomLevelEl = $('<aui-dropdown-menu id="' + dropdownId + '"></aui-dropdown-menu>').append(editButton, deleteButton);
-                var parentEl = $('<div></div>').append(topLevelEl, bottomLevelEl);
+
+                var parentEl = $('<div></div>').append(editButtonEl, deleteButtonEl);
                 return parentEl;
             }
         });
@@ -74,14 +70,6 @@
             views: {
                 row: MyRow
             }
-        });
-
-        AJS.$(document).bind(AJS.RestfulTable.Events.INITIALIZED, function () {
-            //update name of action column that is second from end
-            //last two columns don't have name : action column and loading indicator used when editing
-            $("#configuration-rest-table th:nth-last-child(2)").each(function () {
-                //this.innerHTML = 'Actions';
-            });
         });
     }
 
@@ -232,11 +220,11 @@
             reloadPossibleJiraFields();
         });
 
-        $("#config-dialog .affect-octane-entity-types").change(function () {
+        $("#workspace-config-dialog .affect-octane-entity-types").change(function () {
             reloadOctaneSupportedEntityTypes();
         });
 
-        $("#config-dialog .required").change(function () {
+        $("#workspace-config-dialog .required").change(function () {
             validateRequiredFieldsFilled();
         });
 
@@ -273,7 +261,7 @@
         }
 
         function closeDialog() {
-            AJS.dialog2("#config-dialog").hide();
+            AJS.dialog2("#workspace-config-dialog").hide();
             octanePluginContext.saveClicked = false;
             enableWorkspaceSubmitButton(true);
 
@@ -338,7 +326,7 @@
     function showWorkspaceConfigDialog(){
 
         var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspace-config/additional-data";
-        $("#config-dialog .error").text('');//clear previous error messages
+        $("#workspace-config-dialog .error").text('');//clear previous error messages
         if(octanePluginContext.currentRow){//is edit mode
             var model = octanePluginContext.currentRow.model.attributes;
             dataUrl = dataUrl + "?update-workspace-id=" + model.id;
@@ -349,12 +337,12 @@
             $("#jiraIssueTypesSelector").val(model.jiraIssueTypes);
             $("#jiraProjectsSelector").val(model.jiraProjects);
 
-            $('#config-dialog-title').text("Edit");//set dialog title
+            $('#workspace-config-dialog-title').text("Edit");//set dialog title
         } else {//new item
             $("#octaneUdf").val("");//populate default value for new item
             $('#workspaceSelector').prop('disabled', false);//enable workspace selector
 
-            $('#config-dialog-title').text("Create");//set dialog title
+            $('#workspace-config-dialog-title').text("Create");//set dialog title
         }
 
         $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
@@ -381,7 +369,7 @@
                 });
 
                 reloadPossibleJiraFields();
-                AJS.dialog2("#config-dialog").show();
+                AJS.dialog2("#workspace-config-dialog").show();
             });
     }
 
