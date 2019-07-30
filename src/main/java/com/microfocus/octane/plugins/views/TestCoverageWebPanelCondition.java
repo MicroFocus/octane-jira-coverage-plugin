@@ -42,7 +42,7 @@ public class TestCoverageWebPanelCondition implements Condition {
 
     @Override
     public boolean shouldDisplay(Map<String, Object> map) {
-        if (configManager.isValidConfiguration()) {
+        //if (configManager.isValidConfiguration()) {
             SpaceConfiguration spaceConfiguration = configManager.getConfiguration();
             Project project = (Project) map.get("project");
 
@@ -55,7 +55,7 @@ public class TestCoverageWebPanelCondition implements Condition {
                     return true;
                 }
             }
-        }
+        //}
 
         return false;
     }

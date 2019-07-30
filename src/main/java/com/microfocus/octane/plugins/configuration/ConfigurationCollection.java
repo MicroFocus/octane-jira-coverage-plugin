@@ -21,14 +21,23 @@ import java.util.List;
 public class ConfigurationCollection {
 
     private List<SpaceConfiguration> spaces;
+    private List<WorkspaceConfiguration> workspaces;
     private ProxyConfiguration proxy;
 
     public List<SpaceConfiguration> getSpaces() {
         return spaces;
     }
 
+    public List<WorkspaceConfiguration> getWorkspaces() {
+        return workspaces;
+    }
+
     public void setSpaces(List<SpaceConfiguration> spaces) {
         this.spaces = spaces;
+    }
+
+    public void setWorkspaces(List<WorkspaceConfiguration> workspaces) {
+        this.workspaces = workspaces;
     }
 
     public ProxyConfiguration getProxy() {

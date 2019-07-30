@@ -4,7 +4,7 @@
     padding: 0;
 }
 
-#configuration-rest-table .aui-restfultable-operations{
+#workspace-table .aui-restfultable-operations{
     width: 10px;
 }
 
@@ -15,17 +15,17 @@
     margin: 0 5px 0 -30px;
 }
 
-#workspace-config-dialog div.description{
+#workspace-dialog div.description{
     margin-top: 2px;
 }
 
-#workspace-config-dialog .select2-choice {
+#workspace-dialog .select2-choice {
     background-color: #fff;
     border-color: rgb(193, 199, 208);
     color: rgb(23, 43, 77);
 }
 
-#workspace-config-dialog .select2-container-disabled .select2-choice{
+#workspace-dialog .select2-container-disabled .select2-choice{
     color: #97a0af;
     background-color: rgb(244, 245, 247);
     padding-left: 5px;
@@ -40,7 +40,7 @@
     float: right;
 }
 
-#workspace-config-dialog .field-group .error{
+#workspace-dialog .field-group .error{
     font-size: 12px;
 }
 

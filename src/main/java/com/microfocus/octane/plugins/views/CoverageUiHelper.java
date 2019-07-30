@@ -17,8 +17,9 @@ package com.microfocus.octane.plugins.views;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.OctaneRestManager;
+import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.AggregateDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
@@ -92,8 +93,8 @@ public class CoverageUiHelper {
         return outputEntity;
     }
 
-    private static List<MapBasedObject> getCoverageGroups(OctaneRestService octaneRestService, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
-        GroupEntityCollection coverage = octaneRestService.getCoverage(octaneEntity, typeDescriptor, workspaceId);
+    private static List<MapBasedObject> getCoverageGroups(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
+        GroupEntityCollection coverage = OctaneRestManager.getCoverage(sc, octaneEntity, typeDescriptor, workspaceId);
         Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
         coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
 
@@ -102,7 +103,7 @@ public class CoverageUiHelper {
         //if skipped group not exist - we will create new one
         Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
         if (groupWithoutStatusOpt.isPresent()) {
-            GroupEntityCollection coverageOfRunsWithoutStatus = octaneRestService.getNativeStatusCoverageForRunsWithoutStatus(octaneEntity, typeDescriptor, workspaceId);
+            GroupEntityCollection coverageOfRunsWithoutStatus = OctaneRestManager.getNativeStatusCoverageForRunsWithoutStatus(sc, octaneEntity, typeDescriptor, workspaceId);
             int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(o -> o.getCount()).sum();
             //validate that count in group without status equals to received runsWithoutStatusCount
             if (groupWithoutStatusOpt.get().getCount() == runsWithoutStatusCount) {
@@ -160,7 +161,7 @@ public class CoverageUiHelper {
         }
     }
 
-    private static OctaneEntity tryFindMatchingOctaneEntity(OctaneRestService octaneRestService, WorkspaceConfiguration workspaceConfiguration, QueryPhrase jiraKeyCondition, AggregateDescriptor aggrDescriptor) {
+    private static OctaneEntity tryFindMatchingOctaneEntity(SpaceConfiguration sc, WorkspaceConfiguration wc, QueryPhrase jiraKeyCondition, AggregateDescriptor aggrDescriptor) {
         try {
             List<QueryPhrase> conditions = new ArrayList<>();
             conditions.add(jiraKeyCondition);
@@ -175,7 +176,7 @@ public class CoverageUiHelper {
                 conditions.add(subTypeCondition);
             }
 
-            OctaneEntityCollection entities = octaneRestService.getEntitiesByCondition(workspaceConfiguration.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields);
+            OctaneEntityCollection entities = OctaneRestManager.getEntitiesByCondition(sc, wc.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields);
             if (!entities.getData().isEmpty()) {
                 OctaneEntity octaneEntity = entities.getData().get(0);
                 return octaneEntity;
@@ -190,7 +191,7 @@ public class CoverageUiHelper {
         return null;
     }
 
-    public static Map<String, Object> buildCoverageContextMap(OctaneRestService octaneRestService, String projectKey, String issueKey, String issueId) {
+    public static Map<String, Object> buildCoverageContextMap(String projectKey, String issueKey, String issueId) {
 
         Map<String, Object> contextMap = new HashMap<>();
         Map<String, Object> debugMap = new HashMap<>();
@@ -198,8 +199,9 @@ public class CoverageUiHelper {
         contextMap.put("issueKey", issueKey);
 
         long startTotal = System.currentTimeMillis();
-        if (configurationManager.isValidConfiguration()) {
+        //if (configurationManager.isValidConfiguration()) {
             try {
+                SpaceConfiguration sc = configurationManager.getConfiguration();
                 WorkspaceConfiguration workspaceConfig = configurationManager.getConfiguration().getWorkspaces().stream()
                         .filter(w -> w.getJiraProjects().contains(projectKey)).findFirst().get();//we use get without validation because validation is done in condition
 
@@ -215,7 +217,7 @@ public class CoverageUiHelper {
                     }
                     if (isMatch) {
                         long start = System.currentTimeMillis();
-                        OctaneEntity octaneEntity = tryFindMatchingOctaneEntity(octaneRestService, workspaceConfig, jiraKeyCondition, aggDescriptor);
+                        OctaneEntity octaneEntity = tryFindMatchingOctaneEntity(sc, workspaceConfig, jiraKeyCondition, aggDescriptor);
                         long duration = System.currentTimeMillis() - start;
                         perfMap.put(aggDescriptor.getCollectionName(), duration);
                         if (octaneEntity != null) {
@@ -224,19 +226,19 @@ public class CoverageUiHelper {
 
                             //totalTestsCount
                             start = System.currentTimeMillis();
-                            long totalTestCount = octaneRestService.getTotalTestsCount(octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId());
+                            long totalTestCount = OctaneRestManager.getTotalTestsCount(sc, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId());
                             perfMap.put("totalTestsCount", System.currentTimeMillis() - start);
 
                             //coverage
                             start = System.currentTimeMillis();
-                            List<MapBasedObject> coverageGroups = getCoverageGroups(octaneRestService, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId());
+                            List<MapBasedObject> coverageGroups = getCoverageGroups(sc, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId());
                             perfMap.put("coverage", System.currentTimeMillis() - start);
 
                             //fill context map
-                            octaneEntity.put("url", typeDescriptor.buildEntityUrl(workspaceConfig.getSpaceConfiguration().getLocationParts().getBaseUrl(),
-                                    workspaceConfig.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
-                            octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(workspaceConfig.getSpaceConfiguration().getLocationParts().getBaseUrl(),
-                                    workspaceConfig.getSpaceConfiguration().getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
+                            octaneEntity.put("url", typeDescriptor.buildEntityUrl(sc.getLocationParts().getBaseUrl(),
+                                    sc.getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
+                            octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(sc.getLocationParts().getBaseUrl(),
+                                    sc.getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
                             octaneEntity.put("typeAbbreviation", typeDescriptor.getTypeAbbreviation());
                             octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
                             contextMap.put("octaneEntity", octaneEntity);
@@ -278,7 +280,7 @@ public class CoverageUiHelper {
                 debugMap.put("error", String.format("%s : %s, cause : %s, stacktrace : %s", e.getClass().getName(),
                         e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : null, stackTrace));
             }
-        }
+        //}
 
         if (!contextMap.containsKey("status")) {
             contextMap.put("status", "noValidConfiguration");

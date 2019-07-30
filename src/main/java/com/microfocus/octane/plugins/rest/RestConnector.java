@@ -16,7 +16,7 @@
 package com.microfocus.octane.plugins.rest;
 
 import com.google.common.base.Charsets;
-import com.microfocus.octane.plugins.components.api.Constants;
+import com.microfocus.octane.plugins.configuration.PluginConstants;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -67,7 +67,7 @@ public class RestConnector {
         //Get LWSSO COOKIE
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON);
-        Response authResponse = doHttp("POST", Constants.URL_AUTHENTICATION, null, jsonString, headers, true);
+        Response authResponse = doHttp("POST", PluginConstants.URL_AUTHENTICATION, null, jsonString, headers, true);
         if (authResponse.getStatusCode() == HttpStatus.SC_OK) {
             ret = true;
         }

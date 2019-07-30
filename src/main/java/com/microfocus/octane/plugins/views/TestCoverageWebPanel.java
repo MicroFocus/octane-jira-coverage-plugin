@@ -22,7 +22,6 @@ import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContex
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +32,6 @@ import java.util.Map;
 public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
     private static final Logger log = LoggerFactory.getLogger(TestCoverageWebPanel.class);
-    private OctaneRestService octaneRestService;
-
-
-    public TestCoverageWebPanel(OctaneRestService octaneRestService) {
-        this.octaneRestService = octaneRestService;
-    }
-
 
     @Override
     public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {

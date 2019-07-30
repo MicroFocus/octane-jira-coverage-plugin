@@ -13,27 +13,22 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.configuration;
+package com.microfocus.octane.plugins.configuration.v1_3;
 
 
-import com.microfocus.octane.plugins.rest.RestConnector;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import com.microfocus.octane.plugins.configuration.LocationParts;
 
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+
 public class SpaceConfiguration {
 
-    private String name;
     private String location;
     private LocationParts locationParts;
     private String clientId;
     private String clientSecret;
-    private String id;
 
-    @JsonIgnore
-    private RestConnector restConnector;
+    private String id;
 
     private List<WorkspaceConfiguration> workspaces;
 
@@ -41,70 +36,47 @@ public class SpaceConfiguration {
         return location;
     }
 
-    public SpaceConfiguration setLocation(String location) {
+    public void setLocation(String location) {
         this.location = location;
-        return this;
     }
 
     public String getClientSecret() {
         return clientSecret;
     }
 
-    public SpaceConfiguration setClientSecret(String clientSecret) {
+    public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
-        return this;
     }
 
     public String getClientId() {
         return clientId;
     }
 
-    public SpaceConfiguration setClientId(String clientId) {
+    public void setClientId(String clientId) {
         this.clientId = clientId;
-        return this;
     }
 
     public String getId() {
         return id;
     }
 
-    public SpaceConfiguration setId(String id) {
+    public void setId(String id) {
         this.id = id;
-        return this;
     }
 
     public List<WorkspaceConfiguration> getWorkspaces() {
         return workspaces;
     }
 
-    public SpaceConfiguration setWorkspaces(List<WorkspaceConfiguration> workspaces) {
+    public void setWorkspaces(List<WorkspaceConfiguration> workspaces) {
         this.workspaces = workspaces;
-        return this;
     }
 
     public LocationParts getLocationParts() {
         return locationParts;
     }
 
-    public SpaceConfiguration setLocationParts(LocationParts locationParts) {
+    public void setLocationParts(LocationParts locationParts) {
         this.locationParts = locationParts;
-        return this;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public SpaceConfiguration setName(String name) {
-        this.name = name;
-        return this;
-    }
-
-    @JsonIgnore
-    public RestConnector getRestConnector() {
-        if (restConnector == null) {
-            restConnector = ConfigurarionUtil.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
-        }
-        return restConnector;
     }
 }

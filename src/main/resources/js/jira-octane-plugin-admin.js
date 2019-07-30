@@ -1,4 +1,3 @@
-
 (function ($) { // this closure helps us keep our variables to ourselves.
     // This pattern is known as an "iife" - immediately invoked function expression
     var octanePluginContext = {};
@@ -9,14 +8,63 @@
     // but may be helpful for AJAX that provides secondary content.
     $(document).ready(function () {
         window.onbeforeunload = null;//Disable “Changes you made may not be saved” pop-up window
-        configureWorkspaceConfigurationTable();
-        loadSpaceConfiguration();
+        configureSpaceDialog();
+        configureSpaceTable();
         configureSpaceButtons();
-        configureWorkspaceConfigurationDialog();
+
+        configureWorkspaceDialog();
+        //configureWorkspaceTable();
         configureProxyDialog();
     });
 
-    function configureWorkspaceConfigurationTable() {
+    function configureSpaceTable() {
+
+        var MyRow = AJS.RestfulTable.Row.extend({
+            renderOperations: function () {
+                var instance = this;
+
+                var editButtonEl = $('<button class=\"aui-button aui-button-link\">Edit</button>').click(function (e) {
+                    showSpaceDialog(instance);
+                });
+
+                var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
+                    removeRow(instance);
+                });
+
+                var testConnectionButtonEl = $('<button class=\"aui-button aui-button-link\">Test Connection</button>').click(function (e) {
+
+                });
+
+                var parentEl = $('<div></div>').append(editButtonEl, deleteButtonEl, testConnectionButtonEl);
+                return parentEl;
+            }
+        });
+
+        octanePluginContext.configRestTable = new AJS.RestfulTable({
+            el: jQuery("#space-table"),
+            resources: {
+                all: octanePluginContext.octaneAdminBaseUrl + "spaces"
+            },
+            columns: [
+                {id: "name", header: "Name"},
+                {id: "location", header: "Location"},
+                {id: "clientId", header: "Client ID"}
+
+            ],
+            autoFocus: false,
+            allowEdit: false,
+            allowReorder: false,
+            allowCreate: false,
+            allowDelete: false,
+            noEntriesMsg: "No space configuration is defined.",
+            loadingMsg: "Loading ...",
+            views: {
+                row: MyRow
+            }
+        });
+    }
+
+    function configureWorkspaceTable() {
         var ListReadView = AJS.RestfulTable.CustomReadView.extend({
             render: function (self) {
                 var output = _.reduce(self.value, function (memo, current) {
@@ -32,8 +80,7 @@
                 var instance = this;
 
                 var editButtonEl = $('<button class=\"aui-button aui-button-link\">Edit</button>').click(function (e) {
-                    octanePluginContext.currentRow = instance;
-                    showWorkspaceConfigDialog();
+                    showWorkspaceDialog(instance);
                 });
 
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
@@ -47,7 +94,7 @@
         });
 
         octanePluginContext.configRestTable = new AJS.RestfulTable({
-            el: jQuery("#configuration-rest-table"),
+            el: jQuery("#workspace-table"),
             resources: {
                 all: octanePluginContext.octaneAdminBaseUrl + "workspace-config/all",
                 self: octanePluginContext.octaneAdminBaseUrl + "workspace-config/self"
@@ -73,7 +120,7 @@
         });
     }
 
-    function removeRow(row){
+    function removeRow(row) {
         $("#workspace-to-delete").text(row.model.attributes.workspaceName);//update workspace name in dialog text
 
         AJS.dialog2("#warning-dialog").show();
@@ -81,7 +128,8 @@
             e.preventDefault();
             AJS.dialog2("#warning-dialog").hide();
 
-            $.ajax({url: octanePluginContext.configRestTable.options.resources.self +"/" + row.model.id, type: "DELETE",
+            $.ajax({
+                url: octanePluginContext.configRestTable.options.resources.self + "/" + row.model.id, type: "DELETE",
             }).done(function () {
                 octanePluginContext.configRestTable.removeRow(row);
             });
@@ -93,7 +141,7 @@
         });
     }
 
-    function configureProxyDialog(){
+    function configureProxyDialog() {
         AJS.$("#show-proxy-settings").click(function (e) {
             e.preventDefault();
             $("#proxy-dialog .error").text('');//clear previous error messages
@@ -136,7 +184,12 @@
             }
 
             var myJSON = JSON.stringify(data);
-            $.ajax({url: octanePluginContext.octaneAdminBaseUrl + "proxy", type: "PUT", data: myJSON, dataType: "json", contentType: "application/json"
+            $.ajax({
+                url: octanePluginContext.octaneAdminBaseUrl + "proxy",
+                type: "PUT",
+                data: myJSON,
+                dataType: "json",
+                contentType: "application/json"
             }).done(function (msg) {
                 AJS.dialog2("#proxy-dialog").hide();
                 setProxyStatus("Proxy settings are saved successfully", true);
@@ -175,7 +228,7 @@
                 }
             }).fail(function (request, status, error) {
                 var msg = request.responseText;
-                if(request.responseText && request.responseText.includes('platform.workspace_not_found')){
+                if (request.responseText && request.responseText.includes('platform.workspace_not_found')) {
                     msg = "Workspace " + workspaceId + "  is not accessible.";
                     AJS.flag({type: 'error', close: 'auto', body: msg});
                 }
@@ -186,7 +239,15 @@
         }
     }
 
-    function configureWorkspaceConfigurationDialog() {
+    function configureSpaceDialog() {
+        AJS.$("#show-space-dialog").click(function (e) {
+            e.preventDefault();
+            showSpaceDialog();
+
+        });
+    }
+
+    function configureWorkspaceDialog() {
         octanePluginContext.createDialogData = {};
         octanePluginContext.saveClicked = false;
 
@@ -206,7 +267,7 @@
                 dataType: "json",
                 contentType: "application/json"
             }).done(function (data) {
-                setTimeout(function() {
+                setTimeout(function () {
                     $("#refreshOctaneEntityTypesSpinner").spinStop();
                     $("#octaneEntityTypes").val(data);
                     validateRequiredFieldsFilled();
@@ -220,11 +281,11 @@
             reloadPossibleJiraFields();
         });
 
-        $("#workspace-config-dialog .affect-octane-entity-types").change(function () {
+        $("#workspace-dialog .affect-octane-entity-types").change(function () {
             reloadOctaneSupportedEntityTypes();
         });
 
-        $("#workspace-config-dialog .required").change(function () {
+        $("#workspace-dialog .required").change(function () {
             validateRequiredFieldsFilled();
         });
 
@@ -240,14 +301,14 @@
             $("div.select2-search input.select2-input").attr("tabindex", "0").focus();
         });
 
-        AJS.$("#show-add-dialog").click(function (e) {
+        AJS.$("#show-workspace-dialog").click(function (e) {
             e.preventDefault();
-            octanePluginContext.currentRow = null;
-            showWorkspaceConfigDialog();
+            octanePluginContext.workspaceCurrentRow = null;
+            showWorkspaceDialog();
         });
 
-        function validateRequiredFieldsFilled(){
-            if(!octanePluginContext.saveClicked){
+        function validateRequiredFieldsFilled() {
+            if (!octanePluginContext.saveClicked) {
                 return true;
             }
 
@@ -261,7 +322,7 @@
         }
 
         function closeDialog() {
-            AJS.dialog2("#workspace-config-dialog").hide();
+            AJS.dialog2("#workspace-dialog").hide();
             octanePluginContext.saveClicked = false;
             enableWorkspaceSubmitButton(true);
 
@@ -291,20 +352,29 @@
             modelForUpdate.workspaceName = $("#workspaceSelector").select2('data').text;
             modelForUpdate.octaneUdf = $("#octaneUdf").attr("value");
             modelForUpdate.octaneEntityTypes = ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(",") : []; //if empty value - send empty array
-            modelForUpdate.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
-            modelForUpdate.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {return item.id;});//convert selected objects to array of strings
+            modelForUpdate.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
+                return item.id;
+            });//convert selected objects to array of strings
+            modelForUpdate.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {
+                return item.id;
+            });//convert selected objects to array of strings
 
             //send
             var myJSON = JSON.stringify(modelForUpdate);
-            $.ajax({url: octanePluginContext.configRestTable.options.resources.self, type: "POST", data: myJSON, dataType: "json", contentType: "application/json"
+            $.ajax({
+                url: octanePluginContext.configRestTable.options.resources.self,
+                type: "POST",
+                data: myJSON,
+                dataType: "json",
+                contentType: "application/json"
             }).done(function (msg) {
-                if (octanePluginContext.currentRow) {//is edit mode
-                    var rowModel = octanePluginContext.currentRow.model.attributes;
+                if (octanePluginContext.workspaceCurrentRow) {//is edit mode
+                    var rowModel = octanePluginContext.workspaceCurrentRow.model.attributes;
                     rowModel.octaneUdf = modelForUpdate.octaneUdf;
                     rowModel.octaneEntityTypes = modelForUpdate.octaneEntityTypes;
                     rowModel.jiraIssueTypes = modelForUpdate.jiraIssueTypes;
                     rowModel.jiraProjects = modelForUpdate.jiraProjects;
-                    octanePluginContext.currentRow.render();
+                    octanePluginContext.workspaceCurrentRow.render();
                 } else {//new mode
                     octanePluginContext.configRestTable.addRow(modelForUpdate, 0);
                 }
@@ -323,12 +393,12 @@
         });
     }
 
-    function showWorkspaceConfigDialog(){
-
+    function showWorkspaceDialog() {
+        octanePluginContext.workspaceCurrentRow = instance;
         var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspace-config/additional-data";
-        $("#workspace-config-dialog .error").text('');//clear previous error messages
-        if(octanePluginContext.currentRow){//is edit mode
-            var model = octanePluginContext.currentRow.model.attributes;
+        $("#workspace-dialog .error").text('');//clear previous error messages
+        if (octanePluginContext.workspaceCurrentRow) {//is edit mode
+            var model = octanePluginContext.workspaceCurrentRow.model.attributes;
             dataUrl = dataUrl + "?update-workspace-id=" + model.id;
             $('#workspaceSelector').val([model.id]);
             $('#workspaceSelector').prop('disabled', true); //disable workspace selector
@@ -337,12 +407,12 @@
             $("#jiraIssueTypesSelector").val(model.jiraIssueTypes);
             $("#jiraProjectsSelector").val(model.jiraProjects);
 
-            $('#workspace-config-dialog-title').text("Edit");//set dialog title
+            $('#workspace-dialog-title').text("Edit");//set dialog title
         } else {//new item
             $("#octaneUdf").val("");//populate default value for new item
             $('#workspaceSelector').prop('disabled', false);//enable workspace selector
 
-            $('#workspace-config-dialog-title').text("Create");//set dialog title
+            $('#workspace-dialog-title').text("Create");//set dialog title
         }
 
         $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
@@ -364,26 +434,43 @@
                 });
                 AJS.$("#newSelector").auiSelect2({
                     multiple: false,
-                    maximumselectionsize:1,
-                    tags:["red", "green", "blue"]
+                    maximumselectionsize: 1,
+                    tags: ["red", "green", "blue"]
                 });
 
                 reloadPossibleJiraFields();
-                AJS.dialog2("#workspace-config-dialog").show();
+                AJS.dialog2("#workspace-dialog").show();
             });
     }
 
-    function loadSpaceConfiguration() {
-        $.ajax({url: octanePluginContext.octaneAdminBaseUrl, dataType: "json"})
-            .done(function (config) { // when the configuration is returned...
-                // ...populate the form.
-                $("#clientId").val(config.clientId);
-                $("#clientSecret").val(config.clientSecret);
-                $("#location").val(config.location);
-            });
+    function showSpaceDialog(rowForEdit) {
+        console.log("showSpaceDialog", rowForEdit);
+        octanePluginContext.spaceCurrentRow = rowForEdit;
+        var isEditMode = !!rowForEdit;
+        console.log("showSpaceDialog isEditMode", isEditMode);
+        $("#space-dialog .error").text('');//clear previous error messages
+        if (isEditMode) {//is edit mode
+            var model = rowForEdit.model.attributes;
+            $("#name").val(model.name);
+            $("#location").val(model.location);
+            $("#clientId").val(model.clientId);
+            $("#clientSecret").val(model.clientSecred);
+
+            $('#space-dialog-title').text("Edit");//set dialog title
+        } else {//new item
+            $("#name").val("");
+            $("#location").val("")
+            $("#clientId").val("")
+            $("#clientSecret").val("")
+
+
+            $('#space-dialog-title').text("Create");//set dialog title
+        }
+
+        AJS.dialog2("#space-dialog").show();
     }
 
-    function configureSpaceButtons(){
+    function configureSpaceButtons() {
         AJS.$("#save-space-configuration").click(function () {
             updateSpaceConfig();
         });
@@ -392,7 +479,7 @@
             var data = {
                 location: $("#location").attr("value"),
                 clientId: $("#clientId").attr("value"),
-                clientSecret: $("#clientSecret").attr("value"),
+                clientSecret: $("#clientSecret").attr("value")
             };
 
             var dataJson = JSON.stringify(data);
@@ -402,7 +489,12 @@
             $("#reloadSpinner").spin();
             enableSpaceSaveButton(false);
 
-            $.ajax({url: octanePluginContext.octaneAdminBaseUrl, type: "PUT", data: dataJson, dataType: "json", contentType: "application/json"
+            $.ajax({
+                url: octanePluginContext.octaneAdminBaseUrl,
+                type: "PUT",
+                data: dataJson,
+                dataType: "json",
+                contentType: "application/json"
             }).done(function (msg) {
                 enableSpaceSaveButton(true);
                 showSpaceStatus("Space configuration is saved successfully", true);
@@ -413,7 +505,7 @@
                 console.log(status);
                 enableSpaceSaveButton(true);
                 var msg = request.responseText;
-                if(!msg && status && status === 'timeout'){
+                if (!msg && status && status === 'timeout') {
                     msg = "Timeout : possibly proxy settings are missing.";
                 }
 
@@ -423,8 +515,6 @@
             });
         }
     }
-
-
 
     var spaceErrorFlags = [];
     var workspaceErrorFlags = [];
@@ -474,11 +564,11 @@
         }
     }
 
-    function validateMissingRequiredField(value, errorSelector){
+    function validateMissingRequiredField(value, errorSelector) {
         return validateConditionAndUpdateErrorField(value, 'Value is missing', errorSelector);
     }
 
-    function validateConditionAndUpdateErrorField(condition, errorMessage, errorSelector){
+    function validateConditionAndUpdateErrorField(condition, errorMessage, errorSelector) {
         if (!condition) {
             $(errorSelector).text(errorMessage);
             return false;

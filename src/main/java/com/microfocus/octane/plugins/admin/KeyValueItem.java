@@ -22,8 +22,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement()
 @XmlAccessorType(XmlAccessType.FIELD)
-
-public class Select2ResultItem {
+public class KeyValueItem {
 
     @XmlElement(name = "id")
     private String id;
@@ -32,9 +31,13 @@ public class Select2ResultItem {
     private String text;
 
 
-    public Select2ResultItem(String id, String text) {
+    public KeyValueItem(String id, String text) {
         this.text = text;
         this.id = id;
+    }
+
+    public static KeyValueItem create(String id, String text) {
+        return new KeyValueItem(id, text);
     }
 
     public String getText() {
@@ -47,6 +50,6 @@ public class Select2ResultItem {
 
     @Override
     public String toString() {
-        return id +" : " + text;
+        return id + " : " + text;
     }
 }

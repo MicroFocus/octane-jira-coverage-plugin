@@ -19,7 +19,6 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public class ParamsResource {
 
 
     @Inject
-    public ParamsResource(UserManager userManager, OctaneRestService octaneRestService) {
+    public ParamsResource(UserManager userManager, OctaneRestManager octaneRestManager) {
         this.userManager = userManager;
     }
 

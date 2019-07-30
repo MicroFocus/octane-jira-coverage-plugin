@@ -26,13 +26,13 @@ import java.util.List;
 public class WorkspaceConfigurationOutgoing {
 
     @XmlElement(name = "id")
-    private long id;
+    private String id;
 
-    @XmlElement(name = "workspaceId")
-    private long workspaceId;
+    @XmlElement(name = "spaceConfig")
+    private KeyValueItem spaceConfig;
 
-    @XmlElement(name = "workspaceName")
-    private String workspaceName;
+    @XmlElement(name = "workspace")
+    private KeyValueItem workspace;
 
     @XmlElement(name = "octaneUdf")
     private String octaneUdf;
@@ -46,21 +46,12 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "jiraProjects")
     private List<String> jiraProjects;
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
-    public WorkspaceConfigurationOutgoing setId(long id) {
+    public WorkspaceConfigurationOutgoing setId(String id) {
         this.id = id;
-        return this;
-    }
-
-    public String getWorkspaceName() {
-        return workspaceName;
-    }
-
-    public WorkspaceConfigurationOutgoing setWorkspaceName(String workspaceName) {
-        this.workspaceName = workspaceName;
         return this;
     }
 
@@ -72,7 +63,6 @@ public class WorkspaceConfigurationOutgoing {
         this.octaneUdf = octaneUdf;
         return this;
     }
-
 
     public List<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
@@ -101,12 +91,22 @@ public class WorkspaceConfigurationOutgoing {
         return this;
     }
 
-    public long getWorkspaceId() {
-        return workspaceId;
+
+    public KeyValueItem getSpaceConfig() {
+        return spaceConfig;
     }
 
-    public WorkspaceConfigurationOutgoing setWorkspaceId(long workspaceId) {
-        this.workspaceId = workspaceId;
+    public WorkspaceConfigurationOutgoing setSpaceConfig(KeyValueItem spaceConfig) {
+        this.spaceConfig = spaceConfig;
+        return this;
+    }
+
+    public KeyValueItem getWorkspace() {
+        return workspace;
+    }
+
+    public WorkspaceConfigurationOutgoing setWorkspace(KeyValueItem workspace) {
+        this.workspace = workspace;
         return this;
     }
 }
