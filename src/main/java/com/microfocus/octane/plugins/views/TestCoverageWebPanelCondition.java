@@ -20,7 +20,7 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.project.Project;
 import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.web.Condition;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 
@@ -29,10 +29,10 @@ import java.util.Optional;
 
 public class TestCoverageWebPanelCondition implements Condition {
 
-    OctaneConfigurationManager configManager;
+    ConfigurationManager configManager;
 
     public TestCoverageWebPanelCondition() {
-        configManager = OctaneConfigurationManager.getInstance();
+        configManager = ConfigurationManager.getInstance();
     }
 
     @Override

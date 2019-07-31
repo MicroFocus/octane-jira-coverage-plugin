@@ -47,9 +47,6 @@ public class RestConnector {
     private ProxyConfiguration proxyConfiguration;
     private static final Logger log = LoggerFactory.getLogger(RestConnector.class);
 
-    private String csrfHeaderName;
-    private String csrfCookieName;
-
     public boolean login() {
         boolean ret = false;
         clearAll();
@@ -73,12 +70,6 @@ public class RestConnector {
         }
 
         return ret;
-    }
-
-
-    public void setCSRF(String csrfHeader, String csrfCookieName) {
-        this.csrfHeaderName = csrfHeader;
-        this.csrfCookieName = csrfCookieName;
     }
 
     /**
@@ -269,11 +260,6 @@ public class RestConnector {
                 }
                 con.setRequestProperty(header.getKey(), header.getValue());
             }
-        }
-
-        //set CSRF
-        if (StringUtils.isNotEmpty(csrfHeaderName) && StringUtils.isNotEmpty(csrfCookieName) && cookies.containsKey(csrfCookieName)) {
-            con.setRequestProperty(csrfHeaderName, cookies.get(csrfCookieName));
         }
 
         //if there's data to attach to the request, it's handled here. note that if data exists, we take into account previously removed content-TYPE.

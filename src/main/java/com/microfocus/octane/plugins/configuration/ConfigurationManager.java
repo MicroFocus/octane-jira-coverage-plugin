@@ -18,7 +18,6 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
-import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
@@ -35,10 +34,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 
-public class OctaneConfigurationManager {
+public class ConfigurationManager {
 
     public static final String SHOW_DEBUG_PARAMETER = "showDebug";
-    private static final Logger log = LoggerFactory.getLogger(OctaneConfigurationManager.class);
+    private static final Logger log = LoggerFactory.getLogger(ConfigurationManager.class);
     private PluginSettingsFactory pluginSettingsFactory;
 
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
@@ -55,9 +54,9 @@ public class OctaneConfigurationManager {
     private static Map<String, String> username2Filter;
     private static Map<String, Map<String, Object>> username2parameters = new HashMap<>();
 
-    private static OctaneConfigurationManager instance = new OctaneConfigurationManager();
+    private static ConfigurationManager instance = new ConfigurationManager();
 
-    private OctaneConfigurationManager() {
+    private ConfigurationManager() {
 
     }
 
@@ -66,16 +65,20 @@ public class OctaneConfigurationManager {
         loadConfiguration();
     }
 
-    public static OctaneConfigurationManager getInstance() {
+    public static ConfigurationManager getInstance() {
         return instance;
     }
 
-
-    public Optional<SpaceConfiguration> getSpaceConfigurationById(String spaceConfigurationId) {
-        if (org.apache.commons.lang3.StringUtils.isEmpty(spaceConfigurationId)) {
+    public SpaceConfiguration getSpaceConfigurationById(String spaceConfigurationId) {
+        if (StringUtils.isEmpty(spaceConfigurationId)) {
             throw new IllegalArgumentException("Space configuration id should not be empty");
         }
-        return configuration.getSpaces().stream().filter(s -> s.getId().equals(spaceConfigurationId)).findFirst();
+
+        Optional<SpaceConfiguration> opt = configuration.getSpaces().stream().filter(s -> s.getId().equals(spaceConfigurationId)).findFirst();
+        if (!opt.isPresent()) {
+            throw new IllegalArgumentException(String.format("Space configuration with id %s - not found", spaceConfigurationId));
+        }
+        return opt.get();
     }
 
     public List<SpaceConfiguration> getSpaceConfigurations() {
@@ -101,7 +104,8 @@ public class OctaneConfigurationManager {
         } else {
             try {
                 configuration = JsonHelper.deserialize(confStr, ConfigurationCollection.class);
-            } catch (IOException e) {
+
+            } catch (Exception e) {
                 configuration = new ConfigurationCollection();
                 log.error("Failed to deserialize configuration in loadConfiguration : " + e.getMessage());
             }
@@ -111,30 +115,40 @@ public class OctaneConfigurationManager {
     }
 
     private void persistConfiguration() {
-
-        try {
-            String confStr = JsonHelper.serialize(configuration);
-            if (confStr.length() >= CONFIGURATION_HARD_LIMIT_SIZE) {
-                throw new RuntimeException("Configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
-            }
-            PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-            settings.put(CONFIGURATION_KEY, confStr);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to persist configuration :" + e.getMessage());
+        String confStr = JsonHelper.serialize(configuration);
+        if (confStr.length() >= CONFIGURATION_HARD_LIMIT_SIZE) {
+            throw new RuntimeException("Configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
         }
+
+
+        PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+        settings.put(CONFIGURATION_KEY, confStr);
     }
 
-    public void saveSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
-        SpaceConfiguration spConfig = getConfiguration();
-        spConfig.setClientId(spaceConfigurationOutgoing.getClientId());
-        if (!PluginConstants.PASSWORD_REPLACE.equals(spaceConfigurationOutgoing.getClientSecret())) {
-            spConfig.setClientSecret(spaceConfigurationOutgoing.getClientSecret());
-        }
-
-        spConfig.setLocationParts(ConfigurarionUtil.parseUiLocation(spaceConfigurationOutgoing.getLocation()));
-        spConfig.setLocation(spaceConfigurationOutgoing.getLocation());
-
+    public SpaceConfiguration addSpaceConfiguration(SpaceConfiguration spaceConfiguration) {
+        configuration.getSpaces().add(spaceConfiguration);
         persistConfiguration();
+        return spaceConfiguration;
+    }
+
+    public SpaceConfiguration updateSpaceConfiguration(SpaceConfiguration updatedSpaceConfiguration) {
+        SpaceConfiguration conf = getSpaceConfigurationById(updatedSpaceConfiguration.getId());
+        configuration.getSpaces().remove(conf);
+        configuration.getSpaces().add(updatedSpaceConfiguration);
+        persistConfiguration();
+        return conf;
+    }
+
+    public boolean removeSpaceConfiguration(String spaceConfigurationId) {
+        SpaceConfiguration sc = getSpaceConfigurationById(spaceConfigurationId);
+
+        List<WorkspaceConfiguration> workspaceConfigs = configuration.getWorkspaces().stream()
+                .filter(wc -> spaceConfigurationId.equals(wc.getSpaceConfigurationId()))
+                .collect(Collectors.toList());
+        configuration.getSpaces().remove(sc);
+        configuration.getWorkspaces().removeAll(workspaceConfigs);
+        persistConfiguration();
+        return true;
     }
 
     public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
@@ -203,17 +217,12 @@ public class OctaneConfigurationManager {
                 username2Filter.put(username, filter);
             }
 
-            //persist
-            try {
-                String confStr = JsonHelper.serialize(username2Filter);
-                if (confStr.length() >= CONFIGURATION_HARD_LIMIT_SIZE) {
-                    throw new RuntimeException("User filter configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
-                }
-                PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-                settings.put(USER_FILTER_KEY, confStr);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to persist user filter configuration :" + e.getMessage());
+            String confStr = JsonHelper.serialize(username2Filter);
+            if (confStr.length() >= CONFIGURATION_HARD_LIMIT_SIZE) {
+                throw new RuntimeException("User filter configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
             }
+            PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+            settings.put(USER_FILTER_KEY, confStr);
         }
     }
 
@@ -224,11 +233,7 @@ public class OctaneConfigurationManager {
             if (str == null) {
                 username2Filter = new HashMap<>();
             } else {
-                try {
-                    username2Filter = JsonHelper.deserialize(str, Map.class);
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to deserialize user filter configuration :" + e.getMessage());
-                }
+                username2Filter = JsonHelper.deserialize(str, Map.class);
             }
         }
         return username2Filter.get(username);

@@ -23,9 +23,12 @@ import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.*;
+import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLHandshakeException;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -159,4 +162,45 @@ public class OctaneRestManager {
         return foundJiraNames;
     }
 
+    public static OctaneEntityCollection getWorkspaces(SpaceConfiguration spaceConfiguration) {
+        String getWorspacesUrl = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, spaceConfiguration.getLocationParts().getSpaceId(), "workspaces");
+        String queryString = OctaneQueryBuilder.create().addSelectedFields("id", "name").build();
+        Map<String, String> headers = new HashMap<>();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+        String entitiesCollectionStr = spaceConfiguration.getRestConnector().httpGet(getWorspacesUrl, Arrays.asList(queryString), headers).getResponseData();
+
+        OctaneEntityCollection workspaces = OctaneEntityParser.parseCollection(entitiesCollectionStr);
+        if (workspaces.getData().isEmpty()) {
+            throw new IllegalArgumentException("Incorrect space ID.");
+        }
+        return workspaces;
+    }
+
+    public static RestConnector getRestConnector(String baseUrl, String clientId, String clientSecret) {
+        try {
+            RestConnector restConnector = new RestConnector();
+            restConnector.setBaseUrl(baseUrl);
+            restConnector.setCredentials(clientId, clientSecret);
+            boolean isConnected = restConnector.login();
+            if (!isConnected) {
+                throw new IllegalArgumentException("Failed to authenticate.");
+            } else {
+                return restConnector;
+            }
+        } catch (Exception exc) {
+            String myErrorMessage;
+            if (exc.getMessage().contains("platform.not_authorized")) {
+                myErrorMessage = "Ensure your credentials are correct.";
+            } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
+                myErrorMessage = "Network exception, proxy settings may be missing.";
+            } else if (exc.getMessage().startsWith("Connection timed out")) {
+                myErrorMessage = "Timed out exception, proxy settings may be misconfigured.";
+            } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
+                myErrorMessage = "Location is not available.";
+            } else {
+                myErrorMessage = exc.getMessage();
+            }
+            throw new IllegalArgumentException(myErrorMessage);
+        }
+    }
 }

@@ -56,7 +56,7 @@ public class ParamsResource {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        OctaneConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), OctaneConfigurationManager.SHOW_DEBUG_PARAMETER, visible);
+        ConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), ConfigurationManager.SHOW_DEBUG_PARAMETER, visible);
         return Response.ok("Done show-debug : " + visible).build();
     }
 }

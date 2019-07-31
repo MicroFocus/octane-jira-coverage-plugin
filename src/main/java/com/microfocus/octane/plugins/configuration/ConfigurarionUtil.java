@@ -1,18 +1,13 @@
 package com.microfocus.octane.plugins.configuration;
 
-import com.atlassian.jira.util.json.JSONException;
-import com.atlassian.jira.util.json.JSONObject;
+import com.atlassian.jira.exception.NotFoundException;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
-import com.microfocus.octane.plugins.rest.OctaneEntityParser;
-import com.microfocus.octane.plugins.rest.RestConnector;
-import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
-import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
+import com.microfocus.octane.plugins.rest.RestStatusException;
+import org.apache.commons.lang.StringUtils;
 
-import javax.net.ssl.SSLHandshakeException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.net.UnknownHostException;
 import java.util.*;
 
 public class ConfigurarionUtil {
@@ -74,27 +69,30 @@ public class ConfigurarionUtil {
         return query_pairs;
     }
 
-    public static SpaceConfiguration validateAndConvertToInternal(SpaceConfigurationOutgoing sco, boolean isNew) {
+    public static SpaceConfiguration validateRequiredAndConvertToInternal(SpaceConfigurationOutgoing sco, boolean isNew) {
 
-        if (org.apache.commons.lang.StringUtils.isEmpty(sco.getLocation())) {
+        if (StringUtils.isEmpty(sco.getLocation())) {
             throw new IllegalArgumentException("Location URL is required");
-        } else if (org.apache.commons.lang.StringUtils.isEmpty(sco.getClientId())) {
+        }
+        if (StringUtils.isEmpty(sco.getClientId())) {
             throw new IllegalArgumentException("Client ID is required");
-        } else if (org.apache.commons.lang.StringUtils.isEmpty(sco.getClientSecret())) {
+        }
+        if (StringUtils.isEmpty(sco.getClientSecret())) {
             throw new IllegalArgumentException("Client secret is required");
-        } else {
-            LocationParts locationParts = null;
-            try {
-                locationParts = parseUiLocation(sco.getLocation());
-            } catch (Exception e) {
-                throw new IllegalArgumentException(e.getMessage());
-            }
+        }
 
-            String errorMsg = null;
+        LocationParts locationParts = null;
+        try {
+            locationParts = parseUiLocation(sco.getLocation());
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+            /*String errorMsg = null;
             try {
 
                 String secret = PluginConstants.PASSWORD_REPLACE.equals(sco.getClientSecret()) ?
-                        OctaneConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId()).get().getClientSecret() :
+                        ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId()).get().getClientSecret() :
                         sco.getClientSecret();
 
                 RestConnector restConnector = new RestConnector();
@@ -137,22 +135,34 @@ public class ConfigurarionUtil {
             }
             if (errorMsg != null) {
                 throw new IllegalArgumentException(errorMsg);
+            }*/
+
+        //validate id
+        if (isNew) {
+            if (StringUtils.isNotEmpty(sco.getId())) {
+                throw new IllegalArgumentException("New space configuration cannot contain configuration id");
             }
+            sco.setId(UUID.randomUUID().toString());
+        } else {
+            if (StringUtils.isEmpty(sco.getId())) {
+                throw new IllegalArgumentException("Configuration id is missing");
+            }
+            sco.setId(sco.getId());
         }
 
+        //replace password if required
         String clientSecret = sco.getClientSecret();
         if (PluginConstants.PASSWORD_REPLACE.equals(clientSecret) && !isNew) {
-            Optional<SpaceConfiguration> opt = OctaneConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId());
-            if (opt.isPresent()) {
-                clientSecret = opt.get().getClientSecret();
-            }
+            SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId());
+            clientSecret = sc.getClientSecret();
         }
 
+        //convert
         SpaceConfiguration sc = new SpaceConfiguration()
                 .setId(sco.getId())
                 .setName(sco.getName())
                 .setLocation(sco.getLocation())
-                .setLocationParts(parseUiLocation(sco.getLocation()))
+                .setLocationParts(locationParts)
                 .setClientId(sco.getClientId())
                 .setClientSecret(clientSecret);
         return sc;
@@ -174,20 +184,8 @@ public class ConfigurarionUtil {
         validateSpaceConfigurationConnectivity(spaceConfiguration);
     }
 
-    private static void validateSpaceUrlIsUnique(SpaceConfiguration spaceConfiguration) {
-        /*Optional<SpaceConfiguration> opt = OctaneConfigurationManager.getInstance().getSpaceConfigurations(clientKey).stream()
-                .filter((s -> !s.getId().equals(spaceConfiguration.getId()) //don't check the same configuration
-                        && s.getLocationParts().getKey().equals(spaceConfiguration.getLocationParts().getKey())))
-                .findFirst();
-
-        if (opt.isPresent()) {
-            String msg = String.format("Space location is already defined in space configuration '%s'", opt.get().getName());
-            throw new IllegalArgumentException(msg);
-        }*/
-    }
-
     private static void validateSpaceNameIsUnique(SpaceConfiguration spaceConfiguration) {
-        /*Optional<SpaceConfiguration> opt = OctaneConfigurationManager.getInstance().getSpaceConfigurations(clientKey).stream()
+        Optional<SpaceConfiguration> opt = ConfigurationManager.getInstance().getSpaceConfigurations().stream()
                 .filter((s -> !s.getId().equals(spaceConfiguration.getId()) //don't check the same configuration
                         && s.getName().equals(spaceConfiguration.getName())))
                 .findFirst();
@@ -195,11 +193,23 @@ public class ConfigurarionUtil {
         if (opt.isPresent()) {
             String msg = String.format("Name '%s' is already in use by another space configuration.", spaceConfiguration.getName());
             throw new IllegalArgumentException(msg);
-        }*/
+        }
+    }
+
+    private static void validateSpaceUrlIsUnique(SpaceConfiguration spaceConfiguration) {
+        Optional<SpaceConfiguration> opt = ConfigurationManager.getInstance().getSpaceConfigurations().stream()
+                .filter((s -> !s.getId().equals(spaceConfiguration.getId()) //don't check the same configuration
+                        && s.getLocationParts().getKey().equals(spaceConfiguration.getLocationParts().getKey())))
+                .findFirst();
+
+        if (opt.isPresent()) {
+            String msg = String.format("Space location is already defined in space configuration '%s'", opt.get().getName());
+            throw new IllegalArgumentException(msg);
+        }
     }
 
     public static void validateSpaceConfigurationConnectivity(SpaceConfiguration spaceConfig) {
-        /*try {
+        try {
             OctaneRestManager.getWorkspaces(spaceConfig);
         } catch (RestStatusException e) {
             if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
@@ -207,35 +217,6 @@ public class ConfigurarionUtil {
             } else {
                 throw e;
             }
-        }*/
-    }
-
-
-    public static RestConnector getRestConnector(String baseUrl, String clientId, String clientSecret) {
-        try {
-            RestConnector restConnector = new RestConnector();
-            restConnector.setBaseUrl(baseUrl);
-            restConnector.setCredentials(clientId, clientSecret);
-            boolean isConnected = restConnector.login();
-            if (!isConnected) {
-                throw new IllegalArgumentException("Failed to authenticate.");
-            } else {
-                return restConnector;
-            }
-        } catch (Exception exc) {
-            String myErrorMessage;
-            if (exc.getMessage().contains("platform.not_authorized")) {
-                myErrorMessage = "Ensure your credentials are correct.";
-            } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
-                myErrorMessage = "Network exception, proxy settings may be missing.";
-            } else if (exc.getMessage().startsWith("Connection timed out")) {
-                myErrorMessage = "Timed out exception, proxy settings may be misconfigured.";
-            } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
-                myErrorMessage = "Location is not available.";
-            } else {
-                myErrorMessage = exc.getMessage();
-            }
-            throw new IllegalArgumentException(myErrorMessage);
         }
     }
 }

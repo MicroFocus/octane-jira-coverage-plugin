@@ -16,12 +16,13 @@ package com.microfocus.octane.plugins.configuration;
 
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigurationCollection {
 
-    private List<SpaceConfiguration> spaces;
-    private List<WorkspaceConfiguration> workspaces;
+    private List<SpaceConfiguration> spaces = new ArrayList<>();
+    private List<WorkspaceConfiguration> workspaces = new ArrayList<>();
     private ProxyConfiguration proxy;
 
     public List<SpaceConfiguration> getSpaces() {
@@ -33,10 +34,16 @@ public class ConfigurationCollection {
     }
 
     public void setSpaces(List<SpaceConfiguration> spaces) {
+        if (spaces == null) {
+            spaces = new ArrayList<>();
+        }
         this.spaces = spaces;
     }
 
     public void setWorkspaces(List<WorkspaceConfiguration> workspaces) {
+        if (workspaces == null) {
+            workspaces = new ArrayList<>();
+        }
         this.workspaces = workspaces;
     }
 

@@ -17,7 +17,7 @@ package com.microfocus.octane.plugins.views;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import com.microfocus.octane.plugins.configuration.OctaneRestManager;
 import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
@@ -46,7 +46,7 @@ public class CoverageUiHelper {
     private static Map<String, TestStatusDescriptor> testStatusDescriptors = new HashMap<>();
     private static NumberFormat countFormat = NumberFormat.getInstance();
     private static NumberFormat percentFormatter = NumberFormat.getPercentInstance();
-    private static OctaneConfigurationManager configurationManager = OctaneConfigurationManager.getInstance();
+    private static ConfigurationManager configurationManager = ConfigurationManager.getInstance();
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
     private static final Logger log = LoggerFactory.getLogger(CoverageUiHelper.class);
 
@@ -287,7 +287,7 @@ public class CoverageUiHelper {
         }
 
         ApplicationUser appuser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-        boolean showDebug = (boolean) OctaneConfigurationManager.getInstance().getUserParameter(appuser.getUsername(), OctaneConfigurationManager.SHOW_DEBUG_PARAMETER, false);
+        boolean showDebug = (boolean) ConfigurationManager.getInstance().getUserParameter(appuser.getUsername(), ConfigurationManager.SHOW_DEBUG_PARAMETER, false);
         if (showDebug) {
             perfMap.put("total", System.currentTimeMillis() - startTotal);
             debugMap.put("perf", perfMap.entrySet().stream().map(entry -> entry.getKey() + " " + entry.getValue()).collect(Collectors.joining("; ")));

@@ -38,6 +38,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -109,7 +110,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Collection<WorkspaceConfigurationOutgoing> result = OctaneConfigurationManager.getInstance().getConfiguration()
+        Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getConfiguration()
                 .getWorkspaces().stream().map(wc -> convert(wc))
                 .sorted((h1, h2) -> h1.getWorkspace().getText().compareTo(h2.getWorkspace().getText()))
                 .collect(Collectors.toList());
@@ -142,7 +143,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Optional<WorkspaceConfigurationOutgoing> optResult = OctaneConfigurationManager.getInstance().getConfiguration()
+        Optional<WorkspaceConfigurationOutgoing> optResult = ConfigurationManager.getInstance().getConfiguration()
                 .getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).map(wc -> convert(wc)).findFirst();
 
         if (optResult.isPresent()) {
@@ -202,7 +203,7 @@ public class ConfigResource {
         }
 
         //save
-        WorkspaceConfiguration wc = OctaneConfigurationManager.getInstance().saveWorkspaceConfiguration(model);
+        WorkspaceConfiguration wc = ConfigurationManager.getInstance().saveWorkspaceConfiguration(model);
         return Response.ok(convert(wc)).build();
     }
 
@@ -213,7 +214,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        boolean deleted = OctaneConfigurationManager.getInstance().deleteWorkspaceConfiguration(id);
+        boolean deleted = ConfigurationManager.getInstance().deleteWorkspaceConfiguration(id);
         if (deleted) {
             return Response.ok().build();
         } else {
@@ -235,7 +236,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
         ProxyConfigurationOutgoing outgoing = new ProxyConfigurationOutgoing();
-        ProxyConfiguration config = OctaneConfigurationManager.getInstance().getProxySettings();
+        ProxyConfiguration config = ConfigurationManager.getInstance().getProxySettings();
         if (config != null) {
             outgoing.setHost(config.getHost());
             outgoing.setPort(config.getPort() == null ? "" : config.getPort().toString());
@@ -268,7 +269,7 @@ public class ConfigResource {
             }
         }
 
-        OctaneConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
+        ConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
         return Response.ok().build();
     }
 
@@ -280,7 +281,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        List<SpaceConfigurationOutgoing> outgoing = OctaneConfigurationManager.getInstance().getSpaceConfigurations()
+        List<SpaceConfigurationOutgoing> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
                 .stream().map(c -> ConfigurarionUtil.convertToOutgoing(c)).collect(Collectors.toList());
 
         return Response.ok(outgoing).build();
@@ -298,34 +299,57 @@ public class ConfigResource {
         }
 
         try {
-            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateAndConvertToInternal(sco, true);
-            //ConfigurarionUtil.doFullSpaceConfigurationValidation(getTenantId(), spaceConfig);
-            //ConfigurationManager.getInstance().addSpaceConfiguration(getTenantId(), spaceConfig);
-            //OctaneConfigurationManager.getInstance().saveSpaceConfiguration(spaceConfig);
+            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(sco, true);
+            ConfigurarionUtil.doFullSpaceConfigurationValidation(spaceConfig);
+            ConfigurationManager.getInstance().addSpaceConfiguration(spaceConfig);
             return Response.ok(ConfigurarionUtil.convertToOutgoing(spaceConfig)).build();
         } catch (IllegalArgumentException e) {
-            return Response.status(Status.CONFLICT).entity("Failed to add configuration. " + e.getMessage()).build();
+            return Response.status(Status.CONFLICT).entity("Failed to add configuration : " + e.getMessage()).build();
         }
     }
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response saveSpaceConfiguration(final SpaceConfigurationOutgoing spaceModel, @Context HttpServletRequest request) {
+    public Response saveSpaceConfiguration(final SpaceConfigurationOutgoing sco, @Context HttpServletRequest request) {
         UserProfile username = userManager.getRemoteUser(request);
         if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
         try {
-            ConfigurarionUtil.validateAndConvertToInternal(spaceModel, false);
-            OctaneConfigurationManager.getInstance().saveSpaceConfiguration(spaceModel);
+            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(sco, false);
+            ConfigurarionUtil.doFullSpaceConfigurationValidation(spaceConfig);
+            ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
         } catch (IllegalArgumentException e) {
-            Response.status(Status.CONFLICT).entity("Failed to validate configuration. " + e.getMessage()).build();
+            Response.status(Status.CONFLICT).entity("Failed to update configuration : " + e.getMessage()).build();
         }
 
 
         return Response.ok().build();
+    }
+
+    @DELETE
+    @Path("spaces/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public boolean deleteSpaceConfiguration(@PathParam("id") String id)  {
+        boolean isRemoved = ConfigurationManager.getInstance().removeSpaceConfiguration(id);
+        return isRemoved;
+    }
+
+    @POST
+    @Path("spaces/test-connection")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing, @Context HttpServletRequest request) {
+        try {
+            boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationOutgoing.getId());
+            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
+            ConfigurarionUtil.validateSpaceConfigurationConnectivity(spaceConfig);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
+        }
     }
 }
 

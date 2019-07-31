@@ -103,7 +103,7 @@ public class SpaceConfiguration {
     @JsonIgnore
     public RestConnector getRestConnector() {
         if (restConnector == null) {
-            restConnector = ConfigurarionUtil.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
+            restConnector = OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
         }
         return restConnector;
     }

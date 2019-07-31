@@ -15,7 +15,7 @@
 
 package com.microfocus.octane.plugins.rest;
 
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
+import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class ProxyHelper {
         log.info("get proxy configuration for " + targetUrl.getHost());
         ProxyConfiguration result = null;
 
-        ProxyConfiguration proxyConfig = OctaneConfigurationManager.getInstance().getProxySettings();
+        ProxyConfiguration proxyConfig = ConfigurationManager.getInstance().getProxySettings();
         if (proxyConfig != null && StringUtils.isNotEmpty(proxyConfig.getHost())) {
             return proxyConfig;
         } else if (isProxyNeededInJVM(targetUrl)) {
