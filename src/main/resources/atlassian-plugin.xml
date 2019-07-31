@@ -22,8 +22,6 @@
     <dependency>com.atlassian.auiplugin:aui-flag</dependency>
     <dependency>com.atlassian.auiplugin:aui-form-validation</dependency>
 
-
-
     <resource type="download" name="jira-octane-plugin-admin.js" location="/js/jira-octane-plugin-admin.js"/>
     <resource type="download" name="jira-octane-plugin.css" location="/css/jira-octane-plugin-admin.css"/>
     <context>jira-octane-plugin-admin-resource-context</context>

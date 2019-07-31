@@ -62,10 +62,10 @@
 }
 
 
-.space-save-status.aui-iconfont-successful-build{
+.space-save-status.aui-iconfont-successful-build, .throbber-status.aui-iconfont-successful-build{
     color: #36b37e;
 }
 
-.space-save-status.aui-iconfont-error{
+.space-save-status.aui-iconfont-error, .throbber-status.aui-iconfont-error{
     color: #ff5630;
 }

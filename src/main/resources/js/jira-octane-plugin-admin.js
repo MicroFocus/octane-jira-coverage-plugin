@@ -33,7 +33,7 @@
                 });
 
                 var testConnectionButtonEl = $('<button class=\"aui-button aui-button-link\">Test Connection</button>').click(function (e) {
-
+                    testConnection(instance);
                 });
 
                 var parentEl = $('<div></div>').append(editButtonEl, deleteButtonEl, testConnectionButtonEl);
@@ -284,10 +284,54 @@
             dataType: "json",
             contentType: "application/json"
         }).done(function (result) {
-
             showSpaceStatus("Test connection is successful", true);
         }).fail(function (request, status, error) {
             showSpaceStatus("Test connection is failed : " + request.responseText, false);
+        });
+    }
+
+    function testConnection(row){
+        var rowModel = row.model.attributes;
+        console.log("testConnection", rowModel)
+        var statusEl = row.$el.children().eq(4);
+        var throbber = statusEl.children().first();
+        throbber.addClass("throbber-status");
+        throbber.addClass("aui-icon");
+        throbber.addClass("aui-icon-small");
+        throbber.addClass("aui-icon-wait");
+
+        throbber.removeClass("aui-restfultable-throbber");
+        throbber.removeClass("aui-iconfont-successful-build");
+        throbber.removeClass("aui-iconfont-error");
+        throbber.attr("title", "Testing connection ...");
+
+        //build model
+        var modelForUpdate = {
+            id: rowModel.id,
+            name: rowModel.name,
+            location: rowModel.location,
+            clientId: rowModel.clientId,
+            clientSecret: rowModel.clientSecret
+        };
+
+        //send
+        var myJSON = JSON.stringify(modelForUpdate);
+        $.ajax({
+            url: octanePluginContext.spaceTable.options.resources.all + "/test-connection",
+            type: "POST",
+            data: myJSON,
+            dataType: "json",
+            contentType: "application/json"
+        }).done(function (result) {
+            console.log("testConnection ok");
+            throbber.removeClass("aui-icon-wait");
+            throbber.addClass("aui-iconfont-successful-build");
+            throbber.attr("title", "Test connection is successful");
+        }).fail(function (request, status, error) {
+            console.log("testConnection failed", request);
+            throbber.removeClass("aui-icon-wait");
+            throbber.addClass("aui-iconfont-error");
+            throbber.attr("title", "Test connection is failed : " + request.responseText);
         });
     }
 
@@ -336,7 +380,7 @@
             var url = octanePluginContext.spaceTable.options.resources.all;
             var requestType = "POST";
             if (editMode) {
-                modelForUpdate.id = rowModel.entity.id;
+                modelForUpdate.id = rowModel.id;
                 requestType = "PUT";
                 url+="/" + modelForUpdate.id;
             }

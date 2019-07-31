@@ -38,7 +38,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +49,9 @@ public class ConfigResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigResource.class);
 
+    @Context
+    HttpServletRequest request;
+
     @ComponentImport
     private final UserManager userManager;
 
@@ -60,8 +62,8 @@ public class ConfigResource {
 
     @GET
     @Path("/workspace-config/additional-data")
-    public Response getDataForCreateDialog(@Context HttpServletRequest request, @QueryParam("update-workspace-id") Long id) {
-        if (!hasPermissions(request)) {
+    public Response getDataForCreateDialog(@QueryParam("update-workspace-id") Long id) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -105,8 +107,8 @@ public class ConfigResource {
 
     @GET
     @Path("/workspace-config/all")
-    public Response getAllWorkspaceConfigurations(@Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    public Response getAllWorkspaceConfigurations() {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -138,8 +140,8 @@ public class ConfigResource {
 
     @GET
     @Path("/workspace-config/self/{id}")
-    public Response getWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id) {
-        if (!hasPermissions(request)) {
+    public Response getWorkspaceConfigurationById(@PathParam("id") long id) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -155,8 +157,8 @@ public class ConfigResource {
 
     @GET
     @Path("/workspace-config/supported-octane-types")
-    public Response getSupportedOctaneTypes(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
-        if (!hasPermissions(request)) {
+    public Response getSupportedOctaneTypes(@QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -168,8 +170,8 @@ public class ConfigResource {
 
     @GET
     @Path("/workspace-config/possible-jira-fields")
-    public Response getPossibleJiraFields(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId) {
-        if (!hasPermissions(request)) {
+    public Response getPossibleJiraFields(@QueryParam("workspace-id") long workspaceId) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -180,8 +182,8 @@ public class ConfigResource {
 
     @POST
     @Path("/workspace-config/self")
-    public Response saveWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationOutgoing model) {
-        if (!hasPermissions(request)) {
+    public Response saveWorkspaceConfiguration(WorkspaceConfigurationOutgoing model) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -209,8 +211,8 @@ public class ConfigResource {
 
     @DELETE
     @Path("/workspace-config/self/{id}")
-    public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id) {
-        if (!hasPermissions(request)) {
+    public Response deleteWorkspaceConfigurationById(@PathParam("id") long id) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -223,18 +225,14 @@ public class ConfigResource {
 
     }
 
-    private boolean hasPermissions(HttpServletRequest request) {
-        UserProfile username = userManager.getRemoteUser(request);
-        return (username != null && userManager.isSystemAdmin(username.getUserKey()));
-    }
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/proxy")
-    public Response getProxy(@Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    public Response getProxy() {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
+
         ProxyConfigurationOutgoing outgoing = new ProxyConfigurationOutgoing();
         ProxyConfiguration config = ConfigurationManager.getInstance().getProxySettings();
         if (config != null) {
@@ -251,8 +249,8 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/proxy")
-    public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing, @Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -276,8 +274,8 @@ public class ConfigResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/spaces")
-    public Response getSpaceConfigurations(@Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    public Response getSpaceConfigurations() {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -291,10 +289,8 @@ public class ConfigResource {
     @Path("spaces")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addSpaceConfiguration(SpaceConfigurationOutgoing sco, @Context HttpServletRequest request) {
-
-        UserProfile username = userManager.getRemoteUser(request);
-        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
+    public Response addSpaceConfiguration(SpaceConfigurationOutgoing sco) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -311,9 +307,9 @@ public class ConfigResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response saveSpaceConfiguration(final SpaceConfigurationOutgoing sco, @Context HttpServletRequest request) {
-        UserProfile username = userManager.getRemoteUser(request);
-        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
+    @Path("spaces/{id}")
+    public Response updateSpaceConfiguration(@PathParam("id") String id, final SpaceConfigurationOutgoing sco) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -332,16 +328,24 @@ public class ConfigResource {
     @DELETE
     @Path("spaces/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public boolean deleteSpaceConfiguration(@PathParam("id") String id)  {
+    public Response deleteSpaceConfiguration(@PathParam("id") String id) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         boolean isRemoved = ConfigurationManager.getInstance().removeSpaceConfiguration(id);
-        return isRemoved;
+        return Response.ok(isRemoved).build();
     }
 
     @POST
     @Path("spaces/test-connection")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing, @Context HttpServletRequest request) {
+    public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         try {
             boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationOutgoing.getId());
             SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
@@ -350,6 +354,11 @@ public class ConfigResource {
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
         }
+    }
+
+    private boolean validateUserPermission() {
+        UserProfile username = userManager.getRemoteUser(request);
+        return !(username == null || !userManager.isSystemAdmin(username.getUserKey()));
     }
 }
 
