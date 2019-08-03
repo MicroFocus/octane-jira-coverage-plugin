@@ -18,15 +18,12 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
-import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +47,6 @@ public class ConfigurationManager {
 
     //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
 
-
     private static Map<String, String> username2Filter;
     private static Map<String, Map<String, Object>> username2parameters = new HashMap<>();
 
@@ -69,20 +65,60 @@ public class ConfigurationManager {
         return instance;
     }
 
-    public SpaceConfiguration getSpaceConfigurationById(String spaceConfigurationId) {
+    public Optional<SpaceConfiguration> getSpaceConfigurationById(String spaceConfigurationId, boolean throwIfNotFound) {
         if (StringUtils.isEmpty(spaceConfigurationId)) {
             throw new IllegalArgumentException("Space configuration id should not be empty");
         }
 
         Optional<SpaceConfiguration> opt = configuration.getSpaces().stream().filter(s -> s.getId().equals(spaceConfigurationId)).findFirst();
-        if (!opt.isPresent()) {
+        if (throwIfNotFound && !opt.isPresent()) {
             throw new IllegalArgumentException(String.format("Space configuration with id %s - not found", spaceConfigurationId));
         }
-        return opt.get();
+        return opt;
+    }
+
+    public Optional<WorkspaceConfiguration> getWorkspaceConfigurationById(String workspaceConfigurationId, boolean throwIfNotFound) {
+        if (StringUtils.isEmpty(workspaceConfigurationId)) {
+            throw new IllegalArgumentException("Workspace configuration id should not be empty");
+        }
+
+        Optional<WorkspaceConfiguration> opt = configuration.getWorkspaces().stream().filter(s -> s.getId().equals(workspaceConfigurationId)).findFirst();
+        if (throwIfNotFound && opt.isPresent()) {
+            throw new IllegalArgumentException(String.format("Workspace configuration with id %s - not found", workspaceConfigurationId));
+        }
+
+        return opt;
     }
 
     public List<SpaceConfiguration> getSpaceConfigurations() {
         return configuration.getSpaces();
+    }
+
+    public SpaceConfiguration addSpaceConfiguration(SpaceConfiguration spaceConfiguration) {
+        configuration.getSpaces().add(spaceConfiguration);
+        persistConfiguration();
+        return spaceConfiguration;
+    }
+
+    public SpaceConfiguration updateSpaceConfiguration(SpaceConfiguration updatedSpaceConfiguration) {
+        SpaceConfiguration conf = getSpaceConfigurationById(updatedSpaceConfiguration.getId(), true).get();
+        configuration.getSpaces().remove(conf);
+        configuration.getSpaces().add(updatedSpaceConfiguration);
+        persistConfiguration();
+        return conf;
+    }
+
+    public boolean removeSpaceConfiguration(String spaceConfigurationId) {
+        Optional<SpaceConfiguration> opt = getSpaceConfigurationById(spaceConfigurationId, false);
+        if (opt.isPresent()) {
+            List<WorkspaceConfiguration> workspaceConfigs = configuration.getWorkspaces().stream()
+                    .filter(wc -> spaceConfigurationId.equals(wc.getSpaceConfigurationId()))
+                    .collect(Collectors.toList());
+            configuration.getSpaces().remove(opt.get());
+            configuration.getWorkspaces().removeAll(workspaceConfigs);
+            persistConfiguration();
+        }
+        return opt.isPresent();
     }
 
     @Deprecated
@@ -92,6 +128,31 @@ public class ConfigurationManager {
 
     public ProxyConfiguration getProxySettings() {
         return configuration.getProxy();
+    }
+
+    public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
+        ProxyConfiguration proxy = getProxySettings();
+        if (proxy == null) {
+            proxy = new ProxyConfiguration();
+        }
+
+        proxy.setHost(proxyOutgoing.getHost());
+        Integer port = null;
+        if (StringUtils.isNotEmpty(proxyOutgoing.getHost()) && StringUtils.isNotEmpty(proxyOutgoing.getPort())) {
+            try {
+                port = Integer.parseInt(proxyOutgoing.getPort());
+            } catch (NumberFormatException e) {
+                //do nothing
+            }
+        }
+        proxy.setPort(port);
+        proxy.setUsername(proxyOutgoing.getUsername());
+        if (!proxyOutgoing.getPassword().equals(PluginConstants.PASSWORD_REPLACE)) {
+            proxy.setPassword(proxyOutgoing.getPassword());
+        }
+
+        configuration.setProxy(proxy);
+        persistConfiguration();
     }
 
     private ConfigurationCollection loadConfiguration() {
@@ -125,87 +186,30 @@ public class ConfigurationManager {
         settings.put(CONFIGURATION_KEY, confStr);
     }
 
-    public SpaceConfiguration addSpaceConfiguration(SpaceConfiguration spaceConfiguration) {
-        configuration.getSpaces().add(spaceConfiguration);
-        persistConfiguration();
-        return spaceConfiguration;
+    public List<WorkspaceConfiguration> getWorkspaceConfigurations() {
+        return configuration.getWorkspaces();
     }
 
-    public SpaceConfiguration updateSpaceConfiguration(SpaceConfiguration updatedSpaceConfiguration) {
-        SpaceConfiguration conf = getSpaceConfigurationById(updatedSpaceConfiguration.getId());
-        configuration.getSpaces().remove(conf);
-        configuration.getSpaces().add(updatedSpaceConfiguration);
+    public WorkspaceConfiguration addWorkspaceConfiguration(WorkspaceConfiguration wc) {
+        configuration.getWorkspaces().add(wc);
         persistConfiguration();
-        return conf;
+        return wc;
     }
 
-    public boolean removeSpaceConfiguration(String spaceConfigurationId) {
-        SpaceConfiguration sc = getSpaceConfigurationById(spaceConfigurationId);
-
-        List<WorkspaceConfiguration> workspaceConfigs = configuration.getWorkspaces().stream()
-                .filter(wc -> spaceConfigurationId.equals(wc.getSpaceConfigurationId()))
-                .collect(Collectors.toList());
-        configuration.getSpaces().remove(sc);
-        configuration.getWorkspaces().removeAll(workspaceConfigs);
-        persistConfiguration();
-        return true;
+    public WorkspaceConfiguration updateWorkspaceConfiguration(WorkspaceConfiguration updatedWc) {
+        WorkspaceConfiguration existingWc = getWorkspaceConfigurationById(updatedWc.getId(), true).get();
+        configuration.getWorkspaces().remove(existingWc);
+        configuration.getWorkspaces().add(updatedWc);
+        return updatedWc;
     }
 
-    public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
-        ProxyConfiguration proxy = getProxySettings();
-        if (proxy == null) {
-            proxy = new ProxyConfiguration();
-        }
-
-        proxy.setHost(proxyOutgoing.getHost());
-        Integer port = null;
-        if (StringUtils.isNotEmpty(proxyOutgoing.getHost()) && StringUtils.isNotEmpty(proxyOutgoing.getPort())) {
-            try {
-                port = Integer.parseInt(proxyOutgoing.getPort());
-            } catch (NumberFormatException e) {
-                //do nothing
-            }
-        }
-        proxy.setPort(port);
-        proxy.setUsername(proxyOutgoing.getUsername());
-        if (!proxyOutgoing.getPassword().equals(PluginConstants.PASSWORD_REPLACE)) {
-            proxy.setPassword(proxyOutgoing.getPassword());
-        }
-
-        configuration.setProxy(proxy);
-        persistConfiguration();
-    }
-
-    public WorkspaceConfiguration saveWorkspaceConfiguration(WorkspaceConfigurationOutgoing model) {
-        SpaceConfiguration spConfig = getConfiguration();
-        //Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(w -> w.getWorkspaceId() == model.getId()).findFirst();
-        //if (opt.isPresent()) {
-        //    spConfig.getWorkspaces().remove(opt.get());
-        //}
-
-        WorkspaceConfiguration newWorkspaceConfiguration = new WorkspaceConfiguration();
-        newWorkspaceConfiguration.setWorkspaceId(Long.parseLong(model.getWorkspace().getId()));
-        newWorkspaceConfiguration.setWorkspaceName(model.getWorkspace().getText());
-        newWorkspaceConfiguration.setOctaneUdf(model.getOctaneUdf());
-        newWorkspaceConfiguration.setOctaneEntityTypes(model.getOctaneEntityTypes().stream().map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName()).collect(Collectors.toList()));
-        newWorkspaceConfiguration.setJiraIssueTypes(model.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()));
-        newWorkspaceConfiguration.setJiraProjects(model.getJiraProjects().stream().sorted().collect(Collectors.toList()));
-        //newWorkspaceConfiguration.setSpaceConfigurationId(spConfig);
-
-        spConfig.getWorkspaces().add(newWorkspaceConfiguration);
-        persistConfiguration();
-        return newWorkspaceConfiguration;
-    }
-
-    public boolean deleteWorkspaceConfiguration(long id) {
-        SpaceConfiguration spConfig = getConfiguration();
-        Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(w -> w.getWorkspaceId() == id).findFirst();
+    public boolean removeWorkspaceConfiguration(String id) {
+        Optional<WorkspaceConfiguration> opt = getWorkspaceConfigurationById(id, false);
         if (opt.isPresent()) {
-            spConfig.getWorkspaces().remove(opt.get());
+            configuration.getWorkspaces().remove(opt.get());
             persistConfiguration();
-            return true;
         }
-        return false;
+        return opt.isPresent();
     }
 
     public void setUserFilter(String username, String filter) {

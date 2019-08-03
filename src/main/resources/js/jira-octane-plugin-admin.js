@@ -272,7 +272,7 @@
         var isEditMode = !!octanePluginContext.spaceCurrentRow;
         if (isEditMode) {
             var rowModel = octanePluginContext.spaceCurrentRow.model.attributes;
-            modelForUpdate.id = rowModel.entity.id;
+            modelForUpdate.id = rowModel.id;
         }
 
         //send

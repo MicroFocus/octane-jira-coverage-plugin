@@ -1,7 +1,10 @@
 package com.microfocus.octane.plugins.configuration;
 
-import com.atlassian.jira.exception.NotFoundException;
+import com.microfocus.octane.plugins.admin.KeyValueItem;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
+import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
 import org.apache.commons.lang.StringUtils;
 
@@ -9,6 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConfigurarionUtil {
 
@@ -147,14 +151,15 @@ public class ConfigurarionUtil {
             if (StringUtils.isEmpty(sco.getId())) {
                 throw new IllegalArgumentException("Configuration id is missing");
             }
-            sco.setId(sco.getId());
+
+
         }
 
         //replace password if required
         String clientSecret = sco.getClientSecret();
+        Optional<SpaceConfiguration> opt = ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId(), true);
         if (PluginConstants.PASSWORD_REPLACE.equals(clientSecret) && !isNew) {
-            SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId());
-            clientSecret = sc.getClientSecret();
+            clientSecret = opt.get().getClientSecret();
         }
 
         //convert
@@ -218,6 +223,79 @@ public class ConfigurarionUtil {
                 throw e;
             }
         }
+    }
+
+
+    public static WorkspaceConfigurationOutgoing convertToOutgoing(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name ) {
+        WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
+                .setId(wc.getId())
+                .setSpaceConfig(KeyValueItem.create(wc.getSpaceConfigurationId(), spaceConfigurationId2Name.get(wc.getSpaceConfigurationId())))
+                .setWorkspace(KeyValueItem.create(Long.toString(wc.getWorkspaceId()), wc.getWorkspaceName()))
+                .setOctaneUdf(wc.getOctaneUdf())
+                .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
+                        .map(typeName -> {
+                            OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
+                            return desc == null ? "" : desc.getLabel();
+                        })
+                        .sorted().collect(Collectors.toList()))
+                .setJiraIssueTypes(wc.getJiraIssueTypes())
+                .setJiraProjects(wc.getJiraProjects());
+
+        return result;
+    }
+
+    public static WorkspaceConfiguration validateRequiredAndConvertToInternal(WorkspaceConfigurationOutgoing wco, boolean isNew) {
+        //validation
+
+        if (wco.getSpaceConfig() == null || StringUtils.isEmpty(wco.getSpaceConfig().getId())) {
+            throw new IllegalArgumentException("Space configuration is misssing.");
+        }
+        if (StringUtils.isEmpty(wco.getId())) {
+            throw new IllegalArgumentException("Workspace id is missing.");
+        }
+        if (wco.getWorkspace() == null || StringUtils.isEmpty(wco.getWorkspace().getId()) || StringUtils.isEmpty(wco.getWorkspace().getText())) {
+            throw new IllegalArgumentException("Workspace name is missing.");
+        }
+
+        if (wco.getOctaneEntityTypes().size() == 0) {
+            throw new IllegalArgumentException("Octane entity types are missing");
+        }
+        if (wco.getJiraProjects().size() == 0) {
+            throw new IllegalArgumentException("Jira projects are missing");
+        }
+        if (wco.getJiraIssueTypes().size() == 0) {
+            throw new IllegalArgumentException("Jira issue types are missing");
+        }
+        long workspaceId;
+        try {
+            workspaceId = Long.parseLong(wco.getWorkspace().getId());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Workspace Id must be numeric value");
+        }
+
+        if (isNew) {
+            if (StringUtils.isNotEmpty(wco.getId())) {
+                throw new IllegalArgumentException("New workspace configuration cannot contain configuration id");
+            }
+            wco.setId(UUID.randomUUID().toString());
+        } else {
+            if (StringUtils.isEmpty(wco.getId())) {
+                throw new IllegalArgumentException("Configuration id is missing");
+            }
+        }
+
+        WorkspaceConfiguration wc = new WorkspaceConfiguration()
+                .setSpaceConfigurationId(wco.getSpaceConfig().getId())
+                .setWorkspaceId(workspaceId)
+                .setWorkspaceName(wco.getWorkspace().getText())
+                .setOctaneUdf(wco.getOctaneUdf())
+                .setOctaneEntityTypes(wco.getOctaneEntityTypes().stream()
+                        .map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName())
+                        .collect(Collectors.toList()))
+                .setJiraIssueTypes(wco.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()))
+                .setJiraProjects(wco.getJiraProjects().stream().sorted().collect(Collectors.toList()));
+
+        return wc;
     }
 }
 

@@ -15,7 +15,6 @@
 
 package com.microfocus.octane.plugins.configuration;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.util.List;
@@ -36,63 +35,71 @@ public class WorkspaceConfiguration {
         return workspaceId;
     }
 
-    public void setWorkspaceId(long workspaceId) {
+    public WorkspaceConfiguration setWorkspaceId(long workspaceId) {
         this.workspaceId = workspaceId;
+        return this;
     }
 
     public String getOctaneUdf() {
         return octaneUdf;
     }
 
-    public void setOctaneUdf(String octaneUdf) {
+    public WorkspaceConfiguration setOctaneUdf(String octaneUdf) {
         this.octaneUdf = octaneUdf;
+        return this;
     }
 
     public List<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public void setOctaneEntityTypes(List<String> octaneEntityTypes) {
+    public WorkspaceConfiguration setOctaneEntityTypes(List<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
+        return this;
     }
 
     public List<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public void setJiraIssueTypes(List<String> jiraIssueTypes) {
+    public WorkspaceConfiguration setJiraIssueTypes(List<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
+        return this;
     }
 
     public List<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public void setJiraProjects(List<String> jiraProjects) {
+    public WorkspaceConfiguration setJiraProjects(List<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
+        return this;
     }
 
     public String getWorkspaceName() {
         return workspaceName;
     }
 
-    public void setWorkspaceName(String workspaceName) {
+    public WorkspaceConfiguration setWorkspaceName(String workspaceName) {
         this.workspaceName = workspaceName;
+        return this;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public WorkspaceConfiguration setId(String id) {
         this.id = id;
+        return this;
     }
 
     public String getSpaceConfigurationId() {
         return spaceConfigurationId;
     }
 
-    public void setSpaceConfigurationId(String spaceConfigurationId) {
+    public WorkspaceConfiguration setSpaceConfigurationId(String spaceConfigurationId) {
         this.spaceConfigurationId = spaceConfigurationId;
+        return this;
     }
 }

@@ -21,7 +21,6 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.configuration.*;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
@@ -106,123 +105,112 @@ public class ConfigResource {
     }
 
     @GET
-    @Path("/workspace-config/all")
+    @Path("/workspaces")
     public Response getAllWorkspaceConfigurations() {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
-
-        Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getConfiguration()
-                .getWorkspaces().stream().map(wc -> convert(wc))
-                .sorted((h1, h2) -> h1.getWorkspace().getText().compareTo(h2.getWorkspace().getText()))
+        Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
+                .stream().map(wc -> ConfigurarionUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name()))
+                //.sorted((h1, h2) -> h1.getWorkspace().getText().compareTo(h2.getWorkspace().getText()))
                 .collect(Collectors.toList());
 
         return Response.ok(result).build();
     }
 
-    private WorkspaceConfigurationOutgoing convert(WorkspaceConfiguration wc) {
-        WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
-                .setId(wc.getId())
-                .setSpaceConfig(KeyValueItem.create(wc.getSpaceConfigurationId(), ""))//TODO ADD space name
-                .setWorkspace(KeyValueItem.create(Long.toString(wc.getWorkspaceId()), wc.getWorkspaceName()))
-                .setOctaneUdf(wc.getOctaneUdf())
-                .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
-                        .map(typeName -> {
-                            OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
-                            return desc == null ? "" : desc.getLabel();
-                        })
-                        .sorted().collect(Collectors.toList()))
-                .setJiraIssueTypes(wc.getJiraIssueTypes())
-                .setJiraProjects(wc.getJiraProjects());
-
-        return result;
-    }
-
     @GET
-    @Path("/workspace-config/self/{id}")
-    public Response getWorkspaceConfigurationById(@PathParam("id") long id) {
+    @Path("/workspaces/{id}")
+    public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Optional<WorkspaceConfigurationOutgoing> optResult = ConfigurationManager.getInstance().getConfiguration()
-                .getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).map(wc -> convert(wc)).findFirst();
+        Optional<WorkspaceConfiguration> optResult = ConfigurationManager.getInstance().getWorkspaceConfigurationById(id, false);
 
         if (optResult.isPresent()) {
-            return Response.ok(optResult.get()).build();
+            return Response.ok(ConfigurarionUtil.convertToOutgoing(optResult.get(), getSpaceConfigurationId2Name())).build();
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
     }
 
     @GET
-    @Path("/workspace-config/supported-octane-types")
-    public Response getSupportedOctaneTypes(@QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
+    @Path("/workspaces/supported-octane-types")
+    public Response getSupportedOctaneTypes(@QueryParam("space-configuration-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        SpaceConfiguration spConfig = null;
-        List<String> types = OctaneRestManager.getSupportedOctaneTypes(spConfig, workspaceId, udfName);
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+        List<String> types = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, udfName);
         List<String> names = types.stream().map(t -> OctaneEntityTypeManager.getByTypeName(t).getLabel()).sorted().collect(Collectors.toList());
         return Response.ok(names).build();
     }
 
     @GET
-    @Path("/workspace-config/possible-jira-fields")
-    public Response getPossibleJiraFields(@QueryParam("workspace-id") long workspaceId) {
+    @Path("/workspaces/possible-jira-fields")
+    public Response getPossibleJiraFields(@QueryParam("space-configuration-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        SpaceConfiguration spConfig = null;
-        Set<String> names = OctaneRestManager.getPossibleJiraFields(spConfig, workspaceId);
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+        Set<String> names = OctaneRestManager.getPossibleJiraFields(sc, workspaceId);
         return Response.ok(names).build();
     }
 
     @POST
-    @Path("/workspace-config/self")
-    public Response saveWorkspaceConfiguration(WorkspaceConfigurationOutgoing model) {
+    @Path("/workspaces")
+    public Response addWorkspaceConfiguration(WorkspaceConfigurationOutgoing wco) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        //validation
-        String errorMsg = null;
-        if (StringUtils.isEmpty(model.getId())) {
-            errorMsg = "Workspace id is misssing.";
-        } else if (StringUtils.isEmpty(model.getWorkspace().getText())) {
-            errorMsg = "Workspace name is misssing.";
-        } else if (model.getOctaneEntityTypes().size() == 0) {
-            errorMsg = "Octane entity types are missing";
-        } else if (model.getJiraProjects().size() == 0) {
-            errorMsg = "Jira projects are missing";
-        } else if (model.getJiraIssueTypes().size() == 0) {
-            errorMsg = "Jira issue types are missing";
+
+        try {
+            WorkspaceConfiguration wc = ConfigurarionUtil.validateRequiredAndConvertToInternal(wco, true);
+            wc = ConfigurationManager.getInstance().addWorkspaceConfiguration(wc);
+            WorkspaceConfigurationOutgoing outputWco = ConfigurarionUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name());
+            return Response.ok(outputWco).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
         }
-        if (errorMsg != null) {
-            return Response.status(Status.CONFLICT).entity("Failed to validate workspace configuration : " + errorMsg).build();
+    }
+
+    @PUT
+    @Path("/workspaces/{workspaceConfigurationId}")
+    public Response updateWorkspaceConfiguration(@PathParam("workspaceConfigurationId") String workspaceConfigurationId, WorkspaceConfigurationOutgoing wco) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        //save
-        WorkspaceConfiguration wc = ConfigurationManager.getInstance().saveWorkspaceConfiguration(model);
-        return Response.ok(convert(wc)).build();
+        try {
+            WorkspaceConfiguration wc = ConfigurarionUtil.validateRequiredAndConvertToInternal(wco, false);
+            if (!wco.getId().equals(workspaceConfigurationId)) {
+                return Response.status(Response.Status.CONFLICT).entity("Workspace configuration id in entity should be equal to id in path parameter").build();
+            }
+            WorkspaceConfiguration updatedWc = ConfigurationManager.getInstance().updateWorkspaceConfiguration(wc);
+            WorkspaceConfigurationOutgoing outputWco = ConfigurarionUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
+            return Response.ok(outputWco).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
+        }
     }
+
 
     @DELETE
     @Path("/workspace-config/self/{id}")
-    public Response deleteWorkspaceConfigurationById(@PathParam("id") long id) {
+    public Response deleteWorkspaceConfigurationById(@PathParam("id") String id) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        boolean deleted = ConfigurationManager.getInstance().deleteWorkspaceConfiguration(id);
+        boolean deleted = ConfigurationManager.getInstance().removeWorkspaceConfiguration(id);
         if (deleted) {
             return Response.ok().build();
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
-
     }
 
     @GET
@@ -316,13 +304,11 @@ public class ConfigResource {
         try {
             SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(sco, false);
             ConfigurarionUtil.doFullSpaceConfigurationValidation(spaceConfig);
-            ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
+            SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
+            return Response.ok(ConfigurarionUtil.convertToOutgoing(updated)).build();
         } catch (IllegalArgumentException e) {
-            Response.status(Status.CONFLICT).entity("Failed to update configuration : " + e.getMessage()).build();
+            return Response.status(Status.CONFLICT).entity("Failed to update configuration : " + e.getMessage()).build();
         }
-
-
-        return Response.ok().build();
     }
 
     @DELETE
@@ -359,6 +345,12 @@ public class ConfigResource {
     private boolean validateUserPermission() {
         UserProfile username = userManager.getRemoteUser(request);
         return !(username == null || !userManager.isSystemAdmin(username.getUserKey()));
+    }
+
+    private Map<String, String> getSpaceConfigurationId2Name() {
+        Map<String, String> spaceConfigurationId2Name = ConfigurationManager.getInstance().getSpaceConfigurations().stream()
+                .collect(Collectors.toMap(SpaceConfiguration::getId, SpaceConfiguration::getName));
+        return spaceConfigurationId2Name;
     }
 }
 
