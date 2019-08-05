@@ -127,6 +127,10 @@
         $("#warning-message").text(msg);
 
         AJS.dialog2("#warning-dialog").show();
+
+        $( "#warning-dialog-confirm" ).off();
+        $( "#warning-dialog-cancel" ).off();
+
         AJS.$("#warning-dialog-confirm").click(function (e) {
             e.preventDefault();
             AJS.dialog2("#warning-dialog").hide();

@@ -319,8 +319,12 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        boolean isRemoved = ConfigurationManager.getInstance().removeSpaceConfiguration(id);
-        return Response.ok(isRemoved).build();
+        boolean deleted = ConfigurationManager.getInstance().removeSpaceConfiguration(id);
+        if (deleted) {
+            return Response.ok().build();
+        } else {
+            return Response.status(Status.NOT_FOUND).build();
+        }
     }
 
     @POST
