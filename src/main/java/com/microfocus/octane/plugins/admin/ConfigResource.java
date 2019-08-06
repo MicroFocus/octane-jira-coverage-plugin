@@ -60,22 +60,22 @@ public class ConfigResource {
     }
 
     @GET
-    @Path("/workspace-config/additional-data")
-    public Response getDataForCreateDialog(@QueryParam("update-workspace-id") Long id) {
+    @Path("/workspaces-dialog/additional-data")
+    public Response getDataForWorkspaceDialog(@QueryParam("space-conf-id") String spaceConfId, @QueryParam("workspace-conf-id") String workspaceConfId) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        SpaceConfiguration spConfig = null;
-        Set<Long> usedWorkspaces = spConfig.getWorkspaces().stream().map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
-        Set<String> usedJiraProjects = spConfig.getWorkspaces().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
+        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfId, true).get();
+        Set<Long> usedWorkspaces = spaceConfId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
+                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfId))
+                .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
+        Set<String> usedJiraProjects = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
 
-        if (id != null) {
-            Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).findFirst();
-            if (opt.isPresent()) {
-                usedWorkspaces.remove(opt.get().getWorkspaceId());
-                usedJiraProjects.removeAll(opt.get().getJiraProjects());
-            }
+        if (workspaceConfId != null) {
+            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId,true).get();
+            usedWorkspaces.remove(wc.getWorkspaceId());
+            usedJiraProjects.removeAll(wc.getJiraProjects());
         }
 
         List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
@@ -149,7 +149,7 @@ public class ConfigResource {
 
     @GET
     @Path("/workspaces/possible-jira-fields")
-    public Response getPossibleJiraFields(@QueryParam("space-configuration-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
+    public Response getPossibleJiraFields(@QueryParam("space-conf-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
@@ -199,7 +199,7 @@ public class ConfigResource {
 
 
     @DELETE
-    @Path("/workspace-config/self/{id}")
+    @Path("/workspaces/{id}")
     public Response deleteWorkspaceConfigurationById(@PathParam("id") String id) {
         if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();

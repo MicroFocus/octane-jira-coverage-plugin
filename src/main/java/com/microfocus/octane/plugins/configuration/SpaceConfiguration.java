@@ -73,6 +73,7 @@ public class SpaceConfiguration {
         return this;
     }
 
+    @Deprecated
     public List<WorkspaceConfiguration> getWorkspaces() {
         return workspaces;
     }

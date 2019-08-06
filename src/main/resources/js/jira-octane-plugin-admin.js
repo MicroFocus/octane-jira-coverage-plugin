@@ -27,6 +27,11 @@
                     showSpaceDialog(instance);
                 });
 
+                var addWorkspaceButtonEl = $('<button class=\"aui-button aui-button-link\">Add workspace</button>').click(function (e) {
+                    var model = instance.model.attributes;
+                    showWorkspaceDialog({id: model.id, name: model.name});
+                });
+
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
                     var msg = "Are you sure you want to delete '" + instance.model.attributes.name + "' space configuration?";
                     removeRow(msg, octanePluginContext.spaceTable, instance);
@@ -36,7 +41,7 @@
                     testConnection(instance);
                 });
 
-                var parentEl = $('<div></div>').append(editButtonEl, deleteButtonEl, testConnectionButtonEl);
+                var parentEl = $('<div></div>').append(addWorkspaceButtonEl, editButtonEl, deleteButtonEl, testConnectionButtonEl);
                 return parentEl;
             }
         });
@@ -85,11 +90,9 @@
                 });
 
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
-                    removeRow(instance);
                     var msg = "Are you sure you want to delete '" + instance.model.attributes.workspaceName + "' workspace configuration?";
                     removeRow(msg, octanePluginContext.workspaceTable, instance);
                 });
-
 
                 var parentEl = $('<div></div>').append(editButtonEl, deleteButtonEl);
                 return parentEl;
@@ -99,11 +102,11 @@
         octanePluginContext.workspaceTable = new AJS.RestfulTable({
             el: jQuery("#workspace-table"),
             resources: {
-                all: octanePluginContext.octaneAdminBaseUrl + "workspace-config/all",
-                self: octanePluginContext.octaneAdminBaseUrl + "workspace-config/self"
+                all: octanePluginContext.octaneAdminBaseUrl + "workspaces"
             },
             columns: [
                 {id: "id", header: "Workspace Id"},
+                {id: "spaceConfName", header: "Space"},
                 {id: "workspaceName", header: "Workspace Name"},
                 {id: "octaneUdf", header: "Mapping Field"},
                 {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
@@ -128,8 +131,8 @@
 
         AJS.dialog2("#warning-dialog").show();
 
-        $( "#warning-dialog-confirm" ).off();
-        $( "#warning-dialog-cancel" ).off();
+        $("#warning-dialog-confirm").off();
+        $("#warning-dialog-cancel").off();
 
         AJS.$("#warning-dialog-confirm").click(function (e) {
             e.preventDefault();
@@ -216,20 +219,22 @@
             $("#octane-possible-fields-tooltip").attr("title", text);
             AJS.$("#octane-possible-fields-tooltip").tooltip();
             $("#octane-possible-fields-tooltip").toggleClass("aui-iconfont-info-filled", filled);
-
         }
 
         var workspaceId = $("#workspaceSelector").val();
+        var spaceConfId = octanePluginContext.workspaceDialogData.spaceConf.id;
+        octanePluginContext.workspaceDialogData.possibleJiraField = null;
         if (workspaceId) {
             setTitle("Searching...", false);
             $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl + "workspace-config/possible-jira-fields?workspace-id=" + workspaceId,
+                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/possible-jira-fields?space-conf-id=" + spaceConfId + "&workspace-id=" + workspaceId,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json"
             }).done(function (data) {
                 if (data && data.length) {
                     setTitle("Suggested ALM Octane fields: " + data.join(",  "), true);
+                    octanePluginContext.workspaceDialogData.possibleJiraField = data[0];
                 } else {
                     setTitle("No suggested fields are found.");
                 }
@@ -259,7 +264,7 @@
         return !validationFailed;
     }
 
-    function testConnectionFromDialog(){
+    function testConnectionFromDialog() {
         octanePluginContext.spaceSaveClicked = true;
         if (!validateSpaceRequiredFieldsFilled()) {
             return;
@@ -294,9 +299,9 @@
         });
     }
 
-    function testConnection(row){
+    function testConnection(row) {
         var rowModel = row.model.attributes;
-        console.log("testConnection", rowModel)
+        console.log("testConnection", rowModel);
         var statusEl = row.$el.children().eq(4);
         var throbber = statusEl.children().first();
         throbber.addClass("throbber-status");
@@ -357,7 +362,6 @@
         });
 
 
-
         $("#space-dialog .required").change(function () {
             validateSpaceRequiredFieldsFilled();
         });
@@ -386,7 +390,7 @@
             if (editMode) {
                 modelForUpdate.id = rowModel.id;
                 requestType = "PUT";
-                url+="/" + modelForUpdate.id;
+                url += "/" + modelForUpdate.id;
             }
 
             //send
@@ -424,12 +428,13 @@
     }
 
     function configureWorkspaceDialog() {
-        octanePluginContext.createDialogData = {};
+        octanePluginContext.workspaceDialogData = {};
         octanePluginContext.workspaceSaveClicked = false;
 
         function reloadOctaneSupportedEntityTypes() {
             $("#octaneEntityTypes").val("");//clear before in order to avoid saving not-consistent data
             var workspaceId = $("#workspaceSelector").val();
+            var spaceConfId = $("#spaceConfSelector").val();
             var udfName = $("#octaneUdf").attr("value");
             if (workspaceId && udfName) {
                 $("#refreshOctaneEntityTypesSpinner").spin();
@@ -438,7 +443,7 @@
             }
 
             $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl + "workspace-config/supported-octane-types?workspace-id=" + workspaceId + "&udf-name=" + udfName,
+                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/supported-octane-types?space-configuration-id=" + spaceConfId + "&workspace-id=" + workspaceId + "&udf-name=" + udfName,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json"
@@ -472,14 +477,13 @@
 
         //fixing focus on search control
         //https://community.developer.atlassian.com/t/aui-dialog-2-modal-problems-with-select-2-user-search-and-modal-does-not-lock-keyboard/10474
-        $("#workspaceSelector").on("select2-open", function () {
+        $("#workspaceSelector, #spaceConfSelector").on("select2-open", function () {
             $("[tabindex=0]").attr("tabindex", "-1");
             $("div.select2-search input.select2-input").attr("tabindex", "0").focus();
         });
 
         AJS.$("#show-workspace-dialog").click(function (e) {
             e.preventDefault();
-            octanePluginContext.workspaceCurrentRow = null;
             showWorkspaceDialog();
         });
 
@@ -490,6 +494,7 @@
 
             //validate
             var validationFailed = !validateMissingRequiredField($("#workspaceSelector").select2('data'), "#workspaceSelectorError");
+            validationFailed = !validateMissingRequiredField($("#spaceConfSelector").select2('data'), "#spaceConfSelectorError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#octaneUdf").attr("value"), "#octaneUdfError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#octaneEntityTypes").val(), "#octaneEntityTypesError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#jiraProjectsSelector").select2('data').length, "#jiraProjectsSelectorError") || validationFailed;
@@ -503,10 +508,12 @@
             enableWorkspaceSubmitButton(true);
 
             AJS.$('#workspaceSelector').val(null).trigger('change');
+            AJS.$('#spaceConfSelector').val(null).trigger('change');
             AJS.$('#jiraIssueTypesSelector').val(null).trigger('change');
             AJS.$('#jiraProjectsSelector').val(null).trigger('change');
 
             AJS.$("#workspaceSelector").select2("destroy");
+            AJS.$("#spaceConfSelector").select2("destroy");
             AJS.$("#jiraIssueTypesSelector").select2("destroy");
             AJS.$("#jiraProjectsSelector").select2("destroy");
 
@@ -522,29 +529,42 @@
 
             enableWorkspaceSubmitButton(false);
 
+
+            var editMode = !!octanePluginContext.workspaceCurrentRow;
+            var rowModel = editMode ? octanePluginContext.workspaceCurrentRow.model.attributes : null;
+
             //build model
-            var modelForUpdate = {};
-            modelForUpdate.id = $("#workspaceSelector").select2('data').id;
-            modelForUpdate.workspaceName = $("#workspaceSelector").select2('data').text;
-            modelForUpdate.octaneUdf = $("#octaneUdf").attr("value");
-            modelForUpdate.octaneEntityTypes = ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(",") : []; //if empty value - send empty array
-            modelForUpdate.jiraIssueTypes = _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
-                return item.id;
-            });//convert selected objects to array of strings
-            modelForUpdate.jiraProjects = _.map($("#jiraProjectsSelector").select2('data'), function (item) {
-                return item.id;
-            });//convert selected objects to array of strings
+            var modelForUpdate = {
+                id: $("#workspaceSelector").select2('data').id,
+                workspaceName: $("#workspaceSelector").select2('data').text,
+                octaneUdf: $("#octaneUdf").attr("value"),
+                octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(",") : [], //if empty value - send empty array
+                jiraIssueTypes: _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
+                    return item.id;
+                }),//convert selected objects to array of strings
+                jiraProjects: _.map($("#jiraProjectsSelector").select2('data'), function (item) {
+                    return item.id;
+                }),//convert selected objects to array of strings
+            };
+
+            var url = octanePluginContext.workspaceTable.options.resources.all;
+            var requestType = "POST";
+            if (editMode) {
+                modelForUpdate.id = rowModel.id;
+                requestType = "PUT";
+                url += "/" + modelForUpdate.id;
+            }
 
             //send
             var myJSON = JSON.stringify(modelForUpdate);
             $.ajax({
-                url: octanePluginContext.workspaceTable.options.resources.self,
-                type: "POST",
+                url: url,
+                type: requestType,
                 data: myJSON,
                 dataType: "json",
                 contentType: "application/json"
             }).done(function (msg) {
-                if (octanePluginContext.workspaceCurrentRow) {//is edit mode
+                if (editMode) {
                     var rowModel = octanePluginContext.workspaceCurrentRow.model.attributes;
                     rowModel.octaneUdf = modelForUpdate.octaneUdf;
                     rowModel.octaneEntityTypes = modelForUpdate.octaneEntityTypes;
@@ -567,51 +587,58 @@
             e.preventDefault();
             closeWorkspaceDialog();
         });
+
+        AJS.$("#octane-possible-fields-tooltip").dblclick(function (e) {
+            e.preventDefault();
+            var hasPossibleJiraField = !!octanePluginContext.workspaceDialogData.possibleJiraField;
+            if(hasPossibleJiraField){
+                $("#octaneUdf").val(octanePluginContext.workspaceDialogData.possibleJiraField);
+            }
+        });
     }
 
-    function showWorkspaceDialog() {
-        octanePluginContext.workspaceCurrentRow = instance;
-        var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspace-config/additional-data";
-        $("#workspace-dialog .error").text('');//clear previous error messages
-        if (octanePluginContext.workspaceCurrentRow) {//is edit mode
-            var model = octanePluginContext.workspaceCurrentRow.model.attributes;
-            dataUrl = dataUrl + "?update-workspace-id=" + model.id;
-            $('#workspaceSelector').val([model.id]);
-            $('#workspaceSelector').prop('disabled', true); //disable workspace selector
-            $("#octaneUdf").val(model.octaneUdf);//populate default value for new item
-            $("#octaneEntityTypes").val(model.octaneEntityTypes);
-            $("#jiraIssueTypesSelector").val(model.jiraIssueTypes);
-            $("#jiraProjectsSelector").val(model.jiraProjects);
+    function showWorkspaceDialog(spaceConf, workspaceRow) {
+        octanePluginContext.workspaceCurrentRow = workspaceRow;
+        var editMode = !!octanePluginContext.workspaceCurrentRow;
+        var rowModel = editMode ? octanePluginContext.workspaceCurrentRow.model.attributes : null;
 
+        var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspaces-dialog/additional-data?space-conf-id=" + spaceConf.id;
+        $("#workspace-dialog .error").text('');//clear previous error messages
+        $("#spaceConfSelector").val(spaceConf.name);
+
+        if (editMode) {//is edit mode
+            dataUrl = dataUrl + "&workspace-conf-id=" + model.id;
+            $('#workspaceSelector').val([rowModel.id]);
+            $('#workspaceSelector').prop('disabled', true); //disable workspace selector
+
+            $("#octaneUdf").val(rowModel.octaneUdf);//populate default value for new item
+            $("#octaneEntityTypes").val(rowModel.octaneEntityTypes);
+            $("#jiraIssueTypesSelector").val(rowModel.jiraIssueTypes);
+            $("#jiraProjectsSelector").val(rowModel.jiraProjects);
             $('#workspace-dialog-title').text("Edit");//set dialog title
         } else {//new item
             $("#octaneUdf").val("");//populate default value for new item
             $('#workspaceSelector').prop('disabled', false);//enable workspace selector
-
             $('#workspace-dialog-title').text("Create");//set dialog title
         }
 
         $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
             .done(function (data) {
-                octanePluginContext.createDialogData = data;
+                octanePluginContext.workspaceDialogData = data;
+                octanePluginContext.workspaceDialogData.spaceConf = spaceConf;
                 AJS.$("#workspaceSelector").auiSelect2({
                     multiple: false,
-                    data: octanePluginContext.createDialogData.workspaces
+                    data: octanePluginContext.workspaceDialogData.workspaces
                 });
 
                 AJS.$("#jiraIssueTypesSelector").auiSelect2({
                     multiple: true,
-                    data: octanePluginContext.createDialogData.issueTypes,
+                    data: octanePluginContext.workspaceDialogData.issueTypes,
                 });
 
                 AJS.$("#jiraProjectsSelector").auiSelect2({
                     multiple: true,
-                    data: octanePluginContext.createDialogData.projects,
-                });
-                AJS.$("#newSelector").auiSelect2({
-                    multiple: false,
-                    maximumselectionsize: 1,
-                    tags: ["red", "green", "blue"]
+                    data: octanePluginContext.workspaceDialogData.projects,
                 });
 
                 reloadPossibleJiraFields();
@@ -758,6 +785,7 @@
             return true;
         }
     }
+
 })(AJS.$ || jQuery);
 
 
