@@ -288,6 +288,7 @@ public class ConfigurarionUtil {
         }
 
         WorkspaceConfiguration wc = new WorkspaceConfiguration()
+                .setId(wco.getId())
                 .setSpaceConfigurationId(wco.getSpaceConfigId())
                 .setWorkspaceId(workspaceId)
                 .setWorkspaceName(wco.getWorkspaceName())

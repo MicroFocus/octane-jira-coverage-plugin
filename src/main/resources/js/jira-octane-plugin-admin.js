@@ -105,7 +105,7 @@
                 all: octanePluginContext.octaneAdminBaseUrl + "workspaces"
             },
             columns: [
-                {id: "spaceConfName", header: "Space"},
+                {id: "spaceConfigName", header: "Space Name"},
                 {id: "workspaceId", header: "Workspace Id"},
                 {id: "workspaceName", header: "Workspace Name"},
                 {id: "octaneUdf", header: "Mapping Field"},
@@ -768,7 +768,7 @@
         if (isSuccess) {
             AJS.flag({type: 'success', close: 'auto', body: statusText});
             while (errorFlags.length) {
-                var entry = spaceErrorFlags.pop();
+                var entry = errorFlags.pop();
                 console.log(entry);
                 entry.close();
             }
