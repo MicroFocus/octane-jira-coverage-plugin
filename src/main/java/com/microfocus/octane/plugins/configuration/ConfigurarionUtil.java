@@ -1,6 +1,5 @@
 package com.microfocus.octane.plugins.configuration;
 
-import com.microfocus.octane.plugins.admin.KeyValueItem;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
@@ -226,11 +225,13 @@ public class ConfigurarionUtil {
     }
 
 
-    public static WorkspaceConfigurationOutgoing convertToOutgoing(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name ) {
+    public static WorkspaceConfigurationOutgoing convertToOutgoing(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name) {
         WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
                 .setId(wc.getId())
-                .setSpaceConfig(KeyValueItem.create(wc.getSpaceConfigurationId(), spaceConfigurationId2Name.get(wc.getSpaceConfigurationId())))
-                .setWorkspace(KeyValueItem.create(Long.toString(wc.getWorkspaceId()), wc.getWorkspaceName()))
+                .setSpaceConfigId(wc.getSpaceConfigurationId())
+                .setSpaceConfigName(spaceConfigurationId2Name.get(wc.getSpaceConfigurationId()))
+                .setWorkspaceId(Long.toString(wc.getWorkspaceId()))
+                .setWorkspaceName(wc.getWorkspaceName())
                 .setOctaneUdf(wc.getOctaneUdf())
                 .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
                         .map(typeName -> {
@@ -247,14 +248,16 @@ public class ConfigurarionUtil {
     public static WorkspaceConfiguration validateRequiredAndConvertToInternal(WorkspaceConfigurationOutgoing wco, boolean isNew) {
         //validation
 
-        if (wco.getSpaceConfig() == null || StringUtils.isEmpty(wco.getSpaceConfig().getId())) {
-            throw new IllegalArgumentException("Space configuration is misssing.");
+        if (StringUtils.isEmpty(wco.getSpaceConfigId())) {
+            throw new IllegalArgumentException("Space configuration is missing.");
         }
-        if (StringUtils.isEmpty(wco.getId())) {
+
+        if (StringUtils.isEmpty(wco.getWorkspaceId())) {
             throw new IllegalArgumentException("Workspace id is missing.");
         }
-        if (wco.getWorkspace() == null || StringUtils.isEmpty(wco.getWorkspace().getId()) || StringUtils.isEmpty(wco.getWorkspace().getText())) {
-            throw new IllegalArgumentException("Workspace name is missing.");
+
+        if (StringUtils.isEmpty(wco.getWorkspaceName())) {
+            throw new IllegalArgumentException("Workspace id is missing.");
         }
 
         if (wco.getOctaneEntityTypes().size() == 0) {
@@ -268,7 +271,7 @@ public class ConfigurarionUtil {
         }
         long workspaceId;
         try {
-            workspaceId = Long.parseLong(wco.getWorkspace().getId());
+            workspaceId = Long.parseLong(wco.getWorkspaceId());
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Workspace Id must be numeric value");
         }
@@ -285,9 +288,9 @@ public class ConfigurarionUtil {
         }
 
         WorkspaceConfiguration wc = new WorkspaceConfiguration()
-                .setSpaceConfigurationId(wco.getSpaceConfig().getId())
+                .setSpaceConfigurationId(wco.getSpaceConfigId())
                 .setWorkspaceId(workspaceId)
-                .setWorkspaceName(wco.getWorkspace().getText())
+                .setWorkspaceName(wco.getWorkspaceName())
                 .setOctaneUdf(wco.getOctaneUdf())
                 .setOctaneEntityTypes(wco.getOctaneEntityTypes().stream()
                         .map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName())

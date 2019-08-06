@@ -13,7 +13,7 @@
         configureSpaceButtons();
 
         configureWorkspaceDialog();
-        //configureWorkspaceTable();
+        configureWorkspaceTable();
         configureProxyDialog();
     });
 
@@ -105,8 +105,8 @@
                 all: octanePluginContext.octaneAdminBaseUrl + "workspaces"
             },
             columns: [
-                {id: "id", header: "Workspace Id"},
                 {id: "spaceConfName", header: "Space"},
+                {id: "workspaceId", header: "Workspace Id"},
                 {id: "workspaceName", header: "Workspace Name"},
                 {id: "octaneUdf", header: "Mapping Field"},
                 {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
@@ -434,7 +434,7 @@
         function reloadOctaneSupportedEntityTypes() {
             $("#octaneEntityTypes").val("");//clear before in order to avoid saving not-consistent data
             var workspaceId = $("#workspaceSelector").val();
-            var spaceConfId = $("#spaceConfSelector").val();
+            var spaceConfId = octanePluginContext.workspaceDialogData.spaceConf.id;
             var udfName = $("#octaneUdf").attr("value");
             if (workspaceId && udfName) {
                 $("#refreshOctaneEntityTypesSpinner").spin();
@@ -529,14 +529,15 @@
 
             enableWorkspaceSubmitButton(false);
 
-
             var editMode = !!octanePluginContext.workspaceCurrentRow;
             var rowModel = editMode ? octanePluginContext.workspaceCurrentRow.model.attributes : null;
 
             //build model
             var modelForUpdate = {
-                id: $("#workspaceSelector").select2('data').id,
+                workspaceId: $("#workspaceSelector").select2('data').id,
                 workspaceName: $("#workspaceSelector").select2('data').text,
+                spaceConfigId: octanePluginContext.workspaceDialogData.spaceConf.id,
+                spaceConfigName: octanePluginContext.workspaceDialogData.spaceConf.name,
                 octaneUdf: $("#octaneUdf").attr("value"),
                 octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(",") : [], //if empty value - send empty array
                 jiraIssueTypes: _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
@@ -563,16 +564,20 @@
                 data: myJSON,
                 dataType: "json",
                 contentType: "application/json"
-            }).done(function (msg) {
+            }).done(function (data) {
                 if (editMode) {
                     var rowModel = octanePluginContext.workspaceCurrentRow.model.attributes;
-                    rowModel.octaneUdf = modelForUpdate.octaneUdf;
-                    rowModel.octaneEntityTypes = modelForUpdate.octaneEntityTypes;
-                    rowModel.jiraIssueTypes = modelForUpdate.jiraIssueTypes;
-                    rowModel.jiraProjects = modelForUpdate.jiraProjects;
+                    rowModel.workspaceId = data.workspaceId;
+                    rowModel.workspaceName = data.workspaceName;
+                    rowModel.spaceConfigId = data.spaceConfigId;
+                    rowModel.spaceConfigName = data.spaceConfigName;
+                    rowModel.octaneUdf = data.octaneUdf;
+                    rowModel.octaneEntityTypes = data.octaneEntityTypes;
+                    rowModel.jiraIssueTypes = data.jiraIssueTypes;
+                    rowModel.jiraProjects = data.jiraProjects;
                     octanePluginContext.workspaceCurrentRow.render();
                 } else {//new mode
-                    octanePluginContext.workspaceTable.addRow(modelForUpdate, 0);
+                    octanePluginContext.workspaceTable.addRow(data, 0);
                 }
 
                 closeWorkspaceDialog();
@@ -591,8 +596,9 @@
         AJS.$("#octane-possible-fields-tooltip").dblclick(function (e) {
             e.preventDefault();
             var hasPossibleJiraField = !!octanePluginContext.workspaceDialogData.possibleJiraField;
-            if(hasPossibleJiraField){
+            if (hasPossibleJiraField) {
                 $("#octaneUdf").val(octanePluginContext.workspaceDialogData.possibleJiraField);
+                reloadOctaneSupportedEntityTypes();
             }
         });
     }

@@ -166,7 +166,6 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-
         try {
             WorkspaceConfiguration wc = ConfigurarionUtil.validateRequiredAndConvertToInternal(wco, true);
             wc = ConfigurationManager.getInstance().addWorkspaceConfiguration(wc);

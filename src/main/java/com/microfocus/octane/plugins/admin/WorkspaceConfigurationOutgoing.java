@@ -28,11 +28,17 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "id")
     private String id;
 
-    @XmlElement(name = "spaceConfig")
-    private KeyValueItem spaceConfig;
+    @XmlElement(name = "spaceConfigId")
+    private String spaceConfigId;
 
-    @XmlElement(name = "workspace")
-    private KeyValueItem workspace;
+    @XmlElement(name = "spaceConfigName")
+    private String spaceConfigName;
+
+    @XmlElement(name = "workspaceId")
+    private String workspaceId;
+
+    @XmlElement(name = "workspaceName")
+    private String workspaceName;
 
     @XmlElement(name = "octaneUdf")
     private String octaneUdf;
@@ -92,21 +98,39 @@ public class WorkspaceConfigurationOutgoing {
     }
 
 
-    public KeyValueItem getSpaceConfig() {
-        return spaceConfig;
+    public String getSpaceConfigId() {
+        return spaceConfigId;
     }
 
-    public WorkspaceConfigurationOutgoing setSpaceConfig(KeyValueItem spaceConfig) {
-        this.spaceConfig = spaceConfig;
+    public WorkspaceConfigurationOutgoing setSpaceConfigId(String spaceConfigId) {
+        this.spaceConfigId = spaceConfigId;
         return this;
     }
 
-    public KeyValueItem getWorkspace() {
-        return workspace;
+    public String getSpaceConfigName() {
+        return spaceConfigName;
     }
 
-    public WorkspaceConfigurationOutgoing setWorkspace(KeyValueItem workspace) {
-        this.workspace = workspace;
+    public WorkspaceConfigurationOutgoing setSpaceConfigName(String spaceConfigName) {
+        this.spaceConfigName = spaceConfigName;
+        return this;
+    }
+
+    public String getWorkspaceId() {
+        return workspaceId;
+    }
+
+    public WorkspaceConfigurationOutgoing setWorkspaceId(String workspaceId) {
+        this.workspaceId = workspaceId;
+        return this;
+    }
+
+    public String getWorkspaceName() {
+        return workspaceName;
+    }
+
+    public WorkspaceConfigurationOutgoing setWorkspaceName(String workspaceName) {
+        this.workspaceName = workspaceName;
         return this;
     }
 }
