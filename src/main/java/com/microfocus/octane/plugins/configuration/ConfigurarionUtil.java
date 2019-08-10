@@ -91,74 +91,25 @@ public class ConfigurarionUtil {
             throw new IllegalArgumentException(e.getMessage());
         }
 
-            /*String errorMsg = null;
-            try {
 
-                String secret = PluginConstants.PASSWORD_REPLACE.equals(sco.getClientSecret()) ?
-                        ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId()).get().getClientSecret() :
-                        sco.getClientSecret();
-
-                RestConnector restConnector = new RestConnector();
-                restConnector.setBaseUrl(locationParts.getBaseUrl());
-                restConnector.setCredentials(sco.getClientId(), secret);
-                boolean isConnected = restConnector.login();
-                if (!isConnected) {
-                    errorMsg = "Failed to authenticate.";
-                } else {
-                    String getWorspacesUrl = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, locationParts.getSpaceId(), "workspaces");
-                    String queryString = OctaneQueryBuilder.create().addSelectedFields("id").addPageSize(1).build();
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
-
-                    try {
-                        String entitiesCollectionStr = restConnector.httpGet(getWorspacesUrl, Arrays.asList(queryString), headers).getResponseData();
-                        JSONObject jsonObj = new JSONObject(entitiesCollectionStr);
-                        OctaneEntityCollection workspaces = OctaneEntityParser.parseCollection(jsonObj);
-                    } catch (JSONException e) {
-                        errorMsg = "Incorrect shared space ID.";
-                    }
-                }
-            } catch (Exception exc) {
-                if (exc.getMessage().contains("platform.not_authorized")) {
-                    errorMsg = "Ensure your credentials are correct.";
-                } else if (exc.getMessage().contains("type shared_space does not exist") || exc.getMessage().contains("SharedSpaceNotFoundException")) {
-                    errorMsg = "Shared space '" + locationParts.getSpaceId() + "' does not exist.";
-                } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
-                    errorMsg = "Network exception, proxy settings may be missing.";
-                } else if (exc.getMessage().startsWith("Connection timed out")) {
-                    errorMsg = "Timed out exception, proxy settings may be misconfigured.";
-                } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
-                    errorMsg = "Location is not available.";
-                } else {
-                    errorMsg = "Exception " + exc.getClass().getName() + " : " + exc.getMessage();
-                    if (exc.getCause() != null) {
-                        errorMsg += " . Cause : " + exc.getCause();//"Validate that location is correct.";
-                    }
-                }
-            }
-            if (errorMsg != null) {
-                throw new IllegalArgumentException(errorMsg);
-            }*/
-
-        //validate id
+        String clientSecret = sco.getClientSecret();
         if (isNew) {
+            //validate id is missing
             if (StringUtils.isNotEmpty(sco.getId())) {
                 throw new IllegalArgumentException("New space configuration cannot contain configuration id");
             }
             sco.setId(UUID.randomUUID().toString());
         } else {
+            //validate id is exist
             if (StringUtils.isEmpty(sco.getId())) {
                 throw new IllegalArgumentException("Configuration id is missing");
             }
 
-
-        }
-
-        //replace password if required
-        String clientSecret = sco.getClientSecret();
-        Optional<SpaceConfiguration> opt = ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId(), true);
-        if (PluginConstants.PASSWORD_REPLACE.equals(clientSecret) && !isNew) {
-            clientSecret = opt.get().getClientSecret();
+            //replace password if required
+            Optional<SpaceConfiguration> opt = ConfigurationManager.getInstance().getSpaceConfigurationById(sco.getId(), true);
+            if (PluginConstants.PASSWORD_REPLACE.equals(clientSecret) && !isNew) {
+                clientSecret = opt.get().getClientSecret();
+            }
         }
 
         //convert
