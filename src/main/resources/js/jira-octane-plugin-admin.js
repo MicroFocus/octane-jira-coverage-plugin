@@ -87,7 +87,8 @@
 
                 var editButtonEl = $('<button class=\"aui-button aui-button-link\">Edit</button>').click(function (e) {
                     console.log("editButtonEl",instance);
-                    var space ={id :instance.model.attributes.spaceConfigId};
+                    var model = instance.model.attributes;
+                    var space ={id :model.spaceConfigId, name: model.spaceConfigName};
                     showWorkspaceDialog(space, instance);
                 });
 
@@ -616,8 +617,10 @@
         $("#spaceConfSelector").val(spaceConf.name);
 
         if (editMode) {//is edit mode
+            console.log("editMode",rowModel)
             dataUrl = dataUrl + "&workspace-conf-id=" + rowModel.id;
-            $('#workspaceSelector').val([rowModel.id]);
+
+            $('#workspaceSelector').val([rowModel.workspaceId]);
             $('#workspaceSelector').prop('disabled', true); //disable workspace selector
 
             $("#octaneUdf").val(rowModel.octaneUdf);//populate default value for new item
