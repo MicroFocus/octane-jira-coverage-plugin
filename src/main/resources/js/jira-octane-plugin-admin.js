@@ -10,7 +10,6 @@
         window.onbeforeunload = null;//Disable “Changes you made may not be saved” pop-up window
         configureSpaceDialog();
         configureSpaceTable();
-        configureSpaceButtons();
 
         configureWorkspaceDialog();
         configureWorkspaceTable();
@@ -617,7 +616,6 @@
         $("#spaceConfSelector").val(spaceConf.name);
 
         if (editMode) {//is edit mode
-            console.log("editMode",rowModel)
             dataUrl = dataUrl + "&workspace-conf-id=" + rowModel.id;
 
             $('#workspaceSelector').val([rowModel.workspaceId]);
@@ -684,53 +682,6 @@
         }
 
         AJS.dialog2("#space-dialog").show();
-    }
-
-    //DEPRECATED
-    function configureSpaceButtons() {
-        AJS.$("#save-space-configuration").click(function () {
-            updateSpaceConfig();
-        });
-
-        function updateSpaceConfig() {
-            var data = {
-                location: $("#location").attr("value"),
-                clientId: $("#clientId").attr("value"),
-                clientSecret: $("#clientSecret").attr("value")
-            };
-
-            var dataJson = JSON.stringify(data);
-            $('.space-save-status').removeClass("aui-iconfont-successful-build");
-            $('.space-save-status').removeClass("aui-iconfont-error");
-
-            $("#reloadSpinner").spin();
-            enableSpaceSaveButton(false);
-
-            $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl,
-                type: "PUT",
-                data: dataJson,
-                dataType: "json",
-                contentType: "application/json"
-            }).done(function (msg) {
-                enableSpaceSaveButton(true);
-                showSpaceStatus("Space configuration is saved successfully", true);
-                $('.space-save-status').addClass("aui-iconfont-successful-build");
-                $("#reloadSpinner").spinStop();
-
-            }).fail(function (request, status, error) {
-                console.log(status);
-                enableSpaceSaveButton(true);
-                var msg = request.responseText;
-                if (!msg && status && status === 'timeout') {
-                    msg = "Timeout : possibly proxy settings are missing.";
-                }
-
-                showSpaceStatus(msg, false);
-                $('.space-save-status').addClass("aui-iconfont-error");
-                $("#reloadSpinner").spinStop();
-            });
-        }
     }
 
     var spaceErrorFlags = [];
