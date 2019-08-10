@@ -105,7 +105,7 @@ public class ConfigurationManager {
         configuration.getSpaces().remove(conf);
         configuration.getSpaces().add(updatedSpaceConfiguration);
         persistConfiguration();
-        return conf;
+        return updatedSpaceConfiguration;
     }
 
     public boolean removeSpaceConfiguration(String spaceConfigurationId) {

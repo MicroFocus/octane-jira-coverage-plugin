@@ -86,7 +86,9 @@
                 var instance = this;
 
                 var editButtonEl = $('<button class=\"aui-button aui-button-link\">Edit</button>').click(function (e) {
-                    showWorkspaceDialog(instance);
+                    console.log("editButtonEl",instance);
+                    var space ={id :instance.model.attributes.spaceConfigId};
+                    showWorkspaceDialog(space, instance);
                 });
 
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
@@ -409,6 +411,7 @@
                     rowModel.clientId = result.clientId;
                     rowModel.clientSecret = result.clientSecret;
                     octanePluginContext.spaceCurrentRow.render();
+                    reloadTable(octanePluginContext.workspaceTable);
                 } else {//new mode
                     octanePluginContext.spaceTable.addRow(result, 0);
                 }
@@ -613,7 +616,7 @@
         $("#spaceConfSelector").val(spaceConf.name);
 
         if (editMode) {//is edit mode
-            dataUrl = dataUrl + "&workspace-conf-id=" + model.id;
+            dataUrl = dataUrl + "&workspace-conf-id=" + rowModel.id;
             $('#workspaceSelector').val([rowModel.id]);
             $('#workspaceSelector').prop('disabled', true); //disable workspace selector
 
@@ -680,6 +683,7 @@
         AJS.dialog2("#space-dialog").show();
     }
 
+    //DEPRECATED
     function configureSpaceButtons() {
         AJS.$("#save-space-configuration").click(function () {
             updateSpaceConfig();
@@ -790,6 +794,11 @@
             $(errorSelector).text('');
             return true;
         }
+    }
+
+    function reloadTable(table) {
+        table.$tbody.empty();
+        table.fetchInitialResources();
     }
 
 })(AJS.$ || jQuery);
