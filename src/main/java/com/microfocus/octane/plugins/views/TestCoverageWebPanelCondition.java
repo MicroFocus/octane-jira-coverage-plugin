@@ -21,7 +21,6 @@ import com.atlassian.jira.project.Project;
 import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.web.Condition;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
-import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 
 import java.util.Map;
@@ -42,20 +41,17 @@ public class TestCoverageWebPanelCondition implements Condition {
 
     @Override
     public boolean shouldDisplay(Map<String, Object> map) {
-        //if (configManager.isValidConfiguration()) {
-            SpaceConfiguration spaceConfiguration = configManager.getConfiguration();
-            Project project = (Project) map.get("project");
-
-            Optional<WorkspaceConfiguration> workspaceConfigOpt = spaceConfiguration.getWorkspaces().stream().filter(w -> w.getJiraProjects().contains(project.getKey())).findFirst();
-            if (workspaceConfigOpt.isPresent()) {
-                Issue issue = (Issue) map.get("issue");
-                String issueType = issue.getIssueType().getName();
-                WorkspaceConfiguration workspaceConfig = workspaceConfigOpt.get();
-                if (workspaceConfig.getJiraIssueTypes().isEmpty() || workspaceConfig.getJiraIssueTypes().contains(issueType)) {
-                    return true;
-                }
+        Project project = (Project) map.get("project");
+        Optional<WorkspaceConfiguration> workspaceConfigOpt = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
+                .filter(wc -> wc.getJiraProjects().contains(project.getKey())).findFirst();
+        if (workspaceConfigOpt.isPresent()) {
+            Issue issue = (Issue) map.get("issue");
+            String issueType = issue.getIssueType().getName();
+            WorkspaceConfiguration workspaceConfig = workspaceConfigOpt.get();
+            if (workspaceConfig.getJiraIssueTypes().isEmpty() || workspaceConfig.getJiraIssueTypes().contains(issueType)) {
+                return true;
             }
-        //}
+        }
 
         return false;
     }

@@ -121,11 +121,6 @@ public class ConfigurationManager {
         return opt.isPresent();
     }
 
-    @Deprecated
-    public SpaceConfiguration getConfiguration() {
-        return configuration.getSpaces().get(0);
-    }
-
     public ProxyConfiguration getProxySettings() {
         return configuration.getProxy();
     }
