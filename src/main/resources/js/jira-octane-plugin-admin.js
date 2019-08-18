@@ -281,6 +281,8 @@
 
         //send
         var myJSON = JSON.stringify(modelForUpdate);
+        statusIconStart("#space-save-status", "Testing connection ...");
+
         $.ajax({
             url: octanePluginContext.spaceTable.options.resources.all + "/test-connection",
             type: "POST",
@@ -288,26 +290,26 @@
             dataType: "json",
             contentType: "application/json"
         }).done(function (result) {
-            showSpaceStatus("Test connection is successful", true);
+            statusIconOk("#space-save-status", "Test connection is successful");
         }).fail(function (request, status, error) {
-            showSpaceStatus("Test connection is failed : " + request.responseText, false);
+            statusIconFailed("#space-save-status", "Test connection is failed : " + request.responseText);
         });
     }
 
     function testConnection(row) {
         var rowModel = row.model.attributes;
-        console.log("testConnection", rowModel);
         var statusEl = row.$el.children().eq(4);
         var throbber = statusEl.children().first();
         throbber.addClass("throbber-status");
         throbber.addClass("aui-icon");
         throbber.addClass("aui-icon-small");
-        throbber.addClass("aui-icon-wait");
-
         throbber.removeClass("aui-restfultable-throbber");
-        throbber.removeClass("aui-iconfont-successful-build");
-        throbber.removeClass("aui-iconfont-error");
-        throbber.attr("title", "Testing connection ...");
+
+        var throbberStatusClassName = "throbber_status_" + rowModel.id;
+        var throbberStatusClassNameSelector ="."+throbberStatusClassName;
+        throbber.addClass(throbberStatusClassName);
+
+        statusIconStart(throbberStatusClassNameSelector, "Testing connection ...");
 
         //build model
         var modelForUpdate = {
@@ -327,15 +329,9 @@
             dataType: "json",
             contentType: "application/json"
         }).done(function (result) {
-            console.log("testConnection ok");
-            throbber.removeClass("aui-icon-wait");
-            throbber.addClass("aui-iconfont-successful-build");
-            throbber.attr("title", "Test connection is successful");
-        }).fail(function (request, status, error) {
-            console.log("testConnection failed", request);
-            throbber.removeClass("aui-icon-wait");
-            throbber.addClass("aui-iconfont-error");
-            throbber.attr("title", "Test connection is failed : " + request.responseText);
+            statusIconOk(throbberStatusClassNameSelector, "Test connection is successful");
+        }).fail(function (request) {
+            statusIconFailed(throbberStatusClassNameSelector, "Test connection is failed : " + request.responseText);
         });
     }
 
@@ -412,7 +408,9 @@
                 closeSpaceDialog();
                 showSpaceStatus("Space configuration is saved successfully", true);
             }).fail(function (request, status, error) {
-                showSpaceStatus(request.responseText, false);
+                $("#space-save-status").addClass("aui-iconfont-error");
+                $("#space-save-status").attr("title", request.responseText);
+
                 enableSpaceSubmitButton(true);
             });
         });
@@ -708,11 +706,12 @@
     }
 
     function showSpaceDialog(rowForEdit) {
-        console.log("showSpaceDialog", rowForEdit);
+
+        statusIconInit("#space-save-status");
+
         octanePluginContext.spaceCurrentRow = rowForEdit;
         octanePluginContext.spaceSaveClicked = false;
         var isEditMode = !!rowForEdit;
-        console.log("showSpaceDialog isEditMode", isEditMode);
         $("#space-dialog .error").text('');//clear previous error messages
         if (isEditMode) {//is edit mode
             var model = rowForEdit.model.attributes;
@@ -778,7 +777,6 @@
             AJS.flag({type: 'success', close: 'auto', body: statusText});
             while (errorFlags.length) {
                 var entry = errorFlags.pop();
-                console.log(entry);
                 entry.close();
             }
         } else {
@@ -804,6 +802,37 @@
     function reloadTable(table) {
         table.$tbody.empty();
         table.fetchInitialResources();
+    }
+
+    function statusIconInit(selector){
+        var el = $(selector);
+        el.removeClass("aui-icon-wait");
+        el.removeClass("aui-iconfont-successful-build");
+        el.removeClass("aui-iconfont-error");
+    }
+
+    function statusIconStart(selector, msg){
+        var el = $(selector);
+        el.addClass("aui-icon-wait");
+        el.removeClass("aui-iconfont-successful-build");
+        el.removeClass("aui-iconfont-error");
+        el.attr("title", msg);
+    }
+
+    function statusIconOk(selector, msg){
+        var el = $(selector);
+        el.removeClass("aui-icon-wait");
+        el.addClass("aui-iconfont-successful-build");
+        el.removeClass("aui-iconfont-error");
+        el.attr("title", msg);
+    }
+
+    function statusIconFailed(selector, msg){
+        var el = $(selector);
+        el.removeClass("aui-icon-wait");
+        el.removeClass("aui-iconfont-successful-build");
+        el.addClass("aui-iconfont-error");
+        el.attr("title", msg);
     }
 
 })(AJS.$ || jQuery);

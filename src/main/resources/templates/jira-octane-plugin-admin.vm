@@ -54,9 +54,8 @@
             <div class="field-group">
                 <div id="button-group" style="position: relative;">
                     <input type="button" class="aui-button" id="dialog-test-space-connection" value="Test connection">
-                    <span class="aui-icon aui-icon-small space-save-status"></span>
+                    <span id="space-save-status" class="aui-icon aui-icon-small"></span>
                 </div>
-                <div><span id="reloadSpinner"></span></div>
             </div>
         </form>
     </div>
