@@ -192,9 +192,9 @@ public class OctaneRestManager {
             if (exc.getMessage().contains("platform.not_authorized")) {
                 myErrorMessage = "Ensure your credentials are correct.";
             } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
-                myErrorMessage = "Network exception, proxy settings may be missing.";
+                myErrorMessage = "Network exception, proxy settings may be missing or misconfigured.";
             } else if (exc.getMessage().startsWith("Connection timed out")) {
-                myErrorMessage = "Timed out exception, proxy settings may be misconfigured.";
+                myErrorMessage = "Timed out exception, proxy settings may be missing or misconfigured.";
             } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
                 myErrorMessage = "Location is not available.";
             } else {

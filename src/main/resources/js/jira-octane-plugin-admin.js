@@ -653,7 +653,9 @@
 
                 reloadPossibleJiraFields();
                 AJS.dialog2("#workspace-dialog").show();
-            });
+            }).fail(function (request) {
+                AJS.flag({type: 'error', close: 'auto', body: "Failed to connect to space configuration : " + request.responseText});
+        });
     }
 
     function showSpaceDialog(rowForEdit) {

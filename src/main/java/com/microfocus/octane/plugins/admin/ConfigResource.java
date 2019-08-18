@@ -78,30 +78,34 @@ public class ConfigResource {
             usedJiraProjects.removeAll(wc.getJiraProjects());
         }
 
-        List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
-        OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
-        Collection<KeyValueItem> select2workspaces = workspaces.getData()
-                .stream()
-                .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
-                .map(e -> new KeyValueItem(e.getId(), e.getName()))
-                .collect(Collectors.toList());
+        try {
+            List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
+            OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
+            Collection<KeyValueItem> select2workspaces = workspaces.getData()
+                    .stream()
+                    .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
+                    .map(e -> new KeyValueItem(e.getId(), e.getName()))
+                    .collect(Collectors.toList());
 
 
-        Collection<KeyValueItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
-                .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
+            Collection<KeyValueItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
+                    .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
 
-        Collection<KeyValueItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
-                .stream()
-                .filter(e -> !usedJiraProjects.contains(e.getKey()))
-                .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId()))
-                .collect(Collectors.toList());
+            Collection<KeyValueItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
+                    .stream()
+                    .filter(e -> !usedJiraProjects.contains(e.getKey()))
+                    .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId()))
+                    .collect(Collectors.toList());
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("workspaces", select2workspaces);
-        data.put("issueTypes", select2IssueTypes);
-        data.put("projects", select2Projects);
+            Map<String, Object> data = new HashMap<>();
+            data.put("workspaces", select2workspaces);
+            data.put("issueTypes", select2IssueTypes);
+            data.put("projects", select2Projects);
 
-        return Response.ok(data).build();
+            return Response.ok(data).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
     }
 
     @GET
