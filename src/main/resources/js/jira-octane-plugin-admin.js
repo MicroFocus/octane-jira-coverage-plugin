@@ -137,6 +137,9 @@
                 url: table.options.resources.all + "/" + row.model.id, type: "DELETE",
             }).done(function () {
                 table.removeRow(row);
+                if(table === octanePluginContext.spaceTable){
+                    reloadTable(octanePluginContext.workspaceTable);
+                }
             });
         });
 

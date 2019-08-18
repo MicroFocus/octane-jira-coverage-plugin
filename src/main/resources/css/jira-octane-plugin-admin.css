@@ -29,7 +29,7 @@
     border-top-color: #344563;
 }
 
-#workspace-dialog .select2-container-disabled .select2-choice{
+#workspace-dialog .select2-container-disabled .select2-choice,#workspace-dialog .select2-container-disabled .select2-choices{
     color: #97a0af;
     background-color: rgb(244, 245, 247);
     padding-left: 5px;
