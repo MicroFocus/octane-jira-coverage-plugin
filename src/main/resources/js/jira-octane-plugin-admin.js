@@ -26,11 +26,6 @@
                     showSpaceDialog(instance);
                 });
 
-                var addWorkspaceButtonEl = $('<button class=\"aui-button aui-button-link\">Add workspace</button>').click(function (e) {
-                    var model = instance.model.attributes;
-                    showWorkspaceDialog({id: model.id, name: model.name});
-                });
-
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
                     var msg = "Are you sure you want to delete '" + instance.model.attributes.name + "' space configuration?";
                     removeRow(msg, octanePluginContext.spaceTable, instance);
@@ -40,11 +35,12 @@
                     testConnection(instance);
                 });
 
-                var parentEl = $('<div></div>').append(addWorkspaceButtonEl, editButtonEl, deleteButtonEl, testConnectionButtonEl);
+                var parentEl = $('<div></div>').append(editButtonEl, deleteButtonEl, testConnectionButtonEl);
                 return parentEl;
             }
         });
 
+        octanePluginContext.spacesUrl = octanePluginContext.octaneAdminBaseUrl + "spaces";
         octanePluginContext.spaceTable = new AJS.RestfulTable({
             el: jQuery("#space-table"),
             resources: {
@@ -85,10 +81,7 @@
                 var instance = this;
 
                 var editButtonEl = $('<button class=\"aui-button aui-button-link\">Edit</button>').click(function (e) {
-                    console.log("editButtonEl",instance);
-                    var model = instance.model.attributes;
-                    var space ={id :model.spaceConfigId, name: model.spaceConfigName};
-                    showWorkspaceDialog(space, instance);
+                    showWorkspaceDialog(instance);
                 });
 
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
@@ -461,6 +454,11 @@
             });
         }
 
+        $("#spaceConfSelector").change(function () {
+            $("#workspaceSelector").val(null);
+            fillWorkspaceDialogData($("#spaceConfSelector").select2('data').id);
+        });
+
         $("#workspaceSelector").change(function () {
             reloadPossibleJiraFields();
         });
@@ -539,8 +537,8 @@
             var modelForUpdate = {
                 workspaceId: $("#workspaceSelector").select2('data').id,
                 workspaceName: $("#workspaceSelector").select2('data').text,
-                spaceConfigId: octanePluginContext.workspaceDialogData.spaceConf.id,
-                spaceConfigName: octanePluginContext.workspaceDialogData.spaceConf.name,
+                spaceConfigId: $("#spaceConfSelector").select2('data').id,
+                spaceConfigName: $("#spaceConfSelector").select2('data').text,
                 octaneUdf: $("#octaneUdf").attr("value"),
                 octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(",") : [], //if empty value - send empty array
                 jiraIssueTypes: _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
@@ -606,17 +604,73 @@
         });
     }
 
-    function showWorkspaceDialog(spaceConf, workspaceRow) {
+    function disableControlsInWorkspaceDialog(disable) {
+        $("#octaneUdf").prop('disabled', disable);
+        $("#workspaceSelector").prop('disabled', disable);
+        $("#jiraProjectsSelector").prop('disabled', disable);
+        $("#jiraIssueTypesSelector").prop('disabled', disable);
+
+        $("#workspace-submit-button").prop('disabled', disable);
+    }
+
+    function fillWorkspaceDialogData(spaceConfId, workspaceConfId) {
+        $("#spaceConfSelectorThrobber").addClass("aui-icon-wait");
+        disableControlsInWorkspaceDialog(true);
+
+        return new Promise(function (resolve, reject) {
+            var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspaces-dialog/additional-data?space-conf-id=" + spaceConfId;
+            if (workspaceConfId) {
+                dataUrl = dataUrl + "&workspace-conf-id=" + workspaceConfId;
+            }
+
+            $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
+                .done(function (data) {
+                    octanePluginContext.workspaceDialogData = data;
+                    octanePluginContext.workspaceDialogData.spaceConf = {id: spaceConfId};
+
+                    fillCombo("#workspaceSelector", false, octanePluginContext.workspaceDialogData.workspaces);
+                    fillCombo("#jiraIssueTypesSelector", true, octanePluginContext.workspaceDialogData.issueTypes);
+                    fillCombo("#jiraProjectsSelector", true, octanePluginContext.workspaceDialogData.projects);
+
+                    reloadPossibleJiraFields();
+                    resolve();
+                    disableControlsInWorkspaceDialog(false);
+                }).fail(function (request) {
+                AJS.flag({
+                    type: 'error',
+                    close: 'auto',
+                    body: "Failed to connect to space configuration : " + request.responseText
+                });
+                reject(Error(!request.responseText ? request.statusText : request.responseText));
+            }).always(function () {
+                $("#spaceConfSelectorThrobber").removeClass("aui-icon-wait");
+            });
+        });
+    }
+
+    function fillEmptyCombo(selector, multiple) {
+        AJS.$(selector).auiSelect2({
+            multiple: multiple,
+            data: {},
+        });
+    }
+
+    function fillCombo(selector, multiple, data) {
+        AJS.$(selector).auiSelect2({
+            multiple: multiple,
+            data: data,
+        });
+    }
+
+    function showWorkspaceDialog(workspaceRow) {
         octanePluginContext.workspaceCurrentRow = workspaceRow;
         var editMode = !!octanePluginContext.workspaceCurrentRow;
         var rowModel = editMode ? octanePluginContext.workspaceCurrentRow.model.attributes : null;
-
-        var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspaces-dialog/additional-data?space-conf-id=" + spaceConf.id;
         $("#workspace-dialog .error").text('');//clear previous error messages
-        $("#spaceConfSelector").val(spaceConf.name);
 
         if (editMode) {//is edit mode
-            dataUrl = dataUrl + "&workspace-conf-id=" + rowModel.id;
+            $("#spaceConfSelector").val(rowModel.spaceConfigId);
+            $('#spaceConfSelector').prop('disabled', true); //disable workspace selector
 
             $('#workspaceSelector').val([rowModel.workspaceId]);
             $('#workspaceSelector').prop('disabled', true); //disable workspace selector
@@ -626,35 +680,30 @@
             $("#jiraIssueTypesSelector").val(rowModel.jiraIssueTypes);
             $("#jiraProjectsSelector").val(rowModel.jiraProjects);
             $('#workspace-dialog-title').text("Edit");//set dialog title
+            fillWorkspaceDialogData(rowModel.spaceConfigId, rowModel.id).then(function () {
+                AJS.dialog2("#workspace-dialog").show();
+            });
+
         } else {//new item
             $("#octaneUdf").val("");//populate default value for new item
-            $('#workspaceSelector').prop('disabled', false);//enable workspace selector
+            $('#spaceConfSelector').prop('disabled', false);//enable space selector
+
+            disableControlsInWorkspaceDialog(true);
+
+            fillEmptyCombo('#workspaceSelector', false);
+            fillEmptyCombo('#jiraProjectsSelector', true);
+            fillEmptyCombo('#jiraIssueTypesSelector', true);
+
             $('#workspace-dialog-title').text("Create");//set dialog title
+            AJS.dialog2("#workspace-dialog").show();
         }
 
-        $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
-            .done(function (data) {
-                octanePluginContext.workspaceDialogData = data;
-                octanePluginContext.workspaceDialogData.spaceConf = spaceConf;
-                AJS.$("#workspaceSelector").auiSelect2({
-                    multiple: false,
-                    data: octanePluginContext.workspaceDialogData.workspaces
-                });
-
-                AJS.$("#jiraIssueTypesSelector").auiSelect2({
-                    multiple: true,
-                    data: octanePluginContext.workspaceDialogData.issueTypes,
-                });
-
-                AJS.$("#jiraProjectsSelector").auiSelect2({
-                    multiple: true,
-                    data: octanePluginContext.workspaceDialogData.projects,
-                });
-
-                reloadPossibleJiraFields();
-                AJS.dialog2("#workspace-dialog").show();
-            }).fail(function (request) {
-                AJS.flag({type: 'error', close: 'auto', body: "Failed to connect to space configuration : " + request.responseText});
+        var spaces = _.map(octanePluginContext.spaceTable.getModels().models, function (item) {
+            return {id: item.attributes.id, text: item.attributes.name};
+        });
+        AJS.$("#spaceConfSelector").auiSelect2({
+            multiple: false,
+            data: spaces
         });
     }
 

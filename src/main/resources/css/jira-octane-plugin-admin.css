@@ -25,15 +25,15 @@
     color: rgb(23, 43, 77);
 }
 
+#workspace-dialog .select2-choice:after {
+    border-top-color: #344563;
+}
+
 #workspace-dialog .select2-container-disabled .select2-choice{
     color: #97a0af;
     background-color: rgb(244, 245, 247);
     padding-left: 5px;
     cursor: not-allowed;
-}
-
-#workspace-field-group{
-    margin-bottom: 15px;
 }
 
 #show-proxy-settings{
@@ -61,11 +61,15 @@
     margin-left:10px;
 }
 
-
 .space-save-status.aui-iconfont-successful-build, .throbber-status.aui-iconfont-successful-build{
     color: #36b37e;
 }
 
 .space-save-status.aui-iconfont-error, .throbber-status.aui-iconfont-error{
     color: #ff5630;
+}
+
+#spaceConfSelectorThrobber{
+    margin-left: 9px;
+    margin-top: 6px;
 }

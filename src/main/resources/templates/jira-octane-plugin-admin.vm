@@ -67,7 +67,7 @@
         </div>
     </footer>
 </section>
-<section id="workspace-dialog" class="aui-dialog2 aui-dialog2-large aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
+<section id="workspace-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
     <header class="aui-dialog2-header">
         <h2 class="aui-dialog2-header-main" id="workspace-dialog-title">
             Create
@@ -77,8 +77,9 @@
         <form class="aui" autocomplete="off">
             <div class="field-group" id="space-conf-field-group">
                 <label for="spaceConfSelector">Space configuration<span class="aui-icon icon-required">(required)</span></label>
-                <input type="text" id="spaceConfSelector" name="spaceConfSelector" readonly style="background-color: #f4f5f7" class="text medium-long-field required">
-
+                <input type='hidden' name='spaceConfSelector' id='spaceConfSelector' class="text medium-long-field required "/>
+                <span id="spaceConfSelectorThrobber" class="aui-icon aui-icon-small" ></span>
+                <div class="error" id="spaceConfSelectorError"></div>
                 <div class="description"></div>
             </div>
             <div class="field-group" id="workspace-field-group">
