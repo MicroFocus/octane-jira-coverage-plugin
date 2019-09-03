@@ -8,7 +8,7 @@
 
 <h2>ALM Octane Configuration <input type="button" class="aui-button" id="show-proxy-settings" value="Proxy Settings"></h2>
 
-<h3 class="formtitle">Space</h3>
+<h3 class="formtitle">Spaces</h3>
 <p><button id="show-space-dialog" class="aui-button aui-button-link">Create</button> a new ALM Octane space configuration.</p>
 <table id="space-table"></table>
 </br>

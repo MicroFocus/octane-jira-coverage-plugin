@@ -231,7 +231,7 @@
                 contentType: "application/json"
             }).done(function (data) {
                 if (data && data.length) {
-                    setTitle("Suggested ALM Octane fields: " + data.join(",  "), true);
+                    setTitle("Suggested ALM Octane fields: " + data.join(",") + ". Double-click to set '" + data[0] + "' as value.", true);
                     octanePluginContext.workspaceDialogData.possibleJiraField = data[0];
                 } else {
                     setTitle("No suggested fields are found.");
@@ -702,6 +702,7 @@
         var spaces = _.map(octanePluginContext.spaceTable.getModels().models, function (item) {
             return {id: item.attributes.id, text: item.attributes.name};
         });
+        _.sortBy(spaces, 'text');
         AJS.$("#spaceConfSelector").auiSelect2({
             multiple: false,
             data: spaces
