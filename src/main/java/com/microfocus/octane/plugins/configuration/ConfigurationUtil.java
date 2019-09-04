@@ -13,7 +13,7 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ConfigurarionUtil {
+public class ConfigurationUtil {
 
     private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
 
@@ -133,10 +133,10 @@ public class ConfigurarionUtil {
         return sco;
     }
 
-    public static void doFullSpaceConfigurationValidation(SpaceConfiguration spaceConfiguration) {
+    public static void doSpaceConfigurationUniquenessValidation(SpaceConfiguration spaceConfiguration) {
         validateSpaceNameIsUnique(spaceConfiguration);
         validateSpaceUrlIsUnique(spaceConfiguration);
-        validateSpaceConfigurationConnectivity(spaceConfiguration);
+        //validateSpaceConfigurationConnectivity(spaceConfiguration);
     }
 
     private static void validateSpaceNameIsUnique(SpaceConfiguration spaceConfiguration) {
