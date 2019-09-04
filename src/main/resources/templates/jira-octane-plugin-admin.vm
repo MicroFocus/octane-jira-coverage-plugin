@@ -168,6 +168,11 @@
                 <input type="password" id="proxyPassword" name="proxyPassword" class="text ">
                 <div class="description"></div>
             </div>
+            <div class="field-group">
+                <label  for="nonProxyHost">No Proxy Host</label>
+                <input type="text" id="nonProxyHost" name="nonProxyHost" class="text ">
+                <div class="description">List of hosts separated by the '|' character. The wildcard '*' can be used.</div>
+            </div>
         </form>
     </div>
     <footer class="aui-dialog2-footer">

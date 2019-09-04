@@ -137,7 +137,7 @@
                 url: table.options.resources.all + "/" + row.model.id, type: "DELETE",
             }).done(function () {
                 table.removeRow(row);
-                if(table === octanePluginContext.spaceTable){
+                if (table === octanePluginContext.spaceTable) {
                     reloadTable(octanePluginContext.workspaceTable);
                 }
             });
@@ -163,6 +163,7 @@
                 $("#proxyPort").val(data.port);
                 $("#proxyUser").val(data.username);
                 $("#proxyPassword").val(data.password);
+                $("#nonProxyHost").val(data.nonProxyHost);
 
                 AJS.dialog2("#proxy-dialog").show();
             });
@@ -175,6 +176,7 @@
                 port: $("#proxyPort").attr("value"),
                 username: $("#proxyUser").attr("value"),
                 password: $("#proxyPassword").attr("value"),
+                nonProxyHost: $("#nonProxyHost").attr("value"),
             };
 
             //validation
@@ -309,7 +311,7 @@
         throbber.removeClass("aui-restfultable-throbber");
 
         var throbberStatusClassName = "throbber_status_" + rowModel.id;
-        var throbberStatusClassNameSelector ="."+throbberStatusClassName;
+        var throbberStatusClassNameSelector = "." + throbberStatusClassName;
         throbber.addClass(throbberStatusClassName);
 
         statusIconStart(throbberStatusClassNameSelector, "Testing connection ...");
@@ -334,7 +336,8 @@
         }).done(function (result) {
             statusIconOk(throbberStatusClassNameSelector, "Test connection is successful");
         }).fail(function (request) {
-            statusIconFailed(throbberStatusClassNameSelector, "Test connection is failed : " + request.responseText);
+            var msg = !!request.responseText ? request.responseText : request.statusText;
+            statusIconFailed(throbberStatusClassNameSelector, "Test connection is failed : " + msg);
         });
     }
 
@@ -808,14 +811,14 @@
         table.fetchInitialResources();
     }
 
-    function statusIconInit(selector){
+    function statusIconInit(selector) {
         var el = $(selector);
         el.removeClass("aui-icon-wait");
         el.removeClass("aui-iconfont-successful-build");
         el.removeClass("aui-iconfont-error");
     }
 
-    function statusIconStart(selector, msg){
+    function statusIconStart(selector, msg) {
         var el = $(selector);
         el.addClass("aui-icon-wait");
         el.removeClass("aui-iconfont-successful-build");
@@ -823,7 +826,7 @@
         el.attr("title", msg);
     }
 
-    function statusIconOk(selector, msg){
+    function statusIconOk(selector, msg) {
         var el = $(selector);
         el.removeClass("aui-icon-wait");
         el.addClass("aui-iconfont-successful-build");
@@ -831,7 +834,7 @@
         el.attr("title", msg);
     }
 
-    function statusIconFailed(selector, msg){
+    function statusIconFailed(selector, msg) {
         var el = $(selector);
         el.removeClass("aui-icon-wait");
         el.removeClass("aui-iconfont-successful-build");

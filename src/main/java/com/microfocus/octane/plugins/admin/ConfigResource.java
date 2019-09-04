@@ -115,7 +115,7 @@ public class ConfigResource {
             return Response.status(Status.UNAUTHORIZED).build();
         }
         Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
-                .stream().map(wc -> ConfigurarionUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name()))
+                .stream().map(wc -> ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name()))
                 //.sorted((h1, h2) -> h1.getWorkspace().getText().compareTo(h2.getWorkspace().getText()))
                 .collect(Collectors.toList());
 
@@ -132,7 +132,7 @@ public class ConfigResource {
         Optional<WorkspaceConfiguration> optResult = ConfigurationManager.getInstance().getWorkspaceConfigurationById(id, false);
 
         if (optResult.isPresent()) {
-            return Response.ok(ConfigurarionUtil.convertToOutgoing(optResult.get(), getSpaceConfigurationId2Name())).build();
+            return Response.ok(ConfigurationUtil.convertToOutgoing(optResult.get(), getSpaceConfigurationId2Name())).build();
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
@@ -171,9 +171,9 @@ public class ConfigResource {
         }
 
         try {
-            WorkspaceConfiguration wc = ConfigurarionUtil.validateRequiredAndConvertToInternal(wco, true);
+            WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, true);
             wc = ConfigurationManager.getInstance().addWorkspaceConfiguration(wc);
-            WorkspaceConfigurationOutgoing outputWco = ConfigurarionUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name());
+            WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name());
             return Response.ok(outputWco).build();
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
@@ -188,12 +188,12 @@ public class ConfigResource {
         }
 
         try {
-            WorkspaceConfiguration wc = ConfigurarionUtil.validateRequiredAndConvertToInternal(wco, false);
+            WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, false);
             if (!wco.getId().equals(workspaceConfigurationId)) {
                 return Response.status(Response.Status.CONFLICT).entity("Workspace configuration id in entity should be equal to id in path parameter").build();
             }
             WorkspaceConfiguration updatedWc = ConfigurationManager.getInstance().updateWorkspaceConfiguration(wc);
-            WorkspaceConfigurationOutgoing outputWco = ConfigurarionUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
+            WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
             return Response.ok(outputWco).build();
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
@@ -231,6 +231,7 @@ public class ConfigResource {
             outgoing.setPort(config.getPort() == null ? "" : config.getPort().toString());
             outgoing.setUsername(config.getUsername());
             outgoing.setPassword(PluginConstants.PASSWORD_REPLACE);
+            outgoing.setNonProxyHost(config.getNonProxyHost());
         }
 
         return Response.ok(outgoing).build();
@@ -271,7 +272,7 @@ public class ConfigResource {
         }
 
         List<SpaceConfigurationOutgoing> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
-                .stream().map(c -> ConfigurarionUtil.convertToOutgoing(c)).collect(Collectors.toList());
+                .stream().map(c -> ConfigurationUtil.convertToOutgoing(c)).collect(Collectors.toList());
 
         return Response.ok(outgoing).build();
     }
@@ -286,10 +287,10 @@ public class ConfigResource {
         }
 
         try {
-            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(sco, true);
-            ConfigurarionUtil.doFullSpaceConfigurationValidation(spaceConfig);
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, true);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
             ConfigurationManager.getInstance().addSpaceConfiguration(spaceConfig);
-            return Response.ok(ConfigurarionUtil.convertToOutgoing(spaceConfig)).build();
+            return Response.ok(ConfigurationUtil.convertToOutgoing(spaceConfig)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.CONFLICT).entity("Failed to add configuration : " + e.getMessage()).build();
         }
@@ -305,10 +306,10 @@ public class ConfigResource {
         }
 
         try {
-            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(sco, false);
-            ConfigurarionUtil.doFullSpaceConfigurationValidation(spaceConfig);
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, false);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
             SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
-            return Response.ok(ConfigurarionUtil.convertToOutgoing(updated)).build();
+            return Response.ok(ConfigurationUtil.convertToOutgoing(updated)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.CONFLICT).entity("Failed to update configuration : " + e.getMessage()).build();
         }
@@ -341,8 +342,8 @@ public class ConfigResource {
 
         try {
             boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationOutgoing.getId());
-            SpaceConfiguration spaceConfig = ConfigurarionUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
-            ConfigurarionUtil.validateSpaceConfigurationConnectivity(spaceConfig);
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
+            ConfigurationUtil.validateSpaceConfigurationConnectivity(spaceConfig);
             return Response.ok().build();
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();

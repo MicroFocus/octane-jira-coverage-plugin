@@ -35,7 +35,12 @@ public class ProxyHelper {
 
         ProxyConfiguration proxyConfig = ConfigurationManager.getInstance().getProxySettings();
         if (proxyConfig != null && StringUtils.isNotEmpty(proxyConfig.getHost())) {
-            return proxyConfig;
+            if (StringUtils.isNotEmpty(proxyConfig.getNonProxyHost()) && isNonProxyHost(targetUrl.getHost(), proxyConfig.getNonProxyHost())) {
+                log.info(targetUrl.getHost() + " is NonProxyHost");
+            } else {
+                result = proxyConfig;
+                log.info("proxy settings : " + result.toString());
+            }
         } else if (isProxyNeededInJVM(targetUrl)) {
             String protocol = targetUrl.getProtocol().toLowerCase();
             result = ProxyConfiguration.create()
@@ -44,9 +49,9 @@ public class ProxyHelper {
                     .setUsername(System.getProperty(protocol + ".proxyUser", ""))
                     .setPassword(System.getProperty(protocol + ".proxyPassword", ""));
 
-            log.info("proxy settings : " + result.toString());
+            log.info("proxy settings from JVM : " + result.toString());
         } else {
-            log.info("no proxy settings.");
+            log.info("no proxy settings");
         }
         return result;
     }

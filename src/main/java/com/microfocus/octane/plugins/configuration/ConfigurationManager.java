@@ -142,10 +142,11 @@ public class ConfigurationManager {
         }
         proxy.setPort(port);
         proxy.setUsername(proxyOutgoing.getUsername());
+
         if (!proxyOutgoing.getPassword().equals(PluginConstants.PASSWORD_REPLACE)) {
             proxy.setPassword(proxyOutgoing.getPassword());
         }
-
+        proxy.setNonProxyHost(proxyOutgoing.getNonProxyHost());
         configuration.setProxy(proxy);
         persistConfiguration();
     }

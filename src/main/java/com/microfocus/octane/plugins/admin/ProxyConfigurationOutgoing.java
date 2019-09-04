@@ -37,6 +37,8 @@ public class ProxyConfigurationOutgoing {
     @XmlElement(name = "password")
     private String password;
 
+    @XmlElement(name = "nonProxyHost")
+    private String nonProxyHost;
 
     public static ProxyConfigurationOutgoing create() {
         return new ProxyConfigurationOutgoing();
@@ -81,6 +83,15 @@ public class ProxyConfigurationOutgoing {
     @Override
     public String toString() {
         return "ProxyConfiguration {host=" + host + ", port=" + port + ", username=" + username + " }";
+    }
+
+    public String getNonProxyHost() {
+        return nonProxyHost;
+    }
+
+    public ProxyConfigurationOutgoing setNonProxyHost(String nonProxyHost) {
+        this.nonProxyHost = nonProxyHost;
+        return this;
     }
 }
 
