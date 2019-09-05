@@ -154,11 +154,11 @@ public class ConfigurationManager {
     public String clearConfiguration(int version) {
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
         if (version == 1) {
-            if(settings.remove(CONFIGURATION_KEY_V1)!=null){
+            if (settings.remove(CONFIGURATION_KEY_V1) != null) {
                 return "1";
             }
         } else if (version == 2) {
-            if(settings.remove(CONFIGURATION_KEY_V2)!=null){
+            if (settings.remove(CONFIGURATION_KEY_V2) != null) {
                 return "2";
             }
         }
@@ -195,7 +195,6 @@ public class ConfigurationManager {
         if (confStrV1 != null) {
             try {
                 ConfigurationCollectionV1 configurationV1 = JsonHelper.deserialize(confStrV1, ConfigurationCollectionV1.class);
-                configuration.setProxy(configurationV1.getProxy());
                 if (configurationV1.getSpaces().size() == 1) {
                     SpaceConfigurationV1 scV1 = configurationV1.getSpaces().get(0);
                     LocationParts locationParts = ConfigurationUtil.parseUiLocation(scV1.getLocation());
@@ -225,8 +224,12 @@ public class ConfigurationManager {
                     tempConfiguration = new ConfigurationCollection();
                     tempConfiguration.setSpaces(Arrays.asList(sc));
                     tempConfiguration.setWorkspaces(wcList);
-                }
 
+                    if (configurationV1.getProxy() != null) {
+                        tempConfiguration.setProxy(configurationV1.getProxy());
+                        tempConfiguration.getProxy().setNonProxyHost("");
+                    }
+                }
             } catch (Exception e) {
                 log.error("Failed tryConvertFromPreviousVersion : " + e.getMessage());
             }
