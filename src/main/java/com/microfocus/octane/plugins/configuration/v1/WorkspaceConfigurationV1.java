@@ -13,14 +13,14 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.configuration.v1_3;
+package com.microfocus.octane.plugins.configuration.v1;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.util.List;
 
 
-public class WorkspaceConfiguration {
+public class WorkspaceConfigurationV1 {
 
     private long workspaceId;
     private String workspaceName;
@@ -30,7 +30,7 @@ public class WorkspaceConfiguration {
     private List<String> jiraProjects;
 
     @JsonIgnore
-    private SpaceConfiguration spaceConfiguration;
+    private SpaceConfigurationV1 spaceConfiguration;
 
     public long getWorkspaceId() {
         return workspaceId;
@@ -81,11 +81,11 @@ public class WorkspaceConfiguration {
     }
 
     @JsonIgnore
-    public SpaceConfiguration getSpaceConfiguration() {
+    public SpaceConfigurationV1 getSpaceConfiguration() {
         return spaceConfiguration;
     }
 
-    public void setSpaceConfiguration(SpaceConfiguration spaceConfiguration) {
+    public void setSpaceConfiguration(SpaceConfigurationV1 spaceConfiguration) {
         this.spaceConfiguration = spaceConfiguration;
     }
 }

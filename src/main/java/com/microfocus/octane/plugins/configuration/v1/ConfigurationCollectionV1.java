@@ -12,22 +12,22 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-package com.microfocus.octane.plugins.configuration.v1_3;
+package com.microfocus.octane.plugins.configuration.v1;
 
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 
 import java.util.List;
 
-public class ConfigurationCollection {
+public class ConfigurationCollectionV1 {
 
-    private List<SpaceConfiguration> spaces;
+    private List<SpaceConfigurationV1> spaces;
     private ProxyConfiguration proxy;
 
-    public List<SpaceConfiguration> getSpaces() {
+    public List<SpaceConfigurationV1> getSpaces() {
         return spaces;
     }
 
-    public void setSpaces(List<SpaceConfiguration> spaces) {
+    public void setSpaces(List<SpaceConfigurationV1> spaces) {
         this.spaces = spaces;
     }
 

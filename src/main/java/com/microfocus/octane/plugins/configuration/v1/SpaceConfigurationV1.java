@@ -13,7 +13,7 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.configuration.v1_3;
+package com.microfocus.octane.plugins.configuration.v1;
 
 
 import com.microfocus.octane.plugins.configuration.LocationParts;
@@ -21,7 +21,7 @@ import com.microfocus.octane.plugins.configuration.LocationParts;
 import java.util.List;
 
 
-public class SpaceConfiguration {
+public class SpaceConfigurationV1 {
 
     private String location;
     private LocationParts locationParts;
@@ -30,7 +30,7 @@ public class SpaceConfiguration {
 
     private String id;
 
-    private List<WorkspaceConfiguration> workspaces;
+    private List<WorkspaceConfigurationV1> workspaces;
 
     public String getLocation() {
         return location;
@@ -64,11 +64,11 @@ public class SpaceConfiguration {
         this.id = id;
     }
 
-    public List<WorkspaceConfiguration> getWorkspaces() {
+    public List<WorkspaceConfigurationV1> getWorkspaces() {
         return workspaces;
     }
 
-    public void setWorkspaces(List<WorkspaceConfiguration> workspaces) {
+    public void setWorkspaces(List<WorkspaceConfigurationV1> workspaces) {
         this.workspaces = workspaces;
     }
 

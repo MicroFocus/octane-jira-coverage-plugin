@@ -18,16 +18,15 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
+import com.microfocus.octane.plugins.configuration.v1.ConfigurationCollectionV1;
+import com.microfocus.octane.plugins.configuration.v1.SpaceConfigurationV1;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -38,7 +37,8 @@ public class ConfigurationManager {
     private PluginSettingsFactory pluginSettingsFactory;
 
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
-    private static final String CONFIGURATION_KEY = PLUGIN_PREFIX + "configuration";
+    private static final String CONFIGURATION_KEY_V1 = PLUGIN_PREFIX + "configuration";
+    private static final String CONFIGURATION_KEY_V2 = PLUGIN_PREFIX + "configuration_v2";
     private static final String USER_FILTER_KEY = PLUGIN_PREFIX + "user.filter";
 
     private ConfigurationCollection configuration;
@@ -151,17 +151,34 @@ public class ConfigurationManager {
         persistConfiguration();
     }
 
+    public String clearConfiguration(int version) {
+        PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+        if (version == 1) {
+            if(settings.remove(CONFIGURATION_KEY_V1)!=null){
+                return "1";
+            }
+        } else if (version == 2) {
+            if(settings.remove(CONFIGURATION_KEY_V2)!=null){
+                return "2";
+            }
+        }
+        return "none";
+    }
+
     private ConfigurationCollection loadConfiguration() {
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        String confStr = ((String) settings.get(CONFIGURATION_KEY));
+        String confStr = ((String) settings.get(CONFIGURATION_KEY_V2));
 
         if (confStr == null) {//create initial configuration
-            configuration = new ConfigurationCollection();
+            configuration = tryConvertFromPreviousVersion(settings);
+            if (configuration == null) {
+                configuration = new ConfigurationCollection();
+            }
+
             persistConfiguration();
         } else {
             try {
                 configuration = JsonHelper.deserialize(confStr, ConfigurationCollection.class);
-
             } catch (Exception e) {
                 configuration = new ConfigurationCollection();
                 log.error("Failed to deserialize configuration in loadConfiguration : " + e.getMessage());
@@ -169,6 +186,52 @@ public class ConfigurationManager {
         }
 
         return configuration;
+    }
+
+    private ConfigurationCollection tryConvertFromPreviousVersion(PluginSettings settings) {
+        //try read previous version configuration
+        ConfigurationCollection tempConfiguration = null;
+        String confStrV1 = ((String) settings.get(CONFIGURATION_KEY_V1));
+        if (confStrV1 != null) {
+            try {
+                ConfigurationCollectionV1 configurationV1 = JsonHelper.deserialize(confStrV1, ConfigurationCollectionV1.class);
+                configuration.setProxy(configurationV1.getProxy());
+                if (configurationV1.getSpaces().size() == 1) {
+                    SpaceConfigurationV1 scV1 = configurationV1.getSpaces().get(0);
+                    LocationParts locationParts = ConfigurationUtil.parseUiLocation(scV1.getLocation());
+
+                    SpaceConfiguration sc = new SpaceConfiguration()
+                            .setId(UUID.randomUUID().toString())
+                            .setClientId(scV1.getClientId())
+                            .setClientSecret(scV1.getClientSecret())
+                            .setLocation(scV1.getLocation())
+                            .setLocationParts(locationParts)
+                            .setName(locationParts.getKey());
+
+                    List<WorkspaceConfiguration> wcList = new ArrayList<>();
+                    configurationV1.getSpaces().get(0).getWorkspaces().forEach(w -> {
+                        WorkspaceConfiguration wc = new WorkspaceConfiguration()
+                                .setId(UUID.randomUUID().toString())
+                                .setJiraIssueTypes(w.getJiraIssueTypes())
+                                .setJiraProjects(w.getJiraProjects())
+                                .setOctaneEntityTypes(w.getOctaneEntityTypes())
+                                .setOctaneUdf(w.getOctaneUdf())
+                                .setWorkspaceId(w.getWorkspaceId())
+                                .setWorkspaceName(w.getWorkspaceName())
+                                .setSpaceConfigurationId(sc.getId());
+                        wcList.add(wc);
+                    });
+
+                    tempConfiguration = new ConfigurationCollection();
+                    tempConfiguration.setSpaces(Arrays.asList(sc));
+                    tempConfiguration.setWorkspaces(wcList);
+                }
+
+            } catch (Exception e) {
+                log.error("Failed tryConvertFromPreviousVersion : " + e.getMessage());
+            }
+        }
+        return tempConfiguration;
     }
 
     private void persistConfiguration() {
@@ -179,7 +242,7 @@ public class ConfigurationManager {
 
 
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        settings.put(CONFIGURATION_KEY, confStr);
+        settings.put(CONFIGURATION_KEY_V2, confStr);
     }
 
     public List<WorkspaceConfiguration> getWorkspaceConfigurations() {

@@ -35,8 +35,6 @@ public class SpaceConfiguration {
     @JsonIgnore
     private RestConnector restConnector;
 
-    private List<WorkspaceConfiguration> workspaces;
-
     public String getLocation() {
         return location;
     }
@@ -70,16 +68,6 @@ public class SpaceConfiguration {
 
     public SpaceConfiguration setId(String id) {
         this.id = id;
-        return this;
-    }
-
-    @Deprecated
-    public List<WorkspaceConfiguration> getWorkspaces() {
-        return workspaces;
-    }
-
-    public SpaceConfiguration setWorkspaces(List<WorkspaceConfiguration> workspaces) {
-        this.workspaces = workspaces;
         return this;
     }
 
