@@ -36,14 +36,8 @@ public class SpaceConfigurationOutgoing {
     @XmlElement(name = "clientSecret")
     private String clientSecret;
 
-    public static SpaceConfigurationOutgoing create(String id, String location, String clientId, String clientSecret){
-        SpaceConfigurationOutgoing model = new SpaceConfigurationOutgoing();
-        model.setId(id);
-        model.setLocation(location);
-        model.setClientId(clientId);
-        model.setClientSecret(clientSecret);
-        return model;
-    }
+    @XmlElement(name = "name")
+    private String name;
 
     public String getId() {
         return id;
@@ -58,23 +52,35 @@ public class SpaceConfigurationOutgoing {
         return location;
     }
 
-    public void setLocation(String location) {
+    public SpaceConfigurationOutgoing setLocation(String location) {
         this.location = location;
+        return this;
     }
 
     public String getClientId() {
         return clientId;
     }
 
-    public void  setClientId(String clientId) {
+    public SpaceConfigurationOutgoing  setClientId(String clientId) {
         this.clientId = clientId;
+        return this;
     }
 
     public String getClientSecret() {
         return clientSecret;
     }
 
-    public void  setClientSecret(String clientSecret) {
+    public SpaceConfigurationOutgoing  setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+        return this;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public SpaceConfigurationOutgoing setName(String name) {
+        this.name = name;
+        return this;
     }
 }

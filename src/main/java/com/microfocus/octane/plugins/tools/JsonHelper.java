@@ -17,6 +17,8 @@ package com.microfocus.octane.plugins.tools;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import java.io.IOException;
+
 /*
  *     Copyright 2018 EntIT Software LLC, a Micro Focus company, L.P.
  *     Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,24 +34,30 @@ import org.codehaus.jackson.map.ObjectMapper;
  *     limitations under the License.
  */
 
-import java.io.IOException;
-
 public class JsonHelper {
 
-    public static String serialize(Object obj) throws IOException {
-        //plugin setting can save string with length upto 99000.
-        //length of pretty format is greater upto 40% in comparison with regular format
-        ObjectMapper mapper = new ObjectMapper();
-        //String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
-        String json = mapper.writer().writeValueAsString(obj);
-        return json;
+    public static String serialize(Object obj) {
+        try {
+            //plugin setting can save string with length upto 99000.
+            //length of pretty format is greater upto 40% in comparison with regular format
+            ObjectMapper mapper = new ObjectMapper();
+            //String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+
+
+            String json = mapper.writer().writeValueAsString(obj);
+            return json;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to serialize :" + e.getMessage(), e);
+        }
     }
 
-    public static <T> T deserialize(String value, Class<T> valueType) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        T result = mapper.readValue(value, valueType);
-        return result;
+    public static <T> T deserialize(String value, Class<T> valueType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            T result = mapper.readValue(value, valueType);
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize :" + e.getMessage(), e);
+        }
     }
-
-
 }

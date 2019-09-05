@@ -19,7 +19,6 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,12 +41,9 @@ public class CoverageResource {
     @ComponentImport
     private final UserManager userManager;
 
-    private final OctaneRestService octaneRestService;
-
     @Inject
-    public CoverageResource(UserManager userManager, OctaneRestService octaneRestService) {
+    public CoverageResource(UserManager userManager) {
         this.userManager = userManager;
-        this.octaneRestService = octaneRestService;
     }
 
     @GET
@@ -56,7 +52,7 @@ public class CoverageResource {
         if (userProfile == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-        Map<String, Object> contextMap = CoverageUiHelper.buildCoverageContextMap(octaneRestService, projectKey, issueKey, issueId);
+        Map<String, Object> contextMap = CoverageUiHelper.buildCoverageContextMap(projectKey, issueKey, issueId);
         return Response.ok(contextMap).build();
     }
 }

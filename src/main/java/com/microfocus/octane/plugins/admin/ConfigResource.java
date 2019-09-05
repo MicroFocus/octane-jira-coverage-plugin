@@ -16,40 +16,27 @@
 package com.microfocus.octane.plugins.admin;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.util.json.JSONException;
-import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
-import com.microfocus.octane.plugins.components.api.Constants;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.LocationParts;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
-import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
-import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
-import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
+import com.microfocus.octane.plugins.configuration.*;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
-import com.microfocus.octane.plugins.rest.OctaneEntityParser;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
-import com.microfocus.octane.plugins.rest.RestConnector;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
-import com.microfocus.octane.plugins.rest.query.OctaneQueryBuilder;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.net.ssl.SSLHandshakeException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,199 +48,190 @@ public class ConfigResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigResource.class);
 
+    @Context
+    HttpServletRequest request;
+
     @ComponentImport
     private final UserManager userManager;
 
-    private final OctaneRestService octaneRestService;
-
     @Inject
-    public ConfigResource(UserManager userManager, OctaneRestService octaneRestService) {
+    public ConfigResource(UserManager userManager) {
         this.userManager = userManager;
-        this.octaneRestService = octaneRestService;
     }
 
     @GET
-    @Path("/workspace-config/additional-data")
-    public Response getDataForCreateDialog(@Context HttpServletRequest request, @QueryParam("update-workspace-id") Long id) {
-        if (!hasPermissions(request)) {
+    @Path("/workspaces-dialog/additional-data")
+    public Response getDataForWorkspaceDialog(@QueryParam("space-conf-id") String spaceConfId, @QueryParam("workspace-conf-id") String workspaceConfId) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        SpaceConfiguration spConfig = OctaneConfigurationManager.getInstance().getConfiguration();
-        Set<Long> usedWorkspaces = spConfig.getWorkspaces().stream().map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
-        Set<String> usedJiraProjects = spConfig.getWorkspaces().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
+        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfId, true).get();
+        Set<Long> usedWorkspaces = spaceConfId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
+                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfId))
+                .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
+        Set<String> usedJiraProjects = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
 
-        if (id != null) {
-            Optional<WorkspaceConfiguration> opt = spConfig.getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).findFirst();
-            if (opt.isPresent()) {
-                usedWorkspaces.remove(opt.get().getWorkspaceId());
-                usedJiraProjects.removeAll(opt.get().getJiraProjects());
-            }
+        if (workspaceConfId != null) {
+            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId,true).get();
+            usedWorkspaces.remove(wc.getWorkspaceId());
+            usedJiraProjects.removeAll(wc.getJiraProjects());
         }
 
-        List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
-        OctaneEntityCollection workspaces = octaneRestService.getEntitiesByCondition(OctaneRestService.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
-        Collection<Select2ResultItem> select2workspaces = workspaces.getData()
-                .stream()
-                .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
-                .map(e -> new Select2ResultItem(e.getId(), e.getName()))
-                .collect(Collectors.toList());
+        try {
+            List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
+            OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
+            Collection<KeyValueItem> select2workspaces = workspaces.getData()
+                    .stream()
+                    .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
+                    .map(e -> new KeyValueItem(e.getId(), e.getName()))
+                    .collect(Collectors.toList());
 
 
-        Collection<Select2ResultItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
-                .stream().map(e -> new Select2ResultItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
+            Collection<KeyValueItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
+                    .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
 
-        Collection<Select2ResultItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
-                .stream()
-                .filter(e -> !usedJiraProjects.contains(e.getKey()))
-                .map(e -> new Select2ResultItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId()))
-                .collect(Collectors.toList());
+            Collection<KeyValueItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
+                    .stream()
+                    .filter(e -> !usedJiraProjects.contains(e.getKey()))
+                    .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId()))
+                    .collect(Collectors.toList());
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("workspaces", select2workspaces);
-        data.put("issueTypes", select2IssueTypes);
-        data.put("projects", select2Projects);
+            Map<String, Object> data = new HashMap<>();
+            data.put("workspaces", select2workspaces);
+            data.put("issueTypes", select2IssueTypes);
+            data.put("projects", select2Projects);
 
-        return Response.ok(data).build();
+            return Response.ok(data).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
     }
 
     @GET
-    @Path("/workspace-config/all")
-    public Response getAllWorkspaceConfigurations(@Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    @Path("/workspaces")
+    public Response getAllWorkspaceConfigurations() {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
-
-        Collection<WorkspaceConfigurationOutgoing> result = OctaneConfigurationManager.getInstance().getConfiguration()
-                .getWorkspaces().stream().map(wc -> convert(wc))
-                .sorted(Comparator.comparing(WorkspaceConfigurationOutgoing::getWorkspaceName))
+        Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
+                .stream().map(wc -> ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name()))
+                //.sorted((h1, h2) -> h1.getWorkspace().getText().compareTo(h2.getWorkspace().getText()))
                 .collect(Collectors.toList());
 
         return Response.ok(result).build();
     }
 
-    private WorkspaceConfigurationOutgoing convert(WorkspaceConfiguration wc) {
-        WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
-                .setId(wc.getWorkspaceId())
-                .setWorkspaceId(wc.getWorkspaceId())
-                .setWorkspaceName(wc.getWorkspaceName())
-                .setOctaneUdf(wc.getOctaneUdf())
-                .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
-                        .map(typeName -> {
-                            OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
-                            return desc == null ? "" : desc.getLabel();
-                        })
-                        .sorted().collect(Collectors.toList()))
-                .setJiraIssueTypes(wc.getJiraIssueTypes())
-                .setJiraProjects(wc.getJiraProjects());
-
-        return result;
-    }
-
     @GET
-    @Path("/workspace-config/self/{id}")
-    public Response getWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id) {
-        if (!hasPermissions(request)) {
+    @Path("/workspaces/{id}")
+    public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Optional<WorkspaceConfigurationOutgoing> optResult = OctaneConfigurationManager.getInstance().getConfiguration()
-                .getWorkspaces().stream().filter(wc -> wc.getWorkspaceId() == id).map(wc -> convert(wc)).findFirst();
+        Optional<WorkspaceConfiguration> optResult = ConfigurationManager.getInstance().getWorkspaceConfigurationById(id, false);
 
         if (optResult.isPresent()) {
-            return Response.ok(optResult.get()).build();
+            return Response.ok(ConfigurationUtil.convertToOutgoing(optResult.get(), getSpaceConfigurationId2Name())).build();
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
     }
 
     @GET
-    @Path("/workspace-config/supported-octane-types")
-    public Response getSupportedOctaneTypes(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
-        if (!hasPermissions(request)) {
+    @Path("/workspaces/supported-octane-types")
+    public Response getSupportedOctaneTypes(@QueryParam("space-configuration-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        List<String> types = octaneRestService.getSupportedOctaneTypes(workspaceId, udfName);
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+        List<String> types = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, udfName);
         List<String> names = types.stream().map(t -> OctaneEntityTypeManager.getByTypeName(t).getLabel()).sorted().collect(Collectors.toList());
         return Response.ok(names).build();
     }
 
     @GET
-    @Path("/workspace-config/possible-jira-fields")
-    public Response getPossibleJiraFields(@Context HttpServletRequest request, @QueryParam("workspace-id") long workspaceId) {
-        if (!hasPermissions(request)) {
+    @Path("/workspaces/possible-jira-fields")
+    public Response getPossibleJiraFields(@QueryParam("space-conf-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        Set<String> names = octaneRestService.getPossibleJiraFields(workspaceId);
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+        Set<String> names = OctaneRestManager.getPossibleJiraFields(sc, workspaceId);
         return Response.ok(names).build();
     }
 
     @POST
-    @Path("/workspace-config/self")
-    public Response saveWorkspaceConfiguration(@Context HttpServletRequest request, WorkspaceConfigurationOutgoing model) {
-        if (!hasPermissions(request)) {
+    @Path("/workspaces")
+    public Response addWorkspaceConfiguration(WorkspaceConfigurationOutgoing wco) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        //validation
-        String errorMsg = null;
-        if (model.getId() == 0) {
-            errorMsg = "Workspace id is misssing.";
-        } else if (StringUtils.isEmpty(model.getWorkspaceName())) {
-            errorMsg = "Workspace name is misssing.";
-        } else if (model.getOctaneEntityTypes().size() == 0) {
-            errorMsg = "Octane entity types are missing";
-        } else if (model.getJiraProjects().size() == 0) {
-            errorMsg = "Jira projects are missing";
-        } else if (model.getJiraIssueTypes().size() == 0) {
-            errorMsg = "Jira issue types are missing";
+        try {
+            WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, true);
+            wc = ConfigurationManager.getInstance().addWorkspaceConfiguration(wc);
+            WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name());
+            return Response.ok(outputWco).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
         }
-        if (errorMsg != null) {
-            return Response.status(Status.CONFLICT).entity("Failed to validate workspace configuration : " + errorMsg).build();
-        }
-
-        //save
-        WorkspaceConfiguration wc = OctaneConfigurationManager.getInstance().saveWorkspaceConfiguration(model);
-        return Response.ok(convert(wc)).build();
     }
 
-    @DELETE
-    @Path("/workspace-config/self/{id}")
-    public Response deleteWorkspaceConfigurationById(@Context HttpServletRequest request, @PathParam("id") long id) {
-        if (!hasPermissions(request)) {
+    @PUT
+    @Path("/workspaces/{workspaceConfigurationId}")
+    public Response updateWorkspaceConfiguration(@PathParam("workspaceConfigurationId") String workspaceConfigurationId, WorkspaceConfigurationOutgoing wco) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        boolean deleted = OctaneConfigurationManager.getInstance().deleteWorkspaceConfiguration(id);
+        try {
+            WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, false);
+            if (!wco.getId().equals(workspaceConfigurationId)) {
+                return Response.status(Response.Status.CONFLICT).entity("Workspace configuration id in entity should be equal to id in path parameter").build();
+            }
+            WorkspaceConfiguration updatedWc = ConfigurationManager.getInstance().updateWorkspaceConfiguration(wc);
+            WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
+            return Response.ok(outputWco).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
+        }
+    }
+
+
+    @DELETE
+    @Path("/workspaces/{id}")
+    public Response deleteWorkspaceConfigurationById(@PathParam("id") String id) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        boolean deleted = ConfigurationManager.getInstance().removeWorkspaceConfiguration(id);
         if (deleted) {
             return Response.ok().build();
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
-
-    }
-
-    private boolean hasPermissions(HttpServletRequest request) {
-        UserProfile username = userManager.getRemoteUser(request);
-        return (username != null && userManager.isSystemAdmin(username.getUserKey()));
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/proxy")
-    public Response getProxy(@Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    public Response getProxy() {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
+
         ProxyConfigurationOutgoing outgoing = new ProxyConfigurationOutgoing();
-        ProxyConfiguration config = OctaneConfigurationManager.getInstance().getProxySettings();
+        ProxyConfiguration config = ConfigurationManager.getInstance().getProxySettings();
         if (config != null) {
             outgoing.setHost(config.getHost());
             outgoing.setPort(config.getPort() == null ? "" : config.getPort().toString());
             outgoing.setUsername(config.getUsername());
-            outgoing.setPassword(OctaneConfigurationManager.PASSWORD_REPLACE);
+            outgoing.setPassword(PluginConstants.PASSWORD_REPLACE);
+            outgoing.setNonProxyHost(config.getNonProxyHost());
         }
 
         return Response.ok(outgoing).build();
@@ -263,8 +241,8 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/proxy")
-    public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing, @Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
@@ -281,107 +259,107 @@ public class ConfigResource {
             }
         }
 
-        OctaneConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
+        ConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
         return Response.ok().build();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getSpaceConfiguration(@Context HttpServletRequest request) {
-        if (!hasPermissions(request)) {
+    @Path("/spaces")
+    public Response getSpaceConfigurations() {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        SpaceConfiguration spaceConfig = OctaneConfigurationManager.getInstance().getConfiguration();
-        SpaceConfigurationOutgoing outgoing = SpaceConfigurationOutgoing
-                .create(spaceConfig.getId(), spaceConfig.getLocation(), spaceConfig.getClientId(), OctaneConfigurationManager.PASSWORD_REPLACE);
+        List<SpaceConfigurationOutgoing> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
+                .stream().map(c -> ConfigurationUtil.convertToOutgoing(c)).collect(Collectors.toList());
+
         return Response.ok(outgoing).build();
     }
 
+    @POST
+    @Path("spaces")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addSpaceConfiguration(SpaceConfigurationOutgoing sco) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        try {
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, true);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
+            ConfigurationManager.getInstance().addSpaceConfiguration(spaceConfig);
+            return Response.ok(ConfigurationUtil.convertToOutgoing(spaceConfig)).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.CONFLICT).entity("Failed to add configuration : " + e.getMessage()).build();
+        }
+    }
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response saveSpaceConfiguration(final SpaceConfigurationOutgoing spaceModel, @Context HttpServletRequest request) {
-        UserProfile username = userManager.getRemoteUser(request);
-        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
+    @Path("spaces/{id}")
+    public Response updateSpaceConfiguration(@PathParam("id") String id, final SpaceConfigurationOutgoing sco) {
+        if (!validateUserPermission()) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        String errorMsg = checkConfiguration(spaceModel);
-
-        if (errorMsg != null) {
-            return Response.status(Status.CONFLICT).entity("Failed to validate configuration. " + errorMsg).build();
-        } else {
-            OctaneConfigurationManager.getInstance().saveSpaceConfiguration(spaceModel);
+        try {
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, false);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
+            SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
+            return Response.ok(ConfigurationUtil.convertToOutgoing(updated)).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Status.CONFLICT).entity("Failed to update configuration : " + e.getMessage()).build();
         }
-
-        return Response.ok().build();
     }
 
-    private String checkConfiguration(SpaceConfigurationOutgoing spaceModel) {
-        String errorMsg = null;
-        if (StringUtils.isEmpty(spaceModel.getLocation())) {
-            errorMsg = "Location URL is required";
-        } else if (StringUtils.isEmpty(spaceModel.getClientId())) {
-            errorMsg = "Client ID is required";
-        } else if (StringUtils.isEmpty(spaceModel.getClientSecret())) {
-            errorMsg = "Client secret is required";
-        } else {
-            LocationParts locationParts = null;
-            try {
-                locationParts = OctaneConfigurationManager.parseUiLocation(spaceModel.getLocation());
-            } catch (Exception e) {
-                errorMsg = e.getMessage();
-            }
-
-            if (errorMsg == null) {
-                try {
-
-                    String secret = OctaneConfigurationManager.PASSWORD_REPLACE.equals(spaceModel.getClientSecret()) ?
-                            OctaneConfigurationManager.getInstance().getConfiguration().getClientSecret() :
-                            spaceModel.getClientSecret();
-
-                    RestConnector restConnector = new RestConnector();
-                    restConnector.setBaseUrl(locationParts.getBaseUrl());
-                    restConnector.setCredentials(spaceModel.getClientId(), secret);
-                    boolean isConnected = restConnector.login();
-                    if (!isConnected) {
-                        errorMsg = "Failed to authenticate.";
-                    } else {
-                        String getWorspacesUrl = String.format(Constants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, locationParts.getSpaceId(), "workspaces");
-                        String queryString = OctaneQueryBuilder.create().addSelectedFields("id").addPageSize(1).build();
-                        Map<String, String> headers = new HashMap<>();
-                        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
-
-                        try {
-                            String entitiesCollectionStr = restConnector.httpGet(getWorspacesUrl, Arrays.asList(queryString), headers).getResponseData();
-                            JSONObject jsonObj = new JSONObject(entitiesCollectionStr);
-                            OctaneEntityCollection workspaces = OctaneEntityParser.parseCollection(jsonObj);
-                        } catch (JSONException e) {
-                            errorMsg = "Incorrect shared space ID.";
-                        }
-                    }
-                } catch (Exception exc) {
-                    if (exc.getMessage().contains("platform.not_authorized")) {
-                        errorMsg = "Ensure your credentials are correct.";
-                    } else if (exc.getMessage().contains("type shared_space does not exist") || exc.getMessage().contains("SharedSpaceNotFoundException")) {
-                        errorMsg = "Shared space '" + locationParts.getSpaceId() + "' does not exist.";
-                    } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
-                        errorMsg = "Network exception, proxy settings may be missing.";
-                    } else if (exc.getMessage().startsWith("Connection timed out")) {
-                        errorMsg = "Timed out exception, proxy settings may be misconfigured.";
-                    } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
-                        errorMsg = "Location is not available.";
-                    } else {
-                        errorMsg = "Exception " + exc.getClass().getName() + " : " + exc.getMessage();
-                        if (exc.getCause() != null) {
-                            errorMsg += " . Cause : " + exc.getCause();//"Validate that location is correct.";
-                        }
-                    }
-                }
-            }
+    @DELETE
+    @Path("spaces/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteSpaceConfiguration(@PathParam("id") String id) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
         }
-        return errorMsg;
+
+        boolean deleted = ConfigurationManager.getInstance().removeSpaceConfiguration(id);
+        if (deleted) {
+            return Response.ok().build();
+        } else {
+            return Response.status(Status.NOT_FOUND).build();
+        }
+    }
+
+    @POST
+    @Path("spaces/test-connection")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
+        if (!validateUserPermission()) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        try {
+            boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationOutgoing.getId());
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
+            ConfigurationUtil.validateSpaceConfigurationConnectivity(spaceConfig);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
+        }
+    }
+
+    private boolean validateUserPermission() {
+        UserProfile username = userManager.getRemoteUser(request);
+        return !(username == null || !userManager.isSystemAdmin(username.getUserKey()));
+    }
+
+    private Map<String, String> getSpaceConfigurationId2Name() {
+        Map<String, String> spaceConfigurationId2Name = ConfigurationManager.getInstance().getSpaceConfigurations().stream()
+                .collect(Collectors.toMap(SpaceConfiguration::getId, SpaceConfiguration::getName));
+        return spaceConfigurationId2Name;
     }
 }
+
+

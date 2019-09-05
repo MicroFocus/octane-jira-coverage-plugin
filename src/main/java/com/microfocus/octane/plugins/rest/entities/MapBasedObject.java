@@ -15,6 +15,9 @@
 
 package com.microfocus.octane.plugins.rest.entities;
 
+import org.codehaus.jackson.annotate.JsonAnyGetter;
+import org.codehaus.jackson.annotate.JsonAnySetter;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -34,6 +37,7 @@ public class MapBasedObject {
     @XmlElement(name = "fields")
     private Map<String, Object> fields = new HashMap<String, Object>();
 
+    @JsonAnySetter
     public void put(String fieldName, Object fieldValue) {
         fields.put(fieldName, fieldValue);
     }
@@ -42,6 +46,7 @@ public class MapBasedObject {
         return fields;
     }
 
+    @JsonAnyGetter
     public Object get(String fieldName) {
         return fields.get(fieldName);
     }

@@ -26,10 +26,16 @@ import java.util.List;
 public class WorkspaceConfigurationOutgoing {
 
     @XmlElement(name = "id")
-    private long id;
+    private String id;
+
+    @XmlElement(name = "spaceConfigId")
+    private String spaceConfigId;
+
+    @XmlElement(name = "spaceConfigName")
+    private String spaceConfigName;
 
     @XmlElement(name = "workspaceId")
-    private long workspaceId;
+    private String workspaceId;
 
     @XmlElement(name = "workspaceName")
     private String workspaceName;
@@ -46,21 +52,12 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "jiraProjects")
     private List<String> jiraProjects;
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
-    public WorkspaceConfigurationOutgoing setId(long id) {
+    public WorkspaceConfigurationOutgoing setId(String id) {
         this.id = id;
-        return this;
-    }
-
-    public String getWorkspaceName() {
-        return workspaceName;
-    }
-
-    public WorkspaceConfigurationOutgoing setWorkspaceName(String workspaceName) {
-        this.workspaceName = workspaceName;
         return this;
     }
 
@@ -72,7 +69,6 @@ public class WorkspaceConfigurationOutgoing {
         this.octaneUdf = octaneUdf;
         return this;
     }
-
 
     public List<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
@@ -101,12 +97,40 @@ public class WorkspaceConfigurationOutgoing {
         return this;
     }
 
-    public long getWorkspaceId() {
+
+    public String getSpaceConfigId() {
+        return spaceConfigId;
+    }
+
+    public WorkspaceConfigurationOutgoing setSpaceConfigId(String spaceConfigId) {
+        this.spaceConfigId = spaceConfigId;
+        return this;
+    }
+
+    public String getSpaceConfigName() {
+        return spaceConfigName;
+    }
+
+    public WorkspaceConfigurationOutgoing setSpaceConfigName(String spaceConfigName) {
+        this.spaceConfigName = spaceConfigName;
+        return this;
+    }
+
+    public String getWorkspaceId() {
         return workspaceId;
     }
 
-    public WorkspaceConfigurationOutgoing setWorkspaceId(long workspaceId) {
+    public WorkspaceConfigurationOutgoing setWorkspaceId(String workspaceId) {
         this.workspaceId = workspaceId;
+        return this;
+    }
+
+    public String getWorkspaceName() {
+        return workspaceName;
+    }
+
+    public WorkspaceConfigurationOutgoing setWorkspaceName(String workspaceName) {
+        this.workspaceName = workspaceName;
         return this;
     }
 }

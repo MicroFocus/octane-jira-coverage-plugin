@@ -4,7 +4,7 @@
     padding: 0;
 }
 
-#configuration-rest-table .aui-restfultable-operations{
+#workspace-table .aui-restfultable-operations{
     width: 10px;
 }
 
@@ -15,32 +15,32 @@
     margin: 0 5px 0 -30px;
 }
 
-#config-dialog div.description{
+#workspace-dialog div.description{
     margin-top: 2px;
 }
 
-#config-dialog .select2-choice {
+#workspace-dialog .select2-choice {
     background-color: #fff;
     border-color: rgb(193, 199, 208);
     color: rgb(23, 43, 77);
 }
 
-#config-dialog .select2-container-disabled .select2-choice{
+#workspace-dialog .select2-choice:after {
+    border-top-color: #344563;
+}
+
+#workspace-dialog .select2-container-disabled .select2-choice,#workspace-dialog .select2-container-disabled .select2-choices{
     color: #97a0af;
     background-color: rgb(244, 245, 247);
     padding-left: 5px;
     cursor: not-allowed;
 }
 
-#workspace-field-group{
-    margin-bottom: 15px;
-}
-
 #show-proxy-settings{
     float: right;
 }
 
-#config-dialog .field-group .error{
+#workspace-dialog .field-group .error{
     font-size: 12px;
 }
 
@@ -61,11 +61,21 @@
     margin-left:10px;
 }
 
-
-.space-save-status.aui-iconfont-successful-build{
+.aui-iconfont-successful-build{
     color: #36b37e;
 }
 
-.space-save-status.aui-iconfont-error{
+.aui-iconfont-error{
     color: #ff5630;
 }
+
+#spaceConfSelectorThrobber{
+    margin-left: 9px;
+    margin-top: 6px;
+}
+
+#space-save-status{
+    margin-left: 5px;
+}
+
+

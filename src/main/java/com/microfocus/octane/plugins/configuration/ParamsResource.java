@@ -19,7 +19,6 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +40,8 @@ public class ParamsResource {
     @ComponentImport
     private final UserManager userManager;
 
-
     @Inject
-    public ParamsResource(UserManager userManager, OctaneRestService octaneRestService) {
+    public ParamsResource(UserManager userManager) {
         this.userManager = userManager;
     }
 
@@ -51,13 +49,29 @@ public class ParamsResource {
     @Path("show-debug")
     //http://localhost:2990/jira/rest/octane-params/1.0/show-debug?visible=true
     public Response showDebugInfo(@Context HttpServletRequest request,
-                                 @QueryParam("visible") boolean visible) {
+                                  @QueryParam("visible") boolean visible) {
         UserProfile userProfile = userManager.getRemoteUser(request);
         if (userProfile == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        OctaneConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), OctaneConfigurationManager.SHOW_DEBUG_PARAMETER, visible);
+        ConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), ConfigurationManager.SHOW_DEBUG_PARAMETER, visible);
         return Response.ok("Done show-debug : " + visible).build();
+    }
+
+    @GET
+    @Path("clear-config/{version}")
+    //http://localhost:2990/jira/rest/octane-params/1.0/clear-config/1
+    public Response clearConfiguration(@Context HttpServletRequest request, @PathParam("version") Integer version) {
+        UserProfile userProfile = userManager.getRemoteUser(request);
+        if (userProfile == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        String result = "no version";
+        if (version != null) {
+            result = ConfigurationManager.getInstance().clearConfiguration(version);
+        }
+        return Response.ok(result).build();
     }
 }

@@ -16,65 +16,84 @@
 package com.microfocus.octane.plugins.configuration;
 
 
+import com.microfocus.octane.plugins.rest.RestConnector;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.util.List;
 
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SpaceConfiguration {
 
+    private String name;
     private String location;
     private LocationParts locationParts;
     private String clientId;
     private String clientSecret;
-
     private String id;
 
-    private List<WorkspaceConfiguration> workspaces;
+    @JsonIgnore
+    private RestConnector restConnector;
 
     public String getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public SpaceConfiguration setLocation(String location) {
         this.location = location;
+        return this;
     }
 
     public String getClientSecret() {
         return clientSecret;
     }
 
-    public void setClientSecret(String clientSecret) {
+    public SpaceConfiguration setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+        return this;
     }
 
     public String getClientId() {
         return clientId;
     }
 
-    public void setClientId(String clientId) {
+    public SpaceConfiguration setClientId(String clientId) {
         this.clientId = clientId;
+        return this;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public SpaceConfiguration setId(String id) {
         this.id = id;
-    }
-
-    public List<WorkspaceConfiguration> getWorkspaces() {
-        return workspaces;
-    }
-
-    public void setWorkspaces(List<WorkspaceConfiguration> workspaces) {
-        this.workspaces = workspaces;
+        return this;
     }
 
     public LocationParts getLocationParts() {
         return locationParts;
     }
 
-    public void setLocationParts(LocationParts locationParts) {
+    public SpaceConfiguration setLocationParts(LocationParts locationParts) {
         this.locationParts = locationParts;
+        return this;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public SpaceConfiguration setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    @JsonIgnore
+    public RestConnector getRestConnector() {
+        if (restConnector == null) {
+            restConnector = OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
+        }
+        return restConnector;
     }
 }

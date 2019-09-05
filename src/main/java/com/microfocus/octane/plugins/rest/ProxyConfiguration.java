@@ -26,6 +26,7 @@ public class ProxyConfiguration {
 
     private String password;
 
+    private String nonProxyHost;
 
     public static ProxyConfiguration create() {
         return new ProxyConfiguration();
@@ -70,6 +71,15 @@ public class ProxyConfiguration {
     @Override
     public String toString() {
         return "ProxyConfiguration {host=" + host + ", port=" + port + ", username=" + username + " }";
+    }
+
+    public String getNonProxyHost() {
+        return nonProxyHost;
+    }
+
+    public ProxyConfiguration setNonProxyHost(String nonProxyHost) {
+        this.nonProxyHost = nonProxyHost;
+        return this;
     }
 }
 

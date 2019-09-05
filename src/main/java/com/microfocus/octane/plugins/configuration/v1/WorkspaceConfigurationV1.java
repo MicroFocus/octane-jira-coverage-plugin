@@ -13,17 +13,15 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.configuration;
+package com.microfocus.octane.plugins.configuration.v1;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class WorkspaceConfiguration {
 
-    private String id;
-    private String spaceConfigurationId;
+public class WorkspaceConfigurationV1 {
+
     private long workspaceId;
     private String workspaceName;
     private String octaneUdf;
@@ -31,75 +29,63 @@ public class WorkspaceConfiguration {
     private List<String> jiraIssueTypes;
     private List<String> jiraProjects;
 
+    @JsonIgnore
+    private SpaceConfigurationV1 spaceConfiguration;
+
     public long getWorkspaceId() {
         return workspaceId;
     }
 
-    public WorkspaceConfiguration setWorkspaceId(long workspaceId) {
+    public void setWorkspaceId(long workspaceId) {
         this.workspaceId = workspaceId;
-        return this;
     }
 
     public String getOctaneUdf() {
         return octaneUdf;
     }
 
-    public WorkspaceConfiguration setOctaneUdf(String octaneUdf) {
+    public void setOctaneUdf(String octaneUdf) {
         this.octaneUdf = octaneUdf;
-        return this;
     }
 
     public List<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public WorkspaceConfiguration setOctaneEntityTypes(List<String> octaneEntityTypes) {
+    public void setOctaneEntityTypes(List<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
-        return this;
     }
 
     public List<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public WorkspaceConfiguration setJiraIssueTypes(List<String> jiraIssueTypes) {
+    public void setJiraIssueTypes(List<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
-        return this;
     }
 
     public List<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public WorkspaceConfiguration setJiraProjects(List<String> jiraProjects) {
+    public void setJiraProjects(List<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
-        return this;
     }
 
     public String getWorkspaceName() {
         return workspaceName;
     }
 
-    public WorkspaceConfiguration setWorkspaceName(String workspaceName) {
+    public void setWorkspaceName(String workspaceName) {
         this.workspaceName = workspaceName;
-        return this;
     }
 
-    public String getId() {
-        return id;
+    @JsonIgnore
+    public SpaceConfigurationV1 getSpaceConfiguration() {
+        return spaceConfiguration;
     }
 
-    public WorkspaceConfiguration setId(String id) {
-        this.id = id;
-        return this;
-    }
-
-    public String getSpaceConfigurationId() {
-        return spaceConfigurationId;
-    }
-
-    public WorkspaceConfiguration setSpaceConfigurationId(String spaceConfigurationId) {
-        this.spaceConfigurationId = spaceConfigurationId;
-        return this;
+    public void setSpaceConfiguration(SpaceConfigurationV1 spaceConfiguration) {
+        this.spaceConfiguration = spaceConfiguration;
     }
 }

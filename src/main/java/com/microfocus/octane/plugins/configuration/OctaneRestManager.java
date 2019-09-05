@@ -13,17 +13,8 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.components.impl;
+package com.microfocus.octane.plugins.configuration;
 
-import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.sal.api.ApplicationProperties;
-import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.microfocus.octane.plugins.components.api.Constants;
-import com.microfocus.octane.plugins.components.api.OctaneRestService;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationChangedListener;
-import com.microfocus.octane.plugins.configuration.OctaneConfigurationManager;
-import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
@@ -32,61 +23,23 @@ import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.*;
+import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import javax.net.ssl.SSLHandshakeException;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@ExportAsService({OctaneRestService.class})
-@Named("octaneRestService")
-public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigurationChangedListener {
+public class OctaneRestManager {
 
-    private static final Logger log = LoggerFactory.getLogger(OctaneRestServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(OctaneRestManager.class);
 
-    @ComponentImport
-    private final ApplicationProperties applicationProperties;
-
-    @ComponentImport
-    private final PluginSettingsFactory pluginSettingsFactory;
-
-    private SpaceConfiguration octaneConfiguration;
-
-    private RestConnector restConnector = new RestConnector();
-
-    @Inject
-    public OctaneRestServiceImpl(final PluginSettingsFactory pluginSettingsFactory, final ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
-        this.pluginSettingsFactory = pluginSettingsFactory;
-
-        OctaneConfigurationManager.getInstance().init(pluginSettingsFactory);
-        OctaneConfigurationManager.getInstance().addListener(this);
-        reloadConfiguration();
-    }
-
-    @Override
-    public void reloadConfiguration() {
-        log.debug("before reloadConfiguration");
-
-        restConnector.clearAll();
-        try {
-            octaneConfiguration = OctaneConfigurationManager.getInstance().getConfiguration();
-            restConnector.setBaseUrl(octaneConfiguration.getLocationParts().getBaseUrl());
-            restConnector.setCredentials(octaneConfiguration.getClientId(), octaneConfiguration.getClientSecret());
-            log.debug("after reloadConfiguration, url= " + octaneConfiguration.getLocationParts().getBaseUrl() + ", clientID=" + octaneConfiguration.getClientId());
-        } catch (Exception e) {
-            octaneConfiguration = null;
-            log.error("Failed to reloadConfiguration : " + e.getClass().getName() + ", message =" + e.getMessage() + ", cause : " + e.getCause());
-        }
-    }
-
-    @Override
-    public GroupEntityCollection getCoverage(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
+    public static GroupEntityCollection getCoverage(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
 
-        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
+        String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, sc.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
@@ -97,16 +50,15 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         String queryParam = queryBuilder.build();
 
-        String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
         GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
         return col;
     }
 
-    @Override
-    public GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
+    public static GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //https://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?&query=%22test_of_last_run={covered_requirement={path=%270000000001OT0002K9*%27}};!test_of_last_run={null};status={null}%22&group_by=native_status
 
-        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
+        String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, sc.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
@@ -118,15 +70,15 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         String queryParam = queryBuilder.build();
 
-        String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
         GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
         return col;
     }
 
-    public int getTotalTestsCount(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
+    public static int getTotalTestsCount(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/tests?fields=id&limit=1&query="((covered_content={(path='0000000000XC*')});((!(subtype='test_suite'))))"
 
-        String url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, "tests");
+        String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, sc.getLocationParts().getSpaceId(), workspaceId, "tests");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
@@ -137,41 +89,39 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
                 .addSelectedFields("id")
                 .build();
 
-        String responseStr = restConnector.httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
         OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
         return col.getTotalCount();
     }
 
-    private QueryPhrase createGetEntityCondition(OctaneEntity octaneEntity) {
+    private static QueryPhrase createGetEntityCondition(OctaneEntity octaneEntity) {
         String path = octaneEntity.getString("path");
         return new LogicalQueryPhrase("path", path + "*");
     }
 
-    @Override
-    public OctaneEntityCollection getEntitiesByCondition(long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
+    public static OctaneEntityCollection getEntitiesByCondition(SpaceConfiguration sc, long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
 
         String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).addSelectedFields(fields).build();
         String url;
-        if (SPACE_CONTEXT == workspaceId) {
-            url = String.format(Constants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES,
-                    octaneConfiguration.getLocationParts().getSpaceId(), collectionName);
+        if (PluginConstants.SPACE_CONTEXT == workspaceId) {
+            url = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES,
+                    sc.getLocationParts().getSpaceId(), collectionName);
         } else {
-            url = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
-                    octaneConfiguration.getLocationParts().getSpaceId(), workspaceId, collectionName);
+            url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES,
+                    sc.getLocationParts().getSpaceId(), workspaceId, collectionName);
         }
 
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-        String responseStr = restConnector.httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
         return col;
     }
 
-    @Override
-    public List<String> getSupportedOctaneTypes(long workspaceId, String udfName) {
-        long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
-        String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
+    public static List<String> getSupportedOctaneTypes(SpaceConfiguration sc, long workspaceId, String udfName) {
+        long spaceId = sc.getLocationParts().getSpaceId();
+        String entityCollectionUrl = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
@@ -179,24 +129,23 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
 
         QueryPhrase typeCondition = new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes());
         String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
-        String entitiesCollectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+        String entitiesCollectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
         List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toList());
 
         return foundTypes;
     }
 
-    private Map<String, String> createHeaderMapWithOctaneClientType() {
+    private static Map<String, String> createHeaderMapWithOctaneClientType() {
         Map<String, String> headers = new HashMap<>();
         headers.put("HPECLIENTTYPE", "HPE_CI_CLIENT");
         return headers;
     }
 
-    @Override
-    public Set<String> getPossibleJiraFields(long workspaceId) {
+    public static Set<String> getPossibleJiraFields(SpaceConfiguration sc, long workspaceId) {
         //https://mqalb011sngx.saas.hpe.com/api/shared_spaces/3004/workspaces/2002/metadata/fields?&query=%22field_type=%27string%27;is_user_defined=true;(entity_name+IN+%27feature%27,%27application_module%27,%27requirement_document%27,%27story%27)%22
-        long spaceId = octaneConfiguration.getLocationParts().getSpaceId();
-        String entityCollectionUrl = String.format(Constants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
+        long spaceId = sc.getLocationParts().getSpaceId();
+        String entityCollectionUrl = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
@@ -206,15 +155,52 @@ public class OctaneRestServiceImpl implements OctaneRestService, OctaneConfigura
                 .addQueryCondition(new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes()))
                 .build();
 
-        String collectionStr = restConnector.httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+        String collectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(collectionStr);
         Set<String> foundJiraNames = fields.getData().stream().map(e -> e.getString("name")).filter(n -> n.toLowerCase().contains("jira")).collect(Collectors.toSet());
 
         return foundJiraNames;
     }
 
-    @Override
-    public void onOctaneConfigurationChanged() {
-        reloadConfiguration();
+    public static OctaneEntityCollection getWorkspaces(SpaceConfiguration spaceConfiguration) {
+        String getWorspacesUrl = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, spaceConfiguration.getLocationParts().getSpaceId(), "workspaces");
+        String queryString = OctaneQueryBuilder.create().addSelectedFields("id", "name").build();
+        Map<String, String> headers = new HashMap<>();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+        String entitiesCollectionStr = spaceConfiguration.getRestConnector().httpGet(getWorspacesUrl, Arrays.asList(queryString), headers).getResponseData();
+
+        OctaneEntityCollection workspaces = OctaneEntityParser.parseCollection(entitiesCollectionStr);
+        if (workspaces.getData().isEmpty()) {
+            throw new IllegalArgumentException("Incorrect space ID.");
+        }
+        return workspaces;
+    }
+
+    public static RestConnector getRestConnector(String baseUrl, String clientId, String clientSecret) {
+        try {
+            RestConnector restConnector = new RestConnector();
+            restConnector.setBaseUrl(baseUrl);
+            restConnector.setCredentials(clientId, clientSecret);
+            boolean isConnected = restConnector.login();
+            if (!isConnected) {
+                throw new IllegalArgumentException("Failed to authenticate.");
+            } else {
+                return restConnector;
+            }
+        } catch (Exception exc) {
+            String myErrorMessage;
+            if (exc.getMessage().contains("platform.not_authorized")) {
+                myErrorMessage = "Ensure your credentials are correct.";
+            } else if (exc.getCause() != null && exc.getCause() instanceof SSLHandshakeException && exc.getCause().getMessage().contains("Received fatal alert")) {
+                myErrorMessage = "Network exception, proxy settings may be missing or misconfigured.";
+            } else if (exc.getMessage().startsWith("Connection timed out")) {
+                myErrorMessage = "Timed out exception, proxy settings may be missing or misconfigured.";
+            } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
+                myErrorMessage = "Location is not available.";
+            } else {
+                myErrorMessage = exc.getMessage();
+            }
+            throw new IllegalArgumentException(myErrorMessage);
+        }
     }
 }

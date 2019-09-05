@@ -16,7 +16,7 @@
 package com.microfocus.octane.plugins.rest;
 
 import com.google.common.base.Charsets;
-import com.microfocus.octane.plugins.components.api.Constants;
+import com.microfocus.octane.plugins.configuration.PluginConstants;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -47,9 +47,6 @@ public class RestConnector {
     private ProxyConfiguration proxyConfiguration;
     private static final Logger log = LoggerFactory.getLogger(RestConnector.class);
 
-    private String csrfHeaderName;
-    private String csrfCookieName;
-
     public boolean login() {
         boolean ret = false;
         clearAll();
@@ -67,18 +64,12 @@ public class RestConnector {
         //Get LWSSO COOKIE
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON);
-        Response authResponse = doHttp("POST", Constants.URL_AUTHENTICATION, null, jsonString, headers, true);
+        Response authResponse = doHttp("POST", PluginConstants.URL_AUTHENTICATION, null, jsonString, headers, true);
         if (authResponse.getStatusCode() == HttpStatus.SC_OK) {
             ret = true;
         }
 
         return ret;
-    }
-
-
-    public void setCSRF(String csrfHeader, String csrfCookieName) {
-        this.csrfHeaderName = csrfHeader;
-        this.csrfCookieName = csrfCookieName;
     }
 
     /**
@@ -269,11 +260,6 @@ public class RestConnector {
                 }
                 con.setRequestProperty(header.getKey(), header.getValue());
             }
-        }
-
-        //set CSRF
-        if (StringUtils.isNotEmpty(csrfHeaderName) && StringUtils.isNotEmpty(csrfCookieName) && cookies.containsKey(csrfCookieName)) {
-            con.setRequestProperty(csrfHeaderName, cookies.get(csrfCookieName));
         }
 
         //if there's data to attach to the request, it's handled here. note that if data exists, we take into account previously removed content-TYPE.

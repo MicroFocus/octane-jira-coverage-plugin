@@ -15,10 +15,16 @@
 
 package com.microfocus.octane.plugins.configuration;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 public class LocationParts {
 
     private String baseUrl;
+
     private long spaceId;
+
+    @JsonIgnore
+    private String key;
 
     public String getBaseUrl() {
         return baseUrl;
@@ -34,5 +40,13 @@ public class LocationParts {
 
     public void setSpaceId(long spaceId) {
         this.spaceId = spaceId;
+    }
+
+    @JsonIgnore
+    public String getKey() {
+        if (key == null) {
+            key = (baseUrl + "?p=" + spaceId).toLowerCase();
+        }
+        return key;
     }
 }

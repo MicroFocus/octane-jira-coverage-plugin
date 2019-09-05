@@ -12,19 +12,30 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
+package com.microfocus.octane.plugins.configuration.v1;
 
-package com.microfocus.octane.plugins.components.api;
+import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 
-public interface Constants {
+import java.util.List;
 
-    String URL_AUTHENTICATION = "/authentication/sign_in";
+public class ConfigurationCollectionV1 {
 
-    String PUBLIC_API = "/api";
-    String PUBLIC_API_SHAREDSPACE_FORMAT = PUBLIC_API + "/shared_spaces/%s";
-    String PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES = PUBLIC_API + "/shared_spaces/%s" + "/%s";
+    private List<SpaceConfigurationV1> spaces;
+    private ProxyConfiguration proxy;
 
-    String PUBLIC_API_WORKSPACE_FORMAT = PUBLIC_API_SHAREDSPACE_FORMAT + "/workspaces/%s";
-    String PUBLIC_API_WORKSPACE_LEVEL_ENTITIES = PUBLIC_API_WORKSPACE_FORMAT + "/%s";
+    public List<SpaceConfigurationV1> getSpaces() {
+        return spaces;
+    }
 
+    public void setSpaces(List<SpaceConfigurationV1> spaces) {
+        this.spaces = spaces;
+    }
 
+    public ProxyConfiguration getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(ProxyConfiguration proxy) {
+        this.proxy = proxy;
+    }
 }
