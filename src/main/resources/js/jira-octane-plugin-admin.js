@@ -296,8 +296,9 @@
             contentType: "application/json"
         }).done(function (result) {
             statusIconOk("#space-save-status", "Test connection is successful");
-        }).fail(function (request, status, error) {
-            statusIconFailed("#space-save-status", "Test connection is failed : " + request.responseText);
+        }).fail(function (response) {
+            var msg = getFailedMessage(response);
+            statusIconFailed("#space-save-status", "Test connection is failed : " + msg);
         });
     }
 
@@ -335,10 +336,19 @@
             contentType: "application/json"
         }).done(function (result) {
             statusIconOk(throbberStatusClassNameSelector, "Test connection is successful");
-        }).fail(function (request) {
-            var msg = !!request.responseText ? request.responseText : request.statusText;
+        }).fail(function (response) {
+            var msg = getFailedMessage(response);
             statusIconFailed(throbberStatusClassNameSelector, "Test connection is failed : " + msg);
         });
+    }
+
+    function getFailedMessage(response){
+        if(response.status && response.status===401){
+            return "Jira session is ended. Relogin is required.";
+        }
+
+        var msg = !!response.responseText ? response.responseText : response.statusText;
+        return msg;
     }
 
     function configureSpaceDialog() {
