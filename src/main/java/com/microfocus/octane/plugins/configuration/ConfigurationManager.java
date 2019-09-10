@@ -222,7 +222,7 @@ public class ConfigurationManager {
                     });
 
                     tempConfiguration = new ConfigurationCollection();
-                    tempConfiguration.setSpaces(Arrays.asList(sc));
+                    tempConfiguration.setSpaces(new ArrayList<>(Arrays.asList(sc)));
                     tempConfiguration.setWorkspaces(wcList);
 
                     if (configurationV1.getProxy() != null) {
