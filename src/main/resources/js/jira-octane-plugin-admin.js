@@ -261,7 +261,9 @@
         }
 
         //validate
-        var validationFailed = !validateMissingRequiredField($("#name").attr("value"), "#nameError");
+        var nameValue = $("#name").attr("value");
+        var validationFailed = !validateMissingRequiredField(nameValue, "#nameError") ||
+            !validateConditionAndUpdateErrorField((nameValue.length <= 40), "Exceeds allowed length (40 characters)", "#nameError");
         validationFailed = !validateMissingRequiredField($("#location").attr("value"), "#locationError") || validationFailed;
         validationFailed = !validateMissingRequiredField($("#clientId").attr("value"), "#clientIdError") || validationFailed;
         validationFailed = !validateMissingRequiredField($("#clientSecret").attr("value"), "#clientSecretError") || validationFailed;
@@ -307,25 +309,18 @@
     }
 
     function testConnection(row) {
-        console.log("testConnection 12:06");
         var rowModel = row.model.attributes;
-        console.log("rowModel", rowModel);
         var throbberStatusClassName = "throbber_status_" + rowModel.id;
         var throbberStatusClassNameSelector = "." + throbberStatusClassName;
         var throbber = $(throbberStatusClassNameSelector);
         if (!throbber.length) {
-            console.log("throbber not exist " + throbberStatusClassNameSelector);
             var statusEl = row.$el.children().eq(4);
-            console.log("statusEl", statusEl);
 
-            console.log("statusEl.children().length", statusEl.children().length);
             if (!statusEl.children().length) {//for jira 8
                 statusEl.append('<span></span>');
             }
 
             throbber = statusEl.children().first();
-            console.log("throbber", throbber);
-
             throbber.addClass("throbber-status");
             throbber.addClass("aui-icon");
             throbber.addClass("aui-icon-small");

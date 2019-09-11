@@ -27,7 +27,7 @@
         <form class="aui" autocomplete="off">
             <div class="field-group">
                 <label for="location">Name<span class="aui-icon icon-required"></label>
-                <input type="text" id="name" name="name" class="text medium-long-field required">
+                <input type="text" id="name" name="name" maxlength="40" class="text medium-long-field required">
                 <div class="error" id="nameError"></div>
                 <div class="description">Name for space configuration</div>
             </div>
