@@ -23,6 +23,7 @@ import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.configuration.*;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
+import com.microfocus.octane.plugins.rest.RestStatusException;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
@@ -73,7 +74,7 @@ public class ConfigResource {
         Set<String> usedJiraProjects = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
 
         if (workspaceConfId != null) {
-            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId,true).get();
+            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId, true).get();
             usedWorkspaces.remove(wc.getWorkspaceId());
             usedJiraProjects.removeAll(wc.getJiraProjects());
         }
@@ -105,6 +106,9 @@ public class ConfigResource {
             return Response.ok(data).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        } catch (RestStatusException e) {
+            RuntimeException translatedException = ConfigurationUtil.tryTranslateException(e, spConfig);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(translatedException.getMessage()).build();
         }
     }
 

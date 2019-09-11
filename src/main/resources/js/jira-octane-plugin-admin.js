@@ -1,6 +1,10 @@
 (function ($) { // this closure helps us keep our variables to ourselves.
     // This pattern is known as an "iife" - immediately invoked function expression
     var octanePluginContext = {};
+    var iconWaitClass = "aui-icon-wait icon throbber loading";//jira7 : aui-icon-wait; jira8: icon throbber loading
+    var iconOkClass = "aui-iconfont-successful-build";
+    var iconFailedClass = "aui-iconfont-error";
+
     octanePluginContext.octaneAdminBaseUrl = AJS.contextPath() + "/rest/octane-admin/1.0/";
 
 
@@ -303,17 +307,32 @@
     }
 
     function testConnection(row) {
+        console.log("testConnection 12:06");
         var rowModel = row.model.attributes;
-        var statusEl = row.$el.children().eq(4);
-        var throbber = statusEl.children().first();
-        throbber.addClass("throbber-status");
-        throbber.addClass("aui-icon");
-        throbber.addClass("aui-icon-small");
-        throbber.removeClass("aui-restfultable-throbber");
-
+        console.log("rowModel", rowModel);
         var throbberStatusClassName = "throbber_status_" + rowModel.id;
         var throbberStatusClassNameSelector = "." + throbberStatusClassName;
-        throbber.addClass(throbberStatusClassName);
+        var throbber = $(throbberStatusClassNameSelector);
+        if (!throbber.length) {
+            console.log("throbber not exist " + throbberStatusClassNameSelector);
+            var statusEl = row.$el.children().eq(4);
+            console.log("statusEl", statusEl);
+
+            console.log("statusEl.children().length", statusEl.children().length);
+            if (!statusEl.children().length) {//for jira 8
+                statusEl.append('<span></span>');
+            }
+
+            throbber = statusEl.children().first();
+            console.log("throbber", throbber);
+
+            throbber.addClass("throbber-status");
+            throbber.addClass("aui-icon");
+            throbber.addClass("aui-icon-small");
+            throbber.removeClass("aui-restfultable-throbber");//for jira 7
+
+            throbber.addClass(throbberStatusClassName);
+        }
 
         statusIconStart(throbberStatusClassNameSelector, "Testing connection ...");
 
@@ -342,8 +361,8 @@
         });
     }
 
-    function getFailedMessage(response){
-        if(response.status && response.status===401){
+    function getFailedMessage(response) {
+        if (response.status && response.status === 401) {
             return "Jira session is ended. Relogin is required.";
         }
 
@@ -424,7 +443,7 @@
                 closeSpaceDialog();
                 showSpaceStatus("Space configuration is saved successfully", true);
             }).fail(function (request, status, error) {
-                $("#space-save-status").addClass("aui-iconfont-error");
+                $("#space-save-status").addClass(iconFailedClass);
                 $("#space-save-status").attr("title", request.responseText);
 
                 enableSpaceSubmitButton(true);
@@ -628,7 +647,7 @@
     }
 
     function fillWorkspaceDialogData(spaceConfId, workspaceConfId) {
-        $("#spaceConfSelectorThrobber").addClass("aui-icon-wait");
+        $("#spaceConfSelectorThrobber").addClass(iconWaitClass);
         disableControlsInWorkspaceDialog(true);
 
         return new Promise(function (resolve, reject) {
@@ -657,7 +676,7 @@
                 });
                 reject(Error(!request.responseText ? request.statusText : request.responseText));
             }).always(function () {
-                $("#spaceConfSelectorThrobber").removeClass("aui-icon-wait");
+                $("#spaceConfSelectorThrobber").removeClass(iconWaitClass);
             });
         });
     }
@@ -763,10 +782,6 @@
         enableButton("#space-submit-button", enable);
     }
 
-    function enableSpaceSaveButton(enable) {
-        enableButton("#save-space-configuration", enable);
-    }
-
     function enableButton(selector, enable) {
         if (enable) {
             AJS.$(selector).removeAttr("aria-disabled");
@@ -823,32 +838,32 @@
 
     function statusIconInit(selector) {
         var el = $(selector);
-        el.removeClass("aui-icon-wait");
-        el.removeClass("aui-iconfont-successful-build");
-        el.removeClass("aui-iconfont-error");
+        el.removeClass(iconWaitClass);
+        el.removeClass(iconOkClass);
+        el.removeClass(iconFailedClass);
     }
 
     function statusIconStart(selector, msg) {
         var el = $(selector);
-        el.addClass("aui-icon-wait");
-        el.removeClass("aui-iconfont-successful-build");
-        el.removeClass("aui-iconfont-error");
+        el.addClass(iconWaitClass);
+        el.removeClass(iconOkClass);
+        el.removeClass(iconFailedClass);
         el.attr("title", msg);
     }
 
     function statusIconOk(selector, msg) {
         var el = $(selector);
-        el.removeClass("aui-icon-wait");
-        el.addClass("aui-iconfont-successful-build");
-        el.removeClass("aui-iconfont-error");
+        el.removeClass(iconWaitClass);
+        el.addClass(iconOkClass);
+        el.removeClass(iconFailedClass);
         el.attr("title", msg);
     }
 
     function statusIconFailed(selector, msg) {
         var el = $(selector);
-        el.removeClass("aui-icon-wait");
-        el.removeClass("aui-iconfont-successful-build");
-        el.addClass("aui-iconfont-error");
+        el.removeClass(iconWaitClass);
+        el.removeClass(iconOkClass);
+        el.addClass(iconFailedClass);
         el.attr("title", msg);
     }
 

@@ -167,14 +167,17 @@ public class ConfigurationUtil {
         try {
             OctaneRestManager.getWorkspaces(spaceConfig);
         } catch (RestStatusException e) {
-            if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
-                throw new IllegalArgumentException(String.format("Space id '%d' is not exist", spaceConfig.getLocationParts().getSpaceId()));
-            } else {
-                throw e;
-            }
+            throw tryTranslateException(e,spaceConfig);
         }
     }
 
+    public static RuntimeException tryTranslateException(RestStatusException e, SpaceConfiguration spaceConfig){
+        if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
+            return new IllegalArgumentException(String.format("Space id '%d' is not exist", spaceConfig.getLocationParts().getSpaceId()));
+        } else {
+            return e;
+        }
+    }
 
     public static WorkspaceConfigurationOutgoing convertToOutgoing(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name) {
         WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
