@@ -20,8 +20,6 @@ import com.microfocus.octane.plugins.rest.RestConnector;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
-import java.util.List;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SpaceConfiguration {
 
@@ -95,5 +93,9 @@ public class SpaceConfiguration {
             restConnector = OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
         }
         return restConnector;
+    }
+
+    public void clearRestConnector() {
+        restConnector = null;
     }
 }

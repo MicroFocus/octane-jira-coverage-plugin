@@ -149,6 +149,7 @@ public class ConfigurationManager {
         proxy.setNonProxyHost(proxyOutgoing.getNonProxyHost());
         configuration.setProxy(proxy);
         persistConfiguration();
+        getSpaceConfigurations().forEach(SpaceConfiguration::clearRestConnector);
     }
 
     public String clearConfiguration(int version) {

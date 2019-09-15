@@ -641,8 +641,16 @@
         $("#workspace-submit-button").prop('disabled', disable);
     }
 
+    function removeSpaceTooltipInWorkspaceDialog() {
+        $("#spaceConfSelectorThrobber").attr("title", "");
+        AJS.$('#spaceConfSelectorThrobber').tooltip('destroy');
+    }
+
     function fillWorkspaceDialogData(spaceConfId, workspaceConfId) {
+        $("#spaceConfSelectorThrobber").removeClass(iconFailedClass);
         $("#spaceConfSelectorThrobber").addClass(iconWaitClass);
+        removeSpaceTooltipInWorkspaceDialog();
+
         disableControlsInWorkspaceDialog(true);
 
         return new Promise(function (resolve, reject) {
@@ -663,13 +671,15 @@
                     reloadPossibleJiraFields();
                     resolve();
                     disableControlsInWorkspaceDialog(false);
+
+                    removeSpaceTooltipInWorkspaceDialog();
                 }).fail(function (request) {
-                AJS.flag({
-                    type: 'error',
-                    close: 'auto',
-                    body: "Failed to connect to space configuration : " + request.responseText
-                });
-                reject(Error(!request.responseText ? request.statusText : request.responseText));
+                var msg = !request.responseText ? request.statusText : request.responseText;
+                $("#spaceConfSelectorThrobber").addClass(iconFailedClass);
+                $("#spaceConfSelectorThrobber").attr("title", msg);
+                AJS.$("#spaceConfSelectorThrobber").tooltip();
+
+                reject(Error(msg));
             }).always(function () {
                 $("#spaceConfSelectorThrobber").removeClass(iconWaitClass);
             });
@@ -695,6 +705,12 @@
         var editMode = !!octanePluginContext.workspaceCurrentRow;
         var rowModel = editMode ? octanePluginContext.workspaceCurrentRow.model.attributes : null;
         $("#workspace-dialog .error").text('');//clear previous error messages
+        removeSpaceTooltipInWorkspaceDialog();
+
+        disableControlsInWorkspaceDialog(true);
+        fillEmptyCombo('#workspaceSelector', false);
+        fillEmptyCombo('#jiraProjectsSelector', true);
+        fillEmptyCombo('#jiraIssueTypesSelector', true);
 
         if (editMode) {//is edit mode
             $("#spaceConfSelector").val(rowModel.spaceConfigId);
@@ -708,19 +724,12 @@
             $("#jiraIssueTypesSelector").val(rowModel.jiraIssueTypes);
             $("#jiraProjectsSelector").val(rowModel.jiraProjects);
             $('#workspace-dialog-title').text("Edit");//set dialog title
-            fillWorkspaceDialogData(rowModel.spaceConfigId, rowModel.id).then(function () {
-                AJS.dialog2("#workspace-dialog").show();
-            });
+            AJS.dialog2("#workspace-dialog").show();
+            fillWorkspaceDialogData(rowModel.spaceConfigId, rowModel.id);
 
         } else {//new item
             $("#octaneUdf").val("");//populate default value for new item
             $('#spaceConfSelector').prop('disabled', false);//enable space selector
-
-            disableControlsInWorkspaceDialog(true);
-
-            fillEmptyCombo('#workspaceSelector', false);
-            fillEmptyCombo('#jiraProjectsSelector', true);
-            fillEmptyCombo('#jiraIssueTypesSelector', true);
 
             $('#workspace-dialog-title').text("Create");//set dialog title
             AJS.dialog2("#workspace-dialog").show();
