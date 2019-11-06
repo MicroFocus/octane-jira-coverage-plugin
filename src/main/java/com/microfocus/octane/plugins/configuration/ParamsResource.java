@@ -58,20 +58,4 @@ public class ParamsResource {
         ConfigurationManager.getInstance().setUserParameter(userProfile.getUsername(), ConfigurationManager.SHOW_DEBUG_PARAMETER, visible);
         return Response.ok("Done show-debug : " + visible).build();
     }
-
-    @GET
-    @Path("clear-config/{version}")
-    //http://localhost:2990/jira/rest/octane-params/1.0/clear-config/1
-    public Response clearConfiguration(@Context HttpServletRequest request, @PathParam("version") Integer version) {
-        UserProfile userProfile = userManager.getRemoteUser(request);
-        if (userProfile == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-
-        String result = "no version";
-        if (version != null) {
-            result = ConfigurationManager.getInstance().clearConfiguration(version);
-        }
-        return Response.ok(result).build();
-    }
 }

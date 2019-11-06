@@ -15,6 +15,8 @@
 
 package com.microfocus.octane.plugins.configuration;
 
+import com.atlassian.jira.cluster.ClusterMessageConsumer;
+import com.atlassian.jira.cluster.ClusterMessagingService;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
@@ -30,16 +32,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class ConfigurationManager {
+public class ConfigurationManager implements ClusterMessageConsumer {
 
     public static final String SHOW_DEBUG_PARAMETER = "showDebug";
     private static final Logger log = LoggerFactory.getLogger(ConfigurationManager.class);
     private PluginSettingsFactory pluginSettingsFactory;
+    private ClusterMessagingService clusterMessagingService;
 
     private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
     private static final String CONFIGURATION_KEY_V1 = PLUGIN_PREFIX + "configuration";
     private static final String CONFIGURATION_KEY_V2 = PLUGIN_PREFIX + "configuration_v2";
     private static final String USER_FILTER_KEY = PLUGIN_PREFIX + "user.filter";
+    private static final String MESSAGE_CHANNEL = "OCTANE_CONFIG";
 
     private ConfigurationCollection configuration;
 
@@ -56,9 +60,18 @@ public class ConfigurationManager {
 
     }
 
-    public void init(PluginSettingsFactory pluginSettingsFactory) {
+    public void init(PluginSettingsFactory pluginSettingsFactory, ClusterMessagingService clusterMessagingService) {
         this.pluginSettingsFactory = pluginSettingsFactory;
-        loadConfiguration();
+        this.clusterMessagingService = clusterMessagingService;
+
+        clusterMessagingService.registerListener(MESSAGE_CHANNEL, this);
+    }
+
+    private synchronized ConfigurationCollection getConfiguration() {
+        if (configuration == null) {
+            loadConfiguration();
+        }
+        return configuration;
     }
 
     public static ConfigurationManager getInstance() {
@@ -70,7 +83,7 @@ public class ConfigurationManager {
             throw new IllegalArgumentException("Space configuration id should not be empty");
         }
 
-        Optional<SpaceConfiguration> opt = configuration.getSpaces().stream().filter(s -> s.getId().equals(spaceConfigurationId)).findFirst();
+        Optional<SpaceConfiguration> opt = getConfiguration().getSpaces().stream().filter(s -> s.getId().equals(spaceConfigurationId)).findFirst();
         if (throwIfNotFound && !opt.isPresent()) {
             throw new IllegalArgumentException(String.format("Space configuration with id %s - not found", spaceConfigurationId));
         }
@@ -82,7 +95,7 @@ public class ConfigurationManager {
             throw new IllegalArgumentException("Workspace configuration id should not be empty");
         }
 
-        Optional<WorkspaceConfiguration> opt = configuration.getWorkspaces().stream().filter(s -> s.getId().equals(workspaceConfigurationId)).findFirst();
+        Optional<WorkspaceConfiguration> opt = getConfiguration().getWorkspaces().stream().filter(s -> s.getId().equals(workspaceConfigurationId)).findFirst();
         if (throwIfNotFound && !opt.isPresent()) {
             throw new IllegalArgumentException(String.format("Workspace configuration with id %s - not found", workspaceConfigurationId));
         }
@@ -91,19 +104,19 @@ public class ConfigurationManager {
     }
 
     public List<SpaceConfiguration> getSpaceConfigurations() {
-        return configuration.getSpaces();
+        return getConfiguration().getSpaces();
     }
 
     public SpaceConfiguration addSpaceConfiguration(SpaceConfiguration spaceConfiguration) {
-        configuration.getSpaces().add(spaceConfiguration);
+        getConfiguration().getSpaces().add(spaceConfiguration);
         persistConfiguration();
         return spaceConfiguration;
     }
 
     public SpaceConfiguration updateSpaceConfiguration(SpaceConfiguration updatedSpaceConfiguration) {
         SpaceConfiguration conf = getSpaceConfigurationById(updatedSpaceConfiguration.getId(), true).get();
-        configuration.getSpaces().remove(conf);
-        configuration.getSpaces().add(updatedSpaceConfiguration);
+        getConfiguration().getSpaces().remove(conf);
+        getConfiguration().getSpaces().add(updatedSpaceConfiguration);
         persistConfiguration();
         return updatedSpaceConfiguration;
     }
@@ -111,18 +124,18 @@ public class ConfigurationManager {
     public boolean removeSpaceConfiguration(String spaceConfigurationId) {
         Optional<SpaceConfiguration> opt = getSpaceConfigurationById(spaceConfigurationId, false);
         if (opt.isPresent()) {
-            List<WorkspaceConfiguration> workspaceConfigs = configuration.getWorkspaces().stream()
+            List<WorkspaceConfiguration> workspaceConfigs = getConfiguration().getWorkspaces().stream()
                     .filter(wc -> spaceConfigurationId.equals(wc.getSpaceConfigurationId()))
                     .collect(Collectors.toList());
-            configuration.getSpaces().remove(opt.get());
-            configuration.getWorkspaces().removeAll(workspaceConfigs);
+            getConfiguration().getSpaces().remove(opt.get());
+            getConfiguration().getWorkspaces().removeAll(workspaceConfigs);
             persistConfiguration();
         }
         return opt.isPresent();
     }
 
     public ProxyConfiguration getProxySettings() {
-        return configuration.getProxy();
+        return getConfiguration().getProxy();
     }
 
     public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
@@ -147,35 +160,27 @@ public class ConfigurationManager {
             proxy.setPassword(proxyOutgoing.getPassword());
         }
         proxy.setNonProxyHost(proxyOutgoing.getNonProxyHost());
-        configuration.setProxy(proxy);
+        getConfiguration().setProxy(proxy);
         persistConfiguration();
         getSpaceConfigurations().forEach(SpaceConfiguration::clearRestConnector);
     }
 
-    public String clearConfiguration(int version) {
-        PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        if (version == 1) {
-            if (settings.remove(CONFIGURATION_KEY_V1) != null) {
-                return "1";
-            }
-        } else if (version == 2) {
-            if (settings.remove(CONFIGURATION_KEY_V2) != null) {
-                return "2";
-            }
-        }
-        return "none";
+    public synchronized void clearConfiguration() {
+        log.info("configuration is cleared");
+        configuration = null;
     }
 
     private ConfigurationCollection loadConfiguration() {
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
         String confStr = ((String) settings.get(CONFIGURATION_KEY_V2));
-
+        log.info("Configuration is loading...");
         if (confStr == null) {//create initial configuration
             configuration = tryConvertFromPreviousVersion(settings);
             if (configuration == null) {
                 configuration = new ConfigurationCollection();
             }
 
+            log.info("Initial configuration is loaded.");
             persistConfiguration();
         } else {
             try {
@@ -244,32 +249,33 @@ public class ConfigurationManager {
             throw new RuntimeException("Configuration file exceeds hard limit size of " + CONFIGURATION_HARD_LIMIT_SIZE + " characters");
         }
 
-
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
         settings.put(CONFIGURATION_KEY_V2, confStr);
+        sendConfigurationChangedMessage();
     }
 
     public List<WorkspaceConfiguration> getWorkspaceConfigurations() {
-        return configuration.getWorkspaces();
+        return getConfiguration().getWorkspaces();
     }
 
     public WorkspaceConfiguration addWorkspaceConfiguration(WorkspaceConfiguration wc) {
-        configuration.getWorkspaces().add(wc);
+        getConfiguration().getWorkspaces().add(wc);
         persistConfiguration();
         return wc;
     }
 
     public WorkspaceConfiguration updateWorkspaceConfiguration(WorkspaceConfiguration updatedWc) {
         WorkspaceConfiguration existingWc = getWorkspaceConfigurationById(updatedWc.getId(), true).get();
-        configuration.getWorkspaces().remove(existingWc);
-        configuration.getWorkspaces().add(updatedWc);
+        getConfiguration().getWorkspaces().remove(existingWc);
+        getConfiguration().getWorkspaces().add(updatedWc);
+        persistConfiguration();
         return updatedWc;
     }
 
     public boolean removeWorkspaceConfiguration(String id) {
         Optional<WorkspaceConfiguration> opt = getWorkspaceConfigurationById(id, false);
         if (opt.isPresent()) {
-            configuration.getWorkspaces().remove(opt.get());
+            getConfiguration().getWorkspaces().remove(opt.get());
             persistConfiguration();
         }
         return opt.isPresent();
@@ -328,5 +334,17 @@ public class ConfigurationManager {
         return value;
     }
 
+    public void sendConfigurationChangedMessage() {
+        log.info("sending ConfigurationChangedMessage");
+        clusterMessagingService.sendRemote(MESSAGE_CHANNEL, "updated");
+    }
+
+    @Override
+    public void receive(final String channel, final String message, final String senderId) {
+        if (MESSAGE_CHANNEL.equals(channel)) {
+            log.info(String.format("message received, channel=%s; message=%s; senderId=%s", channel, message, senderId));
+            this.clearConfiguration();
+        }
+    }
 
 }
