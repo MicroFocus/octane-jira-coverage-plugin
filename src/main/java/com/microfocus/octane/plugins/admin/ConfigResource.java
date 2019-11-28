@@ -64,7 +64,7 @@ public class ConfigResource {
     @Path("/workspaces-dialog/additional-data")
     public Response getDataForWorkspaceDialog(@QueryParam("space-conf-id") String spaceConfId, @QueryParam("workspace-conf-id") String workspaceConfId) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfId, true).get();
@@ -116,7 +116,7 @@ public class ConfigResource {
     @Path("/workspaces")
     public Response getAllWorkspaceConfigurations() {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
         Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
                 .stream().map(wc -> ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name()))
@@ -130,7 +130,7 @@ public class ConfigResource {
     @Path("/workspaces/{id}")
     public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         Optional<WorkspaceConfiguration> optResult = ConfigurationManager.getInstance().getWorkspaceConfigurationById(id, false);
@@ -146,7 +146,7 @@ public class ConfigResource {
     @Path("/workspaces/supported-octane-types")
     public Response getSupportedOctaneTypes(@QueryParam("space-configuration-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
@@ -159,7 +159,7 @@ public class ConfigResource {
     @Path("/workspaces/possible-jira-fields")
     public Response getPossibleJiraFields(@QueryParam("space-conf-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
@@ -171,7 +171,7 @@ public class ConfigResource {
     @Path("/workspaces")
     public Response addWorkspaceConfiguration(WorkspaceConfigurationOutgoing wco) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
@@ -188,7 +188,7 @@ public class ConfigResource {
     @Path("/workspaces/{workspaceConfigurationId}")
     public Response updateWorkspaceConfiguration(@PathParam("workspaceConfigurationId") String workspaceConfigurationId, WorkspaceConfigurationOutgoing wco) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
@@ -209,7 +209,7 @@ public class ConfigResource {
     @Path("/workspaces/{id}")
     public Response deleteWorkspaceConfigurationById(@PathParam("id") String id) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         boolean deleted = ConfigurationManager.getInstance().removeWorkspaceConfiguration(id);
@@ -225,7 +225,7 @@ public class ConfigResource {
     @Path("/proxy")
     public Response getProxy() {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         ProxyConfigurationOutgoing outgoing = new ProxyConfigurationOutgoing();
@@ -247,7 +247,7 @@ public class ConfigResource {
     @Path("/proxy")
     public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         Integer port = null;
@@ -272,7 +272,7 @@ public class ConfigResource {
     @Path("/spaces")
     public Response getSpaceConfigurations() {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         List<SpaceConfigurationOutgoing> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
@@ -287,7 +287,7 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addSpaceConfiguration(SpaceConfigurationOutgoing sco) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
@@ -306,7 +306,7 @@ public class ConfigResource {
     @Path("spaces/{id}")
     public Response updateSpaceConfiguration(@PathParam("id") String id, final SpaceConfigurationOutgoing sco) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
@@ -324,7 +324,7 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteSpaceConfiguration(@PathParam("id") String id) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         boolean deleted = ConfigurationManager.getInstance().removeSpaceConfiguration(id);
@@ -341,7 +341,7 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
         if (!validateUserPermission()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
@@ -356,13 +356,17 @@ public class ConfigResource {
 
     private boolean validateUserPermission() {
         UserProfile username = userManager.getRemoteUser(request);
-        return !(username == null || !userManager.isSystemAdmin(username.getUserKey()));
+        return isAdministrator(userManager, username);
     }
 
     private Map<String, String> getSpaceConfigurationId2Name() {
         Map<String, String> spaceConfigurationId2Name = ConfigurationManager.getInstance().getSpaceConfigurations().stream()
                 .collect(Collectors.toMap(SpaceConfiguration::getId, SpaceConfiguration::getName));
         return spaceConfigurationId2Name;
+    }
+
+    public static boolean isAdministrator(UserManager userManager, UserProfile username) {
+        return username != null && (userManager.isSystemAdmin(username.getUserKey()) || userManager.isAdmin(username.getUserKey()));
     }
 }
 

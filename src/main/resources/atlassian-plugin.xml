@@ -68,9 +68,14 @@
   <servlet key="admin-servlet" class="com.microfocus.octane.plugins.admin.AdminServlet">
     <url-pattern>/admin/octane</url-pattern>
   </servlet>
-  <web-item key="jira-menu-item" name="ALM Octane Configuration" section="system.admin/globalsettings" weight="10" application="jira">
+
+  <web-section key="alm_octane_plugin" location="admin_plugins_menu" weight="10" application="jira">
+    <label key="ALM Octane Quality"/>
+  </web-section>
+
+  <web-item key="jira-menu-item" name="ALM Octane Configuration" section="admin_plugins_menu/alm_octane_plugin">
     <description>Link to configuration page.</description>
-    <label key="ALM Octane Configuration" />
+    <label key="Configuration" />
     <link linkId="alm-octane-config-link">/plugins/servlet/admin/octane</link>
   </web-item>
 

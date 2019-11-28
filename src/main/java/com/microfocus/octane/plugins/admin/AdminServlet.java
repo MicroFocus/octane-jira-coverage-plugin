@@ -52,8 +52,13 @@ public class AdminServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         UserProfile username = userManager.getRemoteUser(request);
-        if (username == null || !userManager.isSystemAdmin(username.getUserKey())) {
-            redirectToLogin(request, response);
+        if (!ConfigResource.isAdministrator(userManager, username)) {
+            if (username == null) {
+                redirectToLogin(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Missing permissions");
+            }
+
             return;
         }
 
