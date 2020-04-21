@@ -23,11 +23,18 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -45,6 +52,7 @@ public class RestConnector {
     private String user;
     private String password;
     private ProxyConfiguration proxyConfiguration;
+    private SSLContext sslContext;
     private static final Logger log = LoggerFactory.getLogger(RestConnector.class);
 
     public boolean login() {
@@ -182,6 +190,9 @@ public class RestConnector {
                 }
             }
 
+            if (con instanceof HttpsURLConnection) {
+                setSSLSocketFactory((HttpsURLConnection) con);
+            }
             con.setRequestMethod(type);
             String cookieString = getCookieString();
 
@@ -395,5 +406,58 @@ public class RestConnector {
     public void setCredentials(String user, String password) {
         this.user = user;
         this.password = password;
+    }
+
+    private void setSSLSocketFactory(HttpsURLConnection httpsURLConnection) {
+        if (sslContext == null) {
+            try {
+                sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, getTrustManagers(), new java.security.SecureRandom());
+
+            } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                log.warn("Failed to create SSLContext " + e.getMessage());
+            }
+        }
+
+        if (sslContext != null) {
+            httpsURLConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+        }
+    }
+
+    private TrustManager[] getTrustManagers() throws NoSuchAlgorithmException, KeyStoreException {
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init((KeyStore) null);
+        TrustManager[] tmArr = tmf.getTrustManagers();
+        if (tmArr.length == 1 && tmArr[0] instanceof X509TrustManager) {
+            X509TrustManager defaultTm = (X509TrustManager) tmArr[0];
+            TrustManager myTM = new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return defaultTm.getAcceptedIssuers();
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                    defaultTm.checkClientTrusted(certs, authType);
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                    try {
+                        defaultTm.checkServerTrusted(certs, authType);
+                    } catch (CertificateException e) {
+                        for (X509Certificate cer : certs) {
+                            if (cer.getIssuerDN().getName() != null && cer.getIssuerDN().getName().toLowerCase().contains("microfocus")) {
+                                return;
+                            }
+                        }
+                        throw e;
+                    }
+                }
+            };
+
+            return new TrustManager[]{myTM};
+        } else {
+            log.warn("Using only default trust managers. Received " + tmArr.length + " trust managers."
+                    + ((tmArr.length > 0) ? "First one is :" + tmArr[0].getClass().getCanonicalName() : ""));
+            return tmArr;
+        }
     }
 }
