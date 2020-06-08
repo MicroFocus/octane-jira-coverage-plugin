@@ -338,8 +338,11 @@ public class RestConnector {
     }
 
     private void updateCookies(Response response) {
+        updateCookies(response.getResponseHeaders().get("Set-Cookie"));
+        updateCookies(response.getResponseHeaders().get("set-cookie"));
+    }
 
-        Iterable<String> newCookies = response.getResponseHeaders().get("Set-Cookie");
+    private void updateCookies(Iterable<String> newCookies) {
         if (newCookies != null) {
 
             for (String cookie : newCookies) {
@@ -355,6 +358,7 @@ public class RestConnector {
             }
         }
     }
+
 
     private String getCookieString() {
 
