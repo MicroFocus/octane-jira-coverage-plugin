@@ -26,12 +26,14 @@ public class OctaneEntityTypeManager {
 
     static {
         //TYPE
-        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("product_area", "application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas");
         OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", null, "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content");
         OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", null, "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content");
-        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", null, "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement");
+        OctaneEntityTypeDescriptor defectType = new OctaneEntityTypeDescriptor("defect", null, "D", "Defect", "#b21646", "work_item", "relationships", "covered_content");
 
-        Arrays.asList(applicationModuleType, featureType, storyType, requirementType).forEach(descriptor -> {
+        OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", null, "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement");
+        OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("product_area", "application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas");
+
+        Arrays.asList(applicationModuleType, featureType, storyType, requirementType, defectType).forEach(descriptor -> {
             typeDescriptorsByName.put(descriptor.getTypeName(), descriptor);
             typeDescriptorsByLabel.put(descriptor.getLabel(), descriptor);
             if (descriptor.getAlias() != null) {
@@ -39,7 +41,7 @@ public class OctaneEntityTypeManager {
             }
         });
 
-        aggregators.add(new AggregateDescriptor("work_items", Arrays.asList(featureType, storyType)));
+        aggregators.add(new AggregateDescriptor("work_items", Arrays.asList(featureType, storyType, defectType)));
         aggregators.add(new AggregateDescriptor("application_modules", Arrays.asList(applicationModuleType)));
         aggregators.add(new AggregateDescriptor("requirement_documents", Arrays.asList(requirementType)));
     }

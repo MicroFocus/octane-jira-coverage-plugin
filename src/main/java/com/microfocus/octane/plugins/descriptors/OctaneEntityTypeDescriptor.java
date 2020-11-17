@@ -96,8 +96,12 @@ public class OctaneEntityTypeDescriptor {
         return octaneEntityUrl;
     }
 
-    public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
-        return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
+    public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId, String subtype) {
+        if (("defect").equals(subtype)) {
+            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&configuration={"+ "\"tabName\":" + "\"" + getTestTabName() +"\",\"relation_name\":\"test_to_work_items-gherkin_test-scenario_test-test_automated-test_manual-test_suite-target\"}";
+        } else {
+            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
+        }
     }
 
     public String getTestReferenceField() {
