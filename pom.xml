@@ -22,6 +22,14 @@
             <version>${jira.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>jta</groupId>
+            <artifactId>jta</artifactId>
+            <version>1.0.1b</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.atlassian.sal</groupId>
             <artifactId>sal-api</artifactId>
