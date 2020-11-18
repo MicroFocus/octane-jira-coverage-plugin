@@ -57,6 +57,7 @@ public class OctaneEntityTypeDescriptor {
      */
     private String testReferenceField;
 
+    private static final String TESTS_URL_FOR_DEFECTS = "&configuration={\"tabName\":\"%s\",\"relation_name\":\"test_to_work_items-gherkin_test-scenario_test-test_automated-test_manual-test_suite-target\"}";
 
     public OctaneEntityTypeDescriptor(String typeName, String alias, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField) {
         this.typeName = typeName;
@@ -96,8 +97,14 @@ public class OctaneEntityTypeDescriptor {
         return octaneEntityUrl;
     }
 
-    public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
-        return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
+    public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId, String subtype) {
+        if (("defect").equals(subtype)) {
+            String defectTestsUrl = String.format(TESTS_URL_FOR_DEFECTS, getTestTabName());
+
+            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + defectTestsUrl;
+        } else {
+            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
+        }
     }
 
     public String getTestReferenceField() {

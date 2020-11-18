@@ -237,7 +237,8 @@ public class CoverageUiHelper {
                         octaneEntity.put("url", typeDescriptor.buildEntityUrl(spaceConfiguration.getLocationParts().getBaseUrl(),
                                 spaceConfiguration.getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
                         octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(spaceConfiguration.getLocationParts().getBaseUrl(),
-                                spaceConfiguration.getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
+                                spaceConfiguration.getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId(),
+                                (String) octaneEntity.getFields().get("subtype")));
                         octaneEntity.put("typeAbbreviation", typeDescriptor.getTypeAbbreviation());
                         octaneEntity.put("typeColor", typeDescriptor.getTypeColor());
                         contextMap.put("octaneEntity", octaneEntity);
