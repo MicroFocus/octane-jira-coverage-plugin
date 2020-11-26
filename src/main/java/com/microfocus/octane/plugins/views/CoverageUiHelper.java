@@ -121,6 +121,7 @@ public class CoverageUiHelper {
         //in order to align with Octane test coverage tooltip
         //we add skipped category to requires attention
         addSkippedToRequiresAttention(statusId2group);
+        statusId2group.remove(skippedStatus.getLogicalName());
 
         int total = statusId2group.values().stream().mapToInt(o -> o.getCount()).sum();
         List<MapBasedObject> groups = statusId2group.entrySet().stream()
@@ -135,7 +136,6 @@ public class CoverageUiHelper {
         if (statusId2group.containsKey(skippedStatus.getLogicalName())) {
             int skippedCount = statusId2group.get(skippedStatus.getLogicalName()).getCount();
             appendCountToExistingGroupOrCreateNewOne(statusId2group, needAttentionStatus.getLogicalName(), skippedCount);
-            statusId2group.remove(skippedStatus.getLogicalName());
         }
     }
 
