@@ -98,9 +98,9 @@ public class CoverageUiHelper {
         Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
         coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
 
-        //Octane may return on coverage group without status - it will be assigned to skipped status
-        //if already skipped group exist - we will add count to it
-        //if skipped group not exist - we will create new one
+        //Octane may return on coverage group without status - it will be assigned to need attention status
+        //if need attention group already exists - we will add count to it
+        //if need attention group does not exist - we will create new one
         Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
         if (groupWithoutStatusOpt.isPresent()) {
             GroupEntityCollection coverageOfRunsWithoutStatus = OctaneRestManager.getNativeStatusCoverageForRunsWithoutStatus(sc, octaneEntity, typeDescriptor, workspaceId);
@@ -113,10 +113,15 @@ public class CoverageUiHelper {
                     appendCountToExistingGroupOrCreateNewOne(statusId2group, convertedStatus, gr.getCount());
                 });
             } else {
-                //if we receive different numbers -> put all not-statused items to skipped
-                appendCountToExistingGroupOrCreateNewOne(statusId2group, skippedStatus.getLogicalName(), groupWithoutStatusOpt.get().getCount());
+                //if we receive different numbers -> put all not-statused items to need attention
+                appendCountToExistingGroupOrCreateNewOne(statusId2group, needAttentionStatus.getLogicalName(), groupWithoutStatusOpt.get().getCount());
             }
         }
+
+        //in order to align with Octane test coverage tooltip
+        //we add skipped category to requires attention
+        addSkippedToRequiresAttention(statusId2group);
+        statusId2group.remove(skippedStatus.getLogicalName());
 
         int total = statusId2group.values().stream().mapToInt(o -> o.getCount()).sum();
         List<MapBasedObject> groups = statusId2group.entrySet().stream()
@@ -125,6 +130,13 @@ public class CoverageUiHelper {
                 .collect(Collectors.toList());
 
         return groups;
+    }
+
+    private static void addSkippedToRequiresAttention(Map<String, GroupEntity> statusId2group) {
+        if (statusId2group.containsKey(skippedStatus.getLogicalName())) {
+            int skippedCount = statusId2group.get(skippedStatus.getLogicalName()).getCount();
+            appendCountToExistingGroupOrCreateNewOne(statusId2group, needAttentionStatus.getLogicalName(), skippedCount);
+        }
     }
 
     private static void appendCountToExistingGroupOrCreateNewOne(Map<String, GroupEntity> statusId2group, String groupName, int count) {

@@ -51,8 +51,8 @@ public class OctaneRestManager {
         String queryParam = queryBuilder.build();
 
         String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
-        GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
-        return col;
+
+        return OctaneEntityParser.parseGroupCollection(responseStr);
     }
 
     public static GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
