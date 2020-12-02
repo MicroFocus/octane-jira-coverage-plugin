@@ -6,12 +6,12 @@
 
  
 ## Overview:
-The test coverage plugin enables you to see quality from ALM Octane within JIRA, for JIRA issues that have parallel ALM Octane features and users stories. 
-To do this, you need to have a user-defined field (UDF) in the feature or user story in ALM Octane which contains its corresponding JIRA issue key. After you configure the plugin, JIRA shows the ALM Octane test coverage and latest run statuses. For example, this is useful if you manage development in JIRA, and QA in ALM Octane.
+The test coverage plugin enables you to see quality from ALM Octane within JIRA, for JIRA issues that have parallel ALM Octane features/users stories/defects. 
+To do this, you need to have a user-defined field (UDF) in the entity in ALM Octane which contains its corresponding JIRA issue key. After you configure the plugin, JIRA shows the ALM Octane test coverage and latest run statuses. For example, this is useful if you manage development in JIRA, and QA in ALM Octane.
 
 The plugin is for JIRA on-premises versions 7.x and 8.x.
 
-Supported ALM Octane versions: CP8, CP9.
+Supported ALM Octane versions: CP10 and later.
  
 ## Configuration:
 The plugin configuration is for one ALM Octane space. You can configure multiple workspaces in this space.
