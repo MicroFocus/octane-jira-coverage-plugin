@@ -1,5 +1,8 @@
 package com.microfocus.octane.plugins.configuration;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.IssueConstant;
+import com.atlassian.jira.project.Project;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
@@ -230,6 +233,10 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Workspace Id must be numeric value");
         }
 
+        validateOctaneTypesList(wco, workspaceId);
+        validateJiraIssuesList(wco);
+        validateJiraProjectKey(wco);
+
         if (isNew) {
             if (StringUtils.isNotEmpty(wco.getId())) {
                 throw new IllegalArgumentException("New workspace configuration cannot contain configuration id");
@@ -254,6 +261,39 @@ public class ConfigurationUtil {
                 .setJiraProjects(wco.getJiraProjects().stream().sorted().collect(Collectors.toList()));
 
         return wc;
+    }
+
+    private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
+        List<String> projectKeys = ComponentAccessor.getProjectManager().getProjectObjects()
+                .stream()
+                .map(Project::getKey)
+                .collect(Collectors.toList());
+
+        if (wco.getJiraProjects().stream().anyMatch(e -> !projectKeys.contains(e.trim()))) {
+                throw new IllegalArgumentException("Jira projects list is not valid");
+        }
+    }
+
+    private static void validateJiraIssuesList(WorkspaceConfigurationOutgoing wco) {
+        List<String> issueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
+                .stream()
+                .map(IssueConstant::getName)
+                .collect(Collectors.toList());
+
+        if (wco.getJiraIssueTypes().stream().anyMatch(jit -> !issueTypes.contains(jit.trim()))) {
+                throw new IllegalArgumentException("Jira issue types list is not valid");
+        }
+    }
+
+    private static void validateOctaneTypesList(WorkspaceConfigurationOutgoing wco, long workspaceId) {
+        String spaceConfigurationId = wco.getSpaceConfigId();
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, wco.getOctaneUdf());
+
+        List<String> providedEntityTypes = wco.getOctaneEntityTypes();
+        if (providedEntityTypes.stream().anyMatch(e -> !octaneEntityTypes.contains(e.trim().toLowerCase()))) {
+            throw new IllegalArgumentException("Octane entity types list is not valid for the given udf and workspace");
+        }
     }
 }
 
