@@ -144,21 +144,26 @@ public class ConfigurationManager implements ClusterMessageConsumer {
             proxy = new ProxyConfiguration();
         }
 
-        proxy.setHost(proxyOutgoing.getHost());
+        String host = proxyOutgoing.getHost();
         Integer port = null;
         if (StringUtils.isNotEmpty(proxyOutgoing.getHost()) && StringUtils.isNotEmpty(proxyOutgoing.getPort())) {
+            host = host.trim();
+
             try {
                 port = Integer.parseInt(proxyOutgoing.getPort());
             } catch (NumberFormatException e) {
                 //do nothing
             }
         }
+
+        proxy.setHost(host);
         proxy.setPort(port);
         proxy.setUsername(proxyOutgoing.getUsername());
 
         if (!proxyOutgoing.getPassword().equals(PluginConstants.PASSWORD_REPLACE)) {
             proxy.setPassword(proxyOutgoing.getPassword());
         }
+
         proxy.setNonProxyHost(proxyOutgoing.getNonProxyHost());
         getConfiguration().setProxy(proxy);
         persistConfiguration();
