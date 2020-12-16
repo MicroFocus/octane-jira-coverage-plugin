@@ -231,7 +231,7 @@
         if (workspaceId) {
             setTitle("Searching...", false);
             $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/possible-jira-fields?space-conf-id=" + spaceConfId + "&workspace-id=" + workspaceId,
+                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/possible-jira-fields?space-config-id=" + spaceConfId + "&workspace-id=" + workspaceId,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json"
@@ -467,7 +467,7 @@
             }
 
             $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/supported-octane-types?space-configuration-id=" + spaceConfId + "&workspace-id=" + workspaceId + "&udf-name=" + udfName,
+                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/supported-octane-types?space-config-id=" + spaceConfId + "&workspace-id=" + workspaceId + "&udf-name=" + udfName,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json"
@@ -654,9 +654,9 @@
         disableControlsInWorkspaceDialog(true);
 
         return new Promise(function (resolve, reject) {
-            var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspaces-dialog/additional-data?space-conf-id=" + spaceConfId;
+            var dataUrl = octanePluginContext.octaneAdminBaseUrl + "workspaces-dialog/additional-data?space-config-id=" + spaceConfId;
             if (workspaceConfId) {
-                dataUrl = dataUrl + "&workspace-conf-id=" + workspaceConfId;
+                dataUrl = dataUrl + "&workspace-config-id=" + workspaceConfId;
             }
 
             $.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})

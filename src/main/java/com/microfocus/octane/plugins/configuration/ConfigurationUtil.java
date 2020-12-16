@@ -3,11 +3,15 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.IssueConstant;
 import com.atlassian.jira.project.Project;
+import com.microfocus.octane.plugins.admin.KeyValueItem;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
+import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
+import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -233,6 +237,7 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Workspace Id must be numeric value");
         }
 
+        validateWorkspace(wco);
         validateOctaneTypesList(wco, workspaceId);
         validateJiraIssuesList(wco);
         validateJiraProjectKey(wco);
@@ -261,6 +266,21 @@ public class ConfigurationUtil {
                 .setJiraProjects(new HashSet<>(wco.getJiraProjects()));
 
         return wc;
+    }
+
+    private static void validateWorkspace(WorkspaceConfigurationOutgoing wco) {
+        String spaceConfigId = wco.getSpaceConfigId();
+        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
+
+        Set<Long> usedWorkspaces = spaceConfigId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
+                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfigId))
+                .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
+
+        Collection<KeyValueItem> validWorkspaces = getValidWorkspaces(spConfig, usedWorkspaces);
+
+        if(validWorkspaces.stream().noneMatch(e -> e.getText().equals(wco.getWorkspaceName()))) {
+            throw new IllegalArgumentException("Workspace is not valid");
+        }
     }
 
     private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
@@ -297,5 +317,15 @@ public class ConfigurationUtil {
         if (providedEntityTypes.stream().anyMatch(e -> !octaneEntityLabels.contains(e.trim()))) {
             throw new IllegalArgumentException("Octane entity types list is not valid for the given udf and workspace");
         }
+    }
+
+    public static Collection<KeyValueItem> getValidWorkspaces(SpaceConfiguration spConfig, Set<Long> usedWorkspaces) {
+        List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
+        OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
+        return workspaces.getData()
+                .stream()
+                .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
+                .map(e -> new KeyValueItem(e.getId(), e.getName()))
+                .collect(Collectors.toList());
     }
 }

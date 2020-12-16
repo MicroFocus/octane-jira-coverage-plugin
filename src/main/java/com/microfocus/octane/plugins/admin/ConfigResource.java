@@ -62,12 +62,13 @@ public class ConfigResource {
 
     @GET
     @Path("/workspaces-dialog/additional-data")
-    public Response getDataForWorkspaceDialog(@QueryParam("space-conf-id") String spaceConfId, @QueryParam("workspace-conf-id") String workspaceConfId) {
+    public Response getDataForWorkspaceDialog(@QueryParam("space-config-id") String spaceConfId, @QueryParam("workspace-config-id") String workspaceConfId) {
         if (!validateUserPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
         SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfId, true).get();
+
         Set<Long> usedWorkspaces = spaceConfId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
                 .filter(w -> w.getSpaceConfigurationId().equals(spaceConfId))
                 .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
@@ -80,14 +81,7 @@ public class ConfigResource {
         }
 
         try {
-            List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
-            OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
-            Collection<KeyValueItem> select2workspaces = workspaces.getData()
-                    .stream()
-                    .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
-                    .map(e -> new KeyValueItem(e.getId(), e.getName()))
-                    .collect(Collectors.toList());
-
+            Collection<KeyValueItem> select2workspaces = ConfigurationUtil.getValidWorkspaces(spConfig, usedWorkspaces);
 
             Collection<KeyValueItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
                     .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
@@ -144,7 +138,7 @@ public class ConfigResource {
 
     @GET
     @Path("/workspaces/supported-octane-types")
-    public Response getSupportedOctaneTypes(@QueryParam("space-configuration-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
+    public Response getSupportedOctaneTypes(@QueryParam("space-config-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
         if (!validateUserPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -157,7 +151,7 @@ public class ConfigResource {
 
     @GET
     @Path("/workspaces/possible-jira-fields")
-    public Response getPossibleJiraFields(@QueryParam("space-conf-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
+    public Response getPossibleJiraFields(@QueryParam("space-config-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
         if (!validateUserPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -192,10 +186,8 @@ public class ConfigResource {
         }
 
         try {
+            wco.setId(workspaceConfigurationId);
             WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, false);
-            if (!wco.getId().equals(workspaceConfigurationId)) {
-                return Response.status(Response.Status.CONFLICT).entity("Workspace configuration id in entity should be equal to id in path parameter").build();
-            }
             WorkspaceConfiguration updatedWc = ConfigurationManager.getInstance().updateWorkspaceConfiguration(wc);
             WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
             return Response.ok(outputWco).build();
@@ -310,6 +302,7 @@ public class ConfigResource {
         }
 
         try {
+            sco.setId(id);
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, false);
             ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
             SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
