@@ -17,7 +17,7 @@ package com.microfocus.octane.plugins.configuration;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
-import java.util.List;
+import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkspaceConfiguration {
@@ -27,9 +27,9 @@ public class WorkspaceConfiguration {
     private long workspaceId;
     private String workspaceName;
     private String octaneUdf;
-    private List<String> octaneEntityTypes;
-    private List<String> jiraIssueTypes;
-    private List<String> jiraProjects;
+    private Set<String> octaneEntityTypes;
+    private Set<String> jiraIssueTypes;
+    private Set<String> jiraProjects;
 
     public long getWorkspaceId() {
         return workspaceId;
@@ -49,29 +49,29 @@ public class WorkspaceConfiguration {
         return this;
     }
 
-    public List<String> getOctaneEntityTypes() {
+    public Set<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public WorkspaceConfiguration setOctaneEntityTypes(List<String> octaneEntityTypes) {
+    public WorkspaceConfiguration setOctaneEntityTypes(Set<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
         return this;
     }
 
-    public List<String> getJiraIssueTypes() {
+    public Set<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public WorkspaceConfiguration setJiraIssueTypes(List<String> jiraIssueTypes) {
+    public WorkspaceConfiguration setJiraIssueTypes(Set<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
         return this;
     }
 
-    public List<String> getJiraProjects() {
+    public Set<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public WorkspaceConfiguration setJiraProjects(List<String> jiraProjects) {
+    public WorkspaceConfiguration setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
         return this;
     }

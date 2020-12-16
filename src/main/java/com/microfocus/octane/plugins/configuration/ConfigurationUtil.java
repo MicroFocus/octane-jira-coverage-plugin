@@ -195,7 +195,7 @@ public class ConfigurationUtil {
                             OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
                             return desc == null ? "" : desc.getLabel();
                         })
-                        .sorted().collect(Collectors.toList()))
+                        .collect(Collectors.toSet()))
                 .setJiraIssueTypes(wc.getJiraIssueTypes())
                 .setJiraProjects(wc.getJiraProjects());
 
@@ -256,44 +256,46 @@ public class ConfigurationUtil {
                 .setOctaneUdf(wco.getOctaneUdf())
                 .setOctaneEntityTypes(wco.getOctaneEntityTypes().stream()
                         .map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName())
-                        .collect(Collectors.toList()))
-                .setJiraIssueTypes(wco.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()))
-                .setJiraProjects(wco.getJiraProjects().stream().sorted().collect(Collectors.toList()));
+                        .collect(Collectors.toSet()))
+                .setJiraIssueTypes(new HashSet<>(wco.getJiraIssueTypes()))
+                .setJiraProjects(new HashSet<>(wco.getJiraProjects()));
 
         return wc;
     }
 
     private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
-        List<String> projectKeys = ComponentAccessor.getProjectManager().getProjectObjects()
+        if (!ComponentAccessor.getProjectManager().getProjectObjects()
                 .stream()
                 .map(Project::getKey)
-                .collect(Collectors.toList());
-
-        if (wco.getJiraProjects().stream().anyMatch(e -> !projectKeys.contains(e.trim()))) {
-                throw new IllegalArgumentException("Jira projects list is not valid");
+                .collect(Collectors.toList())
+                .containsAll(wco.getJiraProjects())) {
+            throw new IllegalArgumentException("Jira projects list is not valid");
         }
     }
 
     private static void validateJiraIssuesList(WorkspaceConfigurationOutgoing wco) {
-        List<String> issueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
+        if (!ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
                 .stream()
                 .map(IssueConstant::getName)
-                .collect(Collectors.toList());
-
-        if (wco.getJiraIssueTypes().stream().anyMatch(jit -> !issueTypes.contains(jit.trim()))) {
-                throw new IllegalArgumentException("Jira issue types list is not valid");
+                .collect(Collectors.toList())
+                .containsAll(wco.getJiraIssueTypes())) {
+            throw new IllegalArgumentException("Jira issue types list is not valid");
         }
     }
 
     private static void validateOctaneTypesList(WorkspaceConfigurationOutgoing wco, long workspaceId) {
         String spaceConfigurationId = wco.getSpaceConfigId();
         SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
-        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, wco.getOctaneUdf());
 
-        List<String> providedEntityTypes = wco.getOctaneEntityTypes();
-        if (providedEntityTypes.stream().anyMatch(e -> !octaneEntityTypes.contains(e.trim().toLowerCase()))) {
+        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, wco.getOctaneUdf());
+        Set<String> octaneEntityLabels = octaneEntityTypes
+                .stream()
+                .map(t -> OctaneEntityTypeManager.getByTypeName(t).getLabel())
+                .collect(Collectors.toSet());
+
+        Set<String> providedEntityTypes = wco.getOctaneEntityTypes();
+        if (providedEntityTypes.stream().anyMatch(e -> !octaneEntityLabels.contains(e.trim()))) {
             throw new IllegalArgumentException("Octane entity types list is not valid for the given udf and workspace");
         }
     }
 }
-
