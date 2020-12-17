@@ -84,12 +84,12 @@ public class ConfigResource {
             Collection<KeyValueItem> select2workspaces = ConfigurationUtil.getValidWorkspaces(spConfig, usedWorkspaces);
 
             Collection<KeyValueItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
-                    .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(o -> o.getId())).collect(Collectors.toList());
+                    .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(KeyValueItem::getId)).collect(Collectors.toList());
 
             Collection<KeyValueItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
                     .stream()
                     .filter(e -> !usedJiraProjects.contains(e.getKey()))
-                    .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(o -> o.getId()))
+                    .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(KeyValueItem::getId))
                     .collect(Collectors.toList());
 
             Map<String, Object> data = new HashMap<>();
@@ -226,7 +226,13 @@ public class ConfigResource {
             outgoing.setHost(config.getHost());
             outgoing.setPort(config.getPort() == null ? "" : config.getPort().toString());
             outgoing.setUsername(config.getUsername());
-            outgoing.setPassword(PluginConstants.PASSWORD_REPLACE);
+
+            if (StringUtils.isNotEmpty(config.getPassword())) {
+                outgoing.setPassword(PluginConstants.PASSWORD_REPLACE);
+            } else {
+                outgoing.setPassword("");
+            }
+
             outgoing.setNonProxyHost(config.getNonProxyHost());
         }
 
@@ -268,7 +274,7 @@ public class ConfigResource {
         }
 
         List<SpaceConfigurationOutgoing> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
-                .stream().map(c -> ConfigurationUtil.convertToOutgoing(c)).collect(Collectors.toList());
+                .stream().map(ConfigurationUtil::convertToOutgoing).collect(Collectors.toList());
 
         return Response.ok(outgoing).build();
     }
