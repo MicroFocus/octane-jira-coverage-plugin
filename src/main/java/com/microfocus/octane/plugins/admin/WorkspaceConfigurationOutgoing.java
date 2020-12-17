@@ -19,7 +19,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.List;
+import java.util.Set;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -44,13 +44,13 @@ public class WorkspaceConfigurationOutgoing {
     private String octaneUdf;
 
     @XmlElement(name = "octaneEntityTypes")
-    private List<String> octaneEntityTypes;
+    private Set<String> octaneEntityTypes;
 
     @XmlElement(name = "jiraIssueTypes")
-    private List<String> jiraIssueTypes;
+    private Set<String> jiraIssueTypes;
 
     @XmlElement(name = "jiraProjects")
-    private List<String> jiraProjects;
+    private Set<String> jiraProjects;
 
     public String getId() {
         return id;
@@ -70,29 +70,29 @@ public class WorkspaceConfigurationOutgoing {
         return this;
     }
 
-    public List<String> getOctaneEntityTypes() {
+    public Set<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public WorkspaceConfigurationOutgoing setOctaneEntityTypes(List<String> octaneEntityTypes) {
+    public WorkspaceConfigurationOutgoing setOctaneEntityTypes(Set<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
         return this;
     }
 
-    public List<String> getJiraIssueTypes() {
+    public Set<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public WorkspaceConfigurationOutgoing setJiraIssueTypes(List<String> jiraIssueTypes) {
+    public WorkspaceConfigurationOutgoing setJiraIssueTypes(Set<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
         return this;
     }
 
-    public List<String> getJiraProjects() {
+    public Set<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public WorkspaceConfigurationOutgoing setJiraProjects(List<String> jiraProjects) {
+    public WorkspaceConfigurationOutgoing setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
         return this;
     }

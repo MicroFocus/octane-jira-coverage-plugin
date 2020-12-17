@@ -1,10 +1,17 @@
 package com.microfocus.octane.plugins.configuration;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.IssueConstant;
+import com.atlassian.jira.project.Project;
+import com.microfocus.octane.plugins.admin.KeyValueItem;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
+import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
+import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -192,7 +199,7 @@ public class ConfigurationUtil {
                             OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
                             return desc == null ? "" : desc.getLabel();
                         })
-                        .sorted().collect(Collectors.toList()))
+                        .collect(Collectors.toSet()))
                 .setJiraIssueTypes(wc.getJiraIssueTypes())
                 .setJiraProjects(wc.getJiraProjects());
 
@@ -230,6 +237,11 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Workspace Id must be numeric value");
         }
 
+        validateWorkspace(wco);
+        validateOctaneTypesList(wco, workspaceId);
+        validateJiraIssuesList(wco);
+        validateJiraProjectKey(wco);
+
         if (isNew) {
             if (StringUtils.isNotEmpty(wco.getId())) {
                 throw new IllegalArgumentException("New workspace configuration cannot contain configuration id");
@@ -249,11 +261,71 @@ public class ConfigurationUtil {
                 .setOctaneUdf(wco.getOctaneUdf())
                 .setOctaneEntityTypes(wco.getOctaneEntityTypes().stream()
                         .map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName())
-                        .collect(Collectors.toList()))
-                .setJiraIssueTypes(wco.getJiraIssueTypes().stream().sorted().collect(Collectors.toList()))
-                .setJiraProjects(wco.getJiraProjects().stream().sorted().collect(Collectors.toList()));
+                        .collect(Collectors.toSet()))
+                .setJiraIssueTypes(new HashSet<>(wco.getJiraIssueTypes()))
+                .setJiraProjects(new HashSet<>(wco.getJiraProjects()));
 
         return wc;
     }
-}
 
+    private static void validateWorkspace(WorkspaceConfigurationOutgoing wco) {
+        String spaceConfigId = wco.getSpaceConfigId();
+        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
+
+        Set<Long> usedWorkspaces = spaceConfigId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
+                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfigId))
+                .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
+
+        Collection<KeyValueItem> validWorkspaces = getValidWorkspaces(spConfig, usedWorkspaces);
+
+        if(validWorkspaces.stream().noneMatch(e -> e.getText().equals(wco.getWorkspaceName()))) {
+            throw new IllegalArgumentException("Workspace is not valid");
+        }
+    }
+
+    private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
+        if (!ComponentAccessor.getProjectManager().getProjectObjects()
+                .stream()
+                .map(Project::getKey)
+                .collect(Collectors.toList())
+                .containsAll(wco.getJiraProjects())) {
+            throw new IllegalArgumentException("Jira projects list is not valid");
+        }
+    }
+
+    private static void validateJiraIssuesList(WorkspaceConfigurationOutgoing wco) {
+        if (!ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
+                .stream()
+                .map(IssueConstant::getName)
+                .collect(Collectors.toList())
+                .containsAll(wco.getJiraIssueTypes())) {
+            throw new IllegalArgumentException("Jira issue types list is not valid");
+        }
+    }
+
+    private static void validateOctaneTypesList(WorkspaceConfigurationOutgoing wco, long workspaceId) {
+        String spaceConfigurationId = wco.getSpaceConfigId();
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+
+        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, wco.getOctaneUdf());
+        Set<String> octaneEntityLabels = octaneEntityTypes
+                .stream()
+                .map(t -> OctaneEntityTypeManager.getByTypeName(t).getLabel())
+                .collect(Collectors.toSet());
+
+        Set<String> providedEntityTypes = wco.getOctaneEntityTypes();
+        if (providedEntityTypes.stream().anyMatch(e -> !octaneEntityLabels.contains(e.trim()))) {
+            throw new IllegalArgumentException("Octane entity types list is not valid for the given udf and workspace");
+        }
+    }
+
+    public static Collection<KeyValueItem> getValidWorkspaces(SpaceConfiguration spConfig, Set<Long> usedWorkspaces) {
+        List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
+        OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
+        return workspaces.getData()
+                .stream()
+                .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
+                .map(e -> new KeyValueItem(e.getId(), e.getName()))
+                .collect(Collectors.toList());
+    }
+}
