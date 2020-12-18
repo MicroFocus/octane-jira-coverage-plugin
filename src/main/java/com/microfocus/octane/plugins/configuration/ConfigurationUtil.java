@@ -14,6 +14,7 @@ import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 
+import javax.ws.rs.QueryParam;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -77,6 +78,16 @@ public class ConfigurationUtil {
             query_pairs.get(key).add(value);
         }
         return query_pairs;
+    }
+
+    public static void validateName(SpaceConfigurationOutgoing sco) {
+        if (StringUtils.isEmpty(sco.getName())) {
+            throw new IllegalArgumentException("Space configuration name is required");
+        }
+
+        if (sco.getName().length() > 40) {
+            throw new IllegalArgumentException("Space configuration name exceeds allowed length (40 characters)");
+        }
     }
 
     public static SpaceConfiguration validateRequiredAndConvertToInternal(SpaceConfigurationOutgoing sco, boolean isNew) {
@@ -269,27 +280,21 @@ public class ConfigurationUtil {
     }
 
     private static void validateWorkspace(WorkspaceConfigurationOutgoing wco) {
-        String spaceConfigId = wco.getSpaceConfigId();
-        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
+        Collection<KeyValueItem> validWorkspaces = getValidWorkspaces(wco.getSpaceConfigId(), wco.getId());
 
-        Set<Long> usedWorkspaces = spaceConfigId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
-                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfigId))
-                .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
-
-        Collection<KeyValueItem> validWorkspaces = getValidWorkspaces(spConfig, usedWorkspaces);
-
-        if(validWorkspaces.stream().noneMatch(e -> e.getText().equals(wco.getWorkspaceName()))) {
+        if (validWorkspaces.stream().noneMatch(e -> e.getText().equals(wco.getWorkspaceName()))) {
             throw new IllegalArgumentException("Workspace is not valid");
         }
     }
 
     private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
-        if (!ComponentAccessor.getProjectManager().getProjectObjects()
-                .stream()
-                .map(Project::getKey)
+        Collection<KeyValueItem> validProjects = getValidProjects(wco.getId());
+
+        if (!validProjects.stream()
+                .map(KeyValueItem::getId)
                 .collect(Collectors.toList())
                 .containsAll(wco.getJiraProjects())) {
-            throw new IllegalArgumentException("Jira projects list is not valid");
+            throw new IllegalArgumentException("Jira projects list is not valid. The projects are either already used or don't exist");
         }
     }
 
@@ -319,13 +324,58 @@ public class ConfigurationUtil {
         }
     }
 
-    public static Collection<KeyValueItem> getValidWorkspaces(SpaceConfiguration spConfig, Set<Long> usedWorkspaces) {
+    public static Collection<KeyValueItem> getValidWorkspaces(String spaceConfigId, String workspaceConfId) {
+        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
+        Set<Long> usedWorkspaces = getAlreadyUsedWorkspaces(workspaceConfId, spaceConfigId);
+
         List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
+
         OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
+
         return workspaces.getData()
                 .stream()
                 .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
                 .map(e -> new KeyValueItem(e.getId(), e.getName()))
                 .collect(Collectors.toList());
+    }
+
+    private static Set<Long> getAlreadyUsedWorkspaces(String currentWsConfigId, String spaceConfigId) {
+        Set<Long> usedWorkspaces = spaceConfigId == null ? new HashSet<>() : ConfigurationManager.getInstance().getWorkspaceConfigurations()
+                .stream()
+                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfigId))
+                .map(WorkspaceConfiguration::getWorkspaceId)
+                .collect(Collectors.toSet());
+
+        if (currentWsConfigId != null) {
+            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(currentWsConfigId, true).get();
+            usedWorkspaces.remove(wc.getWorkspaceId());
+        }
+
+        return usedWorkspaces;
+    }
+
+
+    public static Collection<KeyValueItem> getValidProjects(String workspaceConfId) {
+        Set<String> usedJiraProjects = ConfigurationUtil.getAlreadyUsedJiraProjects(workspaceConfId);
+
+        return ComponentAccessor.getProjectManager().getProjectObjects()
+                .stream()
+                .filter(e -> !usedJiraProjects.contains(e.getKey()))
+                .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(KeyValueItem::getId))
+                .collect(Collectors.toList());
+    }
+
+    private static Set<String> getAlreadyUsedJiraProjects(String workspaceConfId) {
+        Set<String> usedJiraProjects = ConfigurationManager.getInstance().getWorkspaceConfigurations()
+                .stream()
+                .flatMap(c -> c.getJiraProjects().stream())
+                .collect(Collectors.toSet());
+
+        if (workspaceConfId != null) {
+            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId, true).get();
+            usedJiraProjects.removeAll(wc.getJiraProjects());
+        }
+
+        return usedJiraProjects;
     }
 }

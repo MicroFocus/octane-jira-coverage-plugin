@@ -24,9 +24,6 @@ import com.microfocus.octane.plugins.configuration.*;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.rest.RestStatusException;
-import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
-import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
-import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,33 +60,19 @@ public class ConfigResource {
     @GET
     @Path("/workspaces-dialog/additional-data")
     public Response getDataForWorkspaceDialog(@QueryParam("space-config-id") String spaceConfId, @QueryParam("workspace-config-id") String workspaceConfId) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
-        SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfId, true).get();
-
-        Set<Long> usedWorkspaces = spaceConfId == null ? Collections.emptySet() : ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
-                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfId))
-                .map(WorkspaceConfiguration::getWorkspaceId).collect(Collectors.toSet());
-        Set<String> usedJiraProjects = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream().flatMap(c -> c.getJiraProjects().stream()).collect(Collectors.toSet());
-
-        if (workspaceConfId != null) {
-            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId, true).get();
-            usedWorkspaces.remove(wc.getWorkspaceId());
-            usedJiraProjects.removeAll(wc.getJiraProjects());
-        }
-
         try {
-            Collection<KeyValueItem> select2workspaces = ConfigurationUtil.getValidWorkspaces(spConfig, usedWorkspaces);
+            Collection<KeyValueItem> select2workspaces = ConfigurationUtil.getValidWorkspaces(spaceConfId, workspaceConfId);
+
+            Collection<KeyValueItem> select2Projects = ConfigurationUtil.getValidProjects(workspaceConfId);
 
             Collection<KeyValueItem> select2IssueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
-                    .stream().map(e -> new KeyValueItem(e.getName(), e.getName())).sorted(Comparator.comparing(KeyValueItem::getId)).collect(Collectors.toList());
-
-            Collection<KeyValueItem> select2Projects = ComponentAccessor.getProjectManager().getProjectObjects()
                     .stream()
-                    .filter(e -> !usedJiraProjects.contains(e.getKey()))
-                    .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(KeyValueItem::getId))
+                    .map(e -> new KeyValueItem(e.getName(), e.getName()))
+                    .sorted(Comparator.comparing(KeyValueItem::getId))
                     .collect(Collectors.toList());
 
             Map<String, Object> data = new HashMap<>();
@@ -101,6 +84,7 @@ public class ConfigResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         } catch (RestStatusException e) {
+            SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfId, true).get();
             RuntimeException translatedException = ConfigurationUtil.tryTranslateException(e, spConfig);
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity(translatedException.getMessage()).build();
         }
@@ -109,7 +93,7 @@ public class ConfigResource {
     @GET
     @Path("/workspaces")
     public Response getAllWorkspaceConfigurations() {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
         Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
@@ -123,7 +107,7 @@ public class ConfigResource {
     @GET
     @Path("/workspaces/{id}")
     public Response getWorkspaceConfigurationById(@PathParam("id") String id) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -139,7 +123,7 @@ public class ConfigResource {
     @GET
     @Path("/workspaces/supported-octane-types")
     public Response getSupportedOctaneTypes(@QueryParam("space-config-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId, @QueryParam("udf-name") String udfName) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -152,7 +136,7 @@ public class ConfigResource {
     @GET
     @Path("/workspaces/possible-jira-fields")
     public Response getPossibleJiraFields(@QueryParam("space-config-id") String spaceConfigurationId, @QueryParam("workspace-id") long workspaceId) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -164,7 +148,7 @@ public class ConfigResource {
     @POST
     @Path("/workspaces")
     public Response addWorkspaceConfiguration(WorkspaceConfigurationOutgoing wco) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -181,7 +165,7 @@ public class ConfigResource {
     @PUT
     @Path("/workspaces/{workspaceConfigurationId}")
     public Response updateWorkspaceConfiguration(@PathParam("workspaceConfigurationId") String workspaceConfigurationId, WorkspaceConfigurationOutgoing wco) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -200,7 +184,7 @@ public class ConfigResource {
     @DELETE
     @Path("/workspaces/{id}")
     public Response deleteWorkspaceConfigurationById(@PathParam("id") String id) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -216,7 +200,7 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/proxy")
     public Response getProxy() {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -244,7 +228,7 @@ public class ConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/proxy")
     public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -269,7 +253,7 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/spaces")
     public Response getSpaceConfigurations() {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -284,11 +268,12 @@ public class ConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addSpaceConfiguration(SpaceConfigurationOutgoing sco) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
+            ConfigurationUtil.validateName(sco);
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, true);
             ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
             ConfigurationManager.getInstance().addSpaceConfiguration(spaceConfig);
@@ -303,12 +288,13 @@ public class ConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("spaces/{id}")
     public Response updateSpaceConfiguration(@PathParam("id") String id, final SpaceConfigurationOutgoing sco) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
             sco.setId(id);
+            ConfigurationUtil.validateName(sco);
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, false);
             ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
             SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
@@ -322,7 +308,7 @@ public class ConfigResource {
     @Path("spaces/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteSpaceConfiguration(@PathParam("id") String id) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -339,7 +325,7 @@ public class ConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
-        if (!validateUserPermission()) {
+        if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
@@ -353,7 +339,7 @@ public class ConfigResource {
         }
     }
 
-    private boolean validateUserPermission() {
+    private boolean hasPermission() {
         UserProfile username = userManager.getRemoteUser(request);
         return isAdministrator(userManager, username);
     }

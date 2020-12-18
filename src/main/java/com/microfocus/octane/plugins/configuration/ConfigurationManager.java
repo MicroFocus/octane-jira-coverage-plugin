@@ -87,6 +87,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         if (throwIfNotFound && !opt.isPresent()) {
             throw new IllegalArgumentException(String.format("Space configuration with id %s - not found", spaceConfigurationId));
         }
+
         return opt;
     }
 
@@ -95,7 +96,11 @@ public class ConfigurationManager implements ClusterMessageConsumer {
             throw new IllegalArgumentException("Workspace configuration id should not be empty");
         }
 
-        Optional<WorkspaceConfiguration> opt = getConfiguration().getWorkspaces().stream().filter(s -> s.getId().equals(workspaceConfigurationId)).findFirst();
+        Optional<WorkspaceConfiguration> opt = getConfiguration().getWorkspaces()
+                .stream()
+                .filter(s -> s.getId().equals(workspaceConfigurationId))
+                .findFirst();
+
         if (throwIfNotFound && !opt.isPresent()) {
             throw new IllegalArgumentException(String.format("Workspace configuration with id %s - not found", workspaceConfigurationId));
         }
