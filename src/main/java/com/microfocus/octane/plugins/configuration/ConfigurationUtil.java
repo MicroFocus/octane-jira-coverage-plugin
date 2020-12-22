@@ -2,7 +2,6 @@ package com.microfocus.octane.plugins.configuration;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.IssueConstant;
-import com.atlassian.jira.project.Project;
 import com.microfocus.octane.plugins.admin.KeyValueItem;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
@@ -14,7 +13,6 @@ import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.StringUtils;
 
-import javax.ws.rs.QueryParam;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -185,15 +183,18 @@ public class ConfigurationUtil {
         try {
             OctaneRestManager.getWorkspaces(spaceConfig);
         } catch (RestStatusException e) {
-            throw tryTranslateException(e,spaceConfig);
+            String msg = parseExceptionMessage(e,spaceConfig);
+            throw new IllegalArgumentException(msg);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Test connection failed: " + e.getMessage());
         }
     }
 
-    public static RuntimeException tryTranslateException(RestStatusException e, SpaceConfiguration spaceConfig){
+    public static String parseExceptionMessage(RestStatusException e, SpaceConfiguration spaceConfig){
         if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
-            return new IllegalArgumentException(String.format("Space id '%d' is not exist", spaceConfig.getLocationParts().getSpaceId()));
+            return String.format("Space id '%d' is not exist", spaceConfig.getLocationParts().getSpaceId());
         } else {
-            return e;
+            return "Test connection failed: " + e.getMessage();
         }
     }
 
@@ -248,6 +249,9 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Workspace Id must be numeric value");
         }
 
+        SpaceConfiguration spaceConfiguration = ConfigurationManager.getInstance().getSpaceConfigurationById(wco.getSpaceConfigId(), true).get();
+        validateSpaceConfigurationConnectivity(spaceConfiguration);
+
         validateWorkspace(wco);
         validateOctaneTypesList(wco, workspaceId);
         validateJiraIssuesList(wco);
@@ -283,7 +287,7 @@ public class ConfigurationUtil {
         Collection<KeyValueItem> validWorkspaces = getValidWorkspaces(wco.getSpaceConfigId(), wco.getId());
 
         if (validWorkspaces.stream().noneMatch(e -> e.getText().equals(wco.getWorkspaceName()))) {
-            throw new IllegalArgumentException("Workspace is not valid");
+            throw new IllegalArgumentException("Workspace is not valid. Either it doesn't exist, it is not reachable/active or it is already used in another workspace configuration");
         }
     }
 

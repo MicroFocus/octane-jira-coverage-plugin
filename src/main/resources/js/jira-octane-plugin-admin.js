@@ -304,7 +304,7 @@
             statusIconOk("#space-save-status", "Test connection is successful");
         }).fail(function (response) {
             var msg = getFailedMessage(response);
-            statusIconFailed("#space-save-status", "Test connection is failed : " + msg);
+            statusIconFailed("#space-save-status", msg);
         });
     }
 
@@ -352,7 +352,7 @@
             statusIconOk(throbberStatusClassNameSelector, "Test connection is successful");
         }).fail(function (response) {
             var msg = getFailedMessage(response);
-            statusIconFailed(throbberStatusClassNameSelector, "Test connection is failed : " + msg);
+            statusIconFailed(throbberStatusClassNameSelector, msg);
         });
     }
 
