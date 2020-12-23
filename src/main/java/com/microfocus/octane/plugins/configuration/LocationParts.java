@@ -45,7 +45,7 @@ public class LocationParts {
     @JsonIgnore
     public String getKey() {
         if (key == null) {
-            key = (baseUrl + "?p=" + spaceId).toLowerCase();
+            key = (baseUrl + "/ui/?p=" + spaceId).toLowerCase();
         }
         return key;
     }
