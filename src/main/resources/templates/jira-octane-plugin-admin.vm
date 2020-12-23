@@ -36,7 +36,7 @@
                 <input type="text" id="location" name="location" class="text medium-long-field required">
                 <div class="error" id="locationError"></div>
                 <div class="description">Enter the URL of your ALM Octane application.
-                    <br/>For example: http://myServer.myCompany.com:8081/ui/?p=1001/1002
+                    <br/>For example: http://myServer.myCompany.com:8081/ui/?p=1001
                 </div>
             </div>
             <div class="field-group">

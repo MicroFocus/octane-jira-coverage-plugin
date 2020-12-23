@@ -103,10 +103,10 @@ public class ConfigurationUtil {
         LocationParts locationParts = null;
         try {
             locationParts = parseUiLocation(sco.getLocation());
+            sco.setLocation(locationParts.getKey()); //remove from url what's after sharedspace id
         } catch (Exception e) {
             throw new IllegalArgumentException(e.getMessage());
         }
-
 
         String clientSecret = sco.getClientSecret();
         if (isNew) {
@@ -136,6 +136,7 @@ public class ConfigurationUtil {
                 .setLocationParts(locationParts)
                 .setClientId(sco.getClientId())
                 .setClientSecret(clientSecret);
+
         return sc;
     }
 
