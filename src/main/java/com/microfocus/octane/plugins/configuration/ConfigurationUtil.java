@@ -235,7 +235,7 @@ public class ConfigurationUtil {
         }
 
         if (wco.getOctaneEntityTypes().size() == 0) {
-            throw new IllegalArgumentException("Octane entity types are missing");
+            throw new IllegalArgumentException("Octane entity types not found for given workspace and udf");
         }
         if (wco.getJiraProjects().size() == 0) {
             throw new IllegalArgumentException("Jira projects are missing");
@@ -254,7 +254,6 @@ public class ConfigurationUtil {
         validateSpaceConfigurationConnectivity(spaceConfiguration);
 
         validateWorkspace(wco);
-        validateOctaneTypesList(wco, workspaceId);
         validateJiraIssuesList(wco);
         validateJiraProjectKey(wco);
 
@@ -313,20 +312,16 @@ public class ConfigurationUtil {
         }
     }
 
-    private static void validateOctaneTypesList(WorkspaceConfigurationOutgoing wco, long workspaceId) {
+    public static Set<String> getOctaneTypesList(WorkspaceConfigurationOutgoing wco, String workspaceId) {
         String spaceConfigurationId = wco.getSpaceConfigId();
         SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
 
-        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, workspaceId, wco.getOctaneUdf());
-        Set<String> octaneEntityLabels = octaneEntityTypes
+        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, Long.parseLong(workspaceId), wco.getOctaneUdf());
+
+        return octaneEntityTypes
                 .stream()
                 .map(t -> OctaneEntityTypeManager.getByTypeName(t).getLabel())
                 .collect(Collectors.toSet());
-
-        Set<String> providedEntityTypes = wco.getOctaneEntityTypes();
-        if (providedEntityTypes.stream().anyMatch(e -> !octaneEntityLabels.contains(e.trim()))) {
-            throw new IllegalArgumentException("Octane entity types list is not valid for the given udf and workspace");
-        }
     }
 
     public static Collection<KeyValueItem> getValidWorkspaces(String spaceConfigId, String workspaceConfId) {
