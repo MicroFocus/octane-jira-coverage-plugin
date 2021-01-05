@@ -150,10 +150,17 @@ public class ConfigurationUtil {
         return sco;
     }
 
-    public static void doSpaceConfigurationUniquenessValidation(SpaceConfiguration spaceConfiguration) {
-        validateSpaceNameIsUnique(spaceConfiguration);
-        validateSpaceUrlIsUnique(spaceConfiguration);
-        //validateSpaceConfigurationConnectivity(spaceConfiguration);
+    public static void doSpaceConfigurationUniquenessValidation(SpaceConfiguration spaceConfiguration, boolean isConnectionTested) {
+        try {
+            validateSpaceNameIsUnique(spaceConfiguration);
+            validateSpaceUrlIsUnique(spaceConfiguration);
+        } catch (IllegalArgumentException ex) {
+            if (isConnectionTested) {
+                throw new IllegalArgumentException("Connection is successful, but the following problem was found: " + ex.getMessage());
+            } else {
+                throw ex;
+            }
+        }
     }
 
     private static void validateSpaceNameIsUnique(SpaceConfiguration spaceConfiguration) {
