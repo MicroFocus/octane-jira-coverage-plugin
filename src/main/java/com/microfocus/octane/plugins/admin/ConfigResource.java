@@ -275,7 +275,7 @@ public class ConfigResource {
         try {
             ConfigurationUtil.validateName(sco);
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, true);
-            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig, false);
             ConfigurationManager.getInstance().addSpaceConfiguration(spaceConfig);
             return Response.ok(ConfigurationUtil.convertToOutgoing(spaceConfig)).build();
         } catch (IllegalArgumentException e) {
@@ -296,7 +296,7 @@ public class ConfigResource {
             sco.setId(id);
             ConfigurationUtil.validateName(sco);
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, false);
-            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig, false);
             SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
             return Response.ok(ConfigurationUtil.convertToOutgoing(updated)).build();
         } catch (IllegalArgumentException e) {
@@ -333,6 +333,7 @@ public class ConfigResource {
             boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationOutgoing.getId());
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
             ConfigurationUtil.validateSpaceConfigurationConnectivity(spaceConfig);
+            ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig, true);
             return Response.ok().build();
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
