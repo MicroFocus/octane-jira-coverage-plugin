@@ -151,6 +151,7 @@ public class ConfigResource {
         }
 
         try {
+            wco.setOctaneEntityTypes(ConfigurationUtil.getOctaneTypesList(wco, wco.getWorkspaceId()));
             WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, true);
             wc = ConfigurationManager.getInstance().addWorkspaceConfiguration(wc);
             WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name());
@@ -169,6 +170,7 @@ public class ConfigResource {
 
         try {
             wco.setId(workspaceConfigurationId);
+            wco.setOctaneEntityTypes(ConfigurationUtil.getOctaneTypesList(wco, wco.getWorkspaceId()));
             WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, false);
             WorkspaceConfiguration updatedWc = ConfigurationManager.getInstance().updateWorkspaceConfiguration(wc);
             WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
