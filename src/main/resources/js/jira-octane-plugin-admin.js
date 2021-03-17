@@ -261,12 +261,16 @@
         }
 
         //validate
-        var nameValue = $("#name").attr("value");
+        var nameValue = $("#name").attr("value").trim();
+        var locationValue = $("#location").attr("value").trim();
+        var clientIdValue = $("#clientId").attr("value").trim();
+
         var validationFailed = !validateMissingRequiredField(nameValue, "#nameError") ||
             !validateConditionAndUpdateErrorField((nameValue.length <= 40), "Exceeds allowed length (40 characters)", "#nameError");
-        validationFailed = !validateMissingRequiredField($("#location").attr("value"), "#locationError") || validationFailed;
-        validationFailed = !validateMissingRequiredField($("#clientId").attr("value"), "#clientIdError") || validationFailed;
+        validationFailed = !validateMissingRequiredField(locationValue, "#locationError") || validationFailed;
+        validationFailed = !validateMissingRequiredField(clientIdValue, "#clientIdError") || validationFailed;
         validationFailed = !validateMissingRequiredField($("#clientSecret").attr("value"), "#clientSecretError") || validationFailed;
+
         return !validationFailed;
     }
 
@@ -278,9 +282,9 @@
 
         //build model
         var modelForUpdate = {
-            name: $("#name").attr("value"),
-            location: $("#location").attr("value"),
-            clientId: $("#clientId").attr("value"),
+            name: $("#name").attr("value").trim(),
+            location: $("#location").attr("value").trim(),
+            clientId: $("#clientId").attr("value").trim(),
             clientSecret: $("#clientSecret").attr("value")
         };
 
@@ -400,9 +404,9 @@
 
             //build model
             var modelForUpdate = {
-                name: $("#name").attr("value"),
-                location: $("#location").attr("value"),
-                clientId: $("#clientId").attr("value"),
+                name: $("#name").attr("value").trim(),
+                location: $("#location").attr("value").trim(),
+                clientId: $("#clientId").attr("value").trim(),
                 clientSecret: $("#clientSecret").attr("value")
             };
 

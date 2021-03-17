@@ -79,21 +79,21 @@ public class ConfigurationUtil {
     }
 
     public static void validateName(SpaceConfigurationOutgoing sco) {
-        if (StringUtils.isEmpty(sco.getName())) {
+        if (StringUtils.isEmpty(sco.getName().trim())) {
             throw new IllegalArgumentException("Space configuration name is required");
         }
 
-        if (sco.getName().length() > 40) {
+        if (sco.getName().trim().length() > 40) {
             throw new IllegalArgumentException("Space configuration name exceeds allowed length (40 characters)");
         }
     }
 
     public static SpaceConfiguration validateRequiredAndConvertToInternal(SpaceConfigurationOutgoing sco, boolean isNew) {
 
-        if (StringUtils.isEmpty(sco.getLocation())) {
+        if (StringUtils.isEmpty(sco.getLocation().trim())) {
             throw new IllegalArgumentException("Location URL is required");
         }
-        if (StringUtils.isEmpty(sco.getClientId())) {
+        if (StringUtils.isEmpty(sco.getClientId().trim())) {
             throw new IllegalArgumentException("Client ID is required");
         }
         if (StringUtils.isEmpty(sco.getClientSecret())) {
@@ -102,7 +102,7 @@ public class ConfigurationUtil {
 
         LocationParts locationParts = null;
         try {
-            locationParts = parseUiLocation(sco.getLocation());
+            locationParts = parseUiLocation(sco.getLocation().trim());
             sco.setLocation(locationParts.getKey()); //remove from url what's after sharedspace id
         } catch (Exception e) {
             throw new IllegalArgumentException(e.getMessage());
@@ -131,10 +131,10 @@ public class ConfigurationUtil {
         //convert
         SpaceConfiguration sc = new SpaceConfiguration()
                 .setId(sco.getId())
-                .setName(sco.getName())
-                .setLocation(sco.getLocation())
+                .setName(sco.getName().trim())
+                .setLocation(sco.getLocation().trim())
                 .setLocationParts(locationParts)
-                .setClientId(sco.getClientId())
+                .setClientId(sco.getClientId().trim())
                 .setClientSecret(clientSecret);
 
         return sc;
