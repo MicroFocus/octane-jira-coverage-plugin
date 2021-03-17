@@ -677,6 +677,9 @@
                     disableControlsInWorkspaceDialog(false);
 
                     removeSpaceTooltipInWorkspaceDialog();
+
+                    //reload the supported entity types
+                    $("#refreshOctaneEntityTypesButton").click();
                 }).fail(function (request) {
                 var msg = !request.responseText ? request.statusText : request.responseText;
                 $("#spaceConfSelectorThrobber").addClass(iconFailedClass);
