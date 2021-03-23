@@ -370,6 +370,15 @@
     }
 
     function configureSpaceDialog() {
+        function resetStatusIcon() {
+            statusIconInit("#space-save-status");
+        }
+
+        AJS.$("#name").change(resetStatusIcon);
+        AJS.$("#location").change(resetStatusIcon);
+        AJS.$("#clientId").change(resetStatusIcon);
+        AJS.$("#clientSecret").change(resetStatusIcon);
+
         AJS.$("#show-space-dialog").click(function (e) {
             e.preventDefault();
             showSpaceDialog();
