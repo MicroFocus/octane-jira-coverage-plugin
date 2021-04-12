@@ -238,7 +238,7 @@ public class ConfigurationUtil {
         }
 
         if (StringUtils.isEmpty(wco.getWorkspaceName())) {
-            throw new IllegalArgumentException("Workspace id is missing.");
+            throw new IllegalArgumentException("Workspace name is missing.");
         }
 
         if (wco.getOctaneEntityTypes().size() == 0) {
