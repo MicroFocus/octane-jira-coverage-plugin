@@ -125,10 +125,13 @@ public class OctaneRestManager {
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-        QueryPhrase fieldNameCondition = new LogicalQueryPhrase("name", udfName);
+        Collection<QueryPhrase> conditions = new ArrayList<>();
+        conditions.add(new LogicalQueryPhrase("name", udfName));
+        conditions.add(new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes()));
+        conditions.add(new LogicalQueryPhrase("field_type", "string"));
 
-        QueryPhrase typeCondition = new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes());
-        String queryCondition = OctaneQueryBuilder.create().addQueryCondition(fieldNameCondition).addQueryCondition(typeCondition).build();
+        String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).build();
+
         String entitiesCollectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
         List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toList());
