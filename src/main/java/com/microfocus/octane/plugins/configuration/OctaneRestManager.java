@@ -129,6 +129,7 @@ public class OctaneRestManager {
         conditions.add(new LogicalQueryPhrase("name", udfName));
         conditions.add(new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes()));
         conditions.add(new LogicalQueryPhrase("field_type", "string"));
+        conditions.add(new LogicalQueryPhrase("max_length", 255));
 
         String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).build();
 
