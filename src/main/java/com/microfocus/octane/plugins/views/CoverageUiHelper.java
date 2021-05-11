@@ -46,17 +46,15 @@ public class CoverageUiHelper {
     private static Map<String, TestStatusDescriptor> testStatusDescriptors = new HashMap<>();
     private static NumberFormat countFormat = NumberFormat.getInstance();
     private static NumberFormat percentFormatter = NumberFormat.getPercentInstance();
-    private static ConfigurationManager configurationManager = ConfigurationManager.getInstance();
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
     private static final Logger log = LoggerFactory.getLogger(CoverageUiHelper.class);
 
     //TEST TYPES
     private static final TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "run_status_passed", "Passed", "#1aac60", 1);
     private static final TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "run_status_failed", "Failed", "#e5004c", 2);
-    private static final TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "run_status_planned", "Planned", "#dddddd", 3);
-    private static final TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "run_status_skipped", "Skipped", "#5216ac", 4);
-    private static final TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "run_status_requires_attention", "Requires Attention", "#fcdb1f", 5);
-
+    private static final TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "run_status_requires_attention", "Requires Attention", "#fcdb1f", 3);
+    private static final TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "run_status_planned", "Planned", "#2fd6c3", 4);
+    private static final TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "run_status_skipped", "Skipped", "#5216ac", 5);
 
     static {
         percentFormatter.setMinimumFractionDigits(1);
@@ -71,11 +69,10 @@ public class CoverageUiHelper {
     }
 
     public static List<MapBasedObject> getAllCoverageGroups() {
-        List<MapBasedObject> groups = testStatusDescriptors.keySet().stream()
+        return testStatusDescriptors.keySet().stream()
                 .map(key -> convertGroupEntityToUiEntity(testStatusDescriptors.get(key), 0, 0))
                 .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
                 .collect(Collectors.toList());
-        return groups;
     }
 
     private static MapBasedObject convertGroupEntityToUiEntity(TestStatusDescriptor testStatusDescriptor, int groupCount, int totalCount) {
@@ -124,12 +121,11 @@ public class CoverageUiHelper {
         statusId2group.remove(skippedStatus.getLogicalName());
 
         int total = statusId2group.values().stream().mapToInt(o -> o.getCount()).sum();
-        List<MapBasedObject> groups = statusId2group.entrySet().stream()
+
+        return statusId2group.entrySet().stream()
                 .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptors.get(entry.getKey()), entry.getValue().getCount(), total))
                 .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
                 .collect(Collectors.toList());
-
-        return groups;
     }
 
     private static void addSkippedToRequiresAttention(Map<String, GroupEntity> statusId2group) {
@@ -190,13 +186,11 @@ public class CoverageUiHelper {
 
             OctaneEntityCollection entities = OctaneRestManager.getEntitiesByCondition(sc, wc.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields);
             if (!entities.getData().isEmpty()) {
-                OctaneEntity octaneEntity = entities.getData().get(0);
-                return octaneEntity;
+                return entities.getData().get(0);
             }
         } catch (RestStatusException e) {
-            if (UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
-                //field is not defined - skip
-            } else {
+            //if field is not defined - skip
+            if (!UDF_NOT_DEFINED_IN_OCTANE.equals(e.getErrorCode())) {
                 throw e;
             }
         }
@@ -265,10 +259,9 @@ public class CoverageUiHelper {
                 }
             }
 
+            //context map is not filled
             if (!found) {
                 contextMap.put("status", "noData");
-            } else {
-                //context map is filled
             }
         } catch (RestStatusException e) {
             if (e.getResponse().getStatusCode() == 401) {
