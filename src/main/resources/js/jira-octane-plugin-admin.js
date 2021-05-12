@@ -489,6 +489,7 @@
                     $("#refreshOctaneEntityTypesSpinner").spinStop();
                     $("#octaneEntityTypes").val(data);
                     validateWorkspaceRequiredFieldsFilled();
+                    validateMissingOctaneSupportedEntityTypes(data, "#octaneEntityTypesError", udfName);
                 }, 1000);
             }).fail(function (request, status, error) {
                 $("#refreshOctaneEntityTypesSpinner").spinStop();
@@ -839,6 +840,10 @@
 
     function validateMissingRequiredField(value, errorSelector) {
         return validateConditionAndUpdateErrorField(value, 'Value is missing', errorSelector);
+    }
+
+    function validateMissingOctaneSupportedEntityTypes(data, errorSelector, udfName) {
+        return validateConditionAndUpdateErrorField(data.length !== 0, "No supported entities were found for mapping field: " + udfName, errorSelector);
     }
 
     function validateConditionAndUpdateErrorField(condition, errorMessage, errorSelector) {
