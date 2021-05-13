@@ -93,7 +93,6 @@ public class CoverageUiHelper {
     private static List<MapBasedObject> getCoverageGroups(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         GroupEntityCollection coverage = OctaneRestManager.getCoverage(sc, octaneEntity, typeDescriptor, workspaceId);
         Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
-        coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
 
         //Octane may return on coverage group without status - it will be assigned to need attention status
         //if need attention group already exists - we will add count to it
@@ -101,10 +100,10 @@ public class CoverageUiHelper {
         Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
         if (groupWithoutStatusOpt.isPresent()) {
             GroupEntityCollection coverageOfRunsWithoutStatus = OctaneRestManager.getNativeStatusCoverageForRunsWithoutStatus(sc, octaneEntity, typeDescriptor, workspaceId);
-            int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(o -> o.getCount()).sum();
+            int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(GroupEntity::getCount).sum();
             //validate that count in group without status equals to received runsWithoutStatusCount
             if (groupWithoutStatusOpt.get().getCount() == runsWithoutStatusCount) {
-                coverageOfRunsWithoutStatus.getGroups().stream().forEach(gr -> {
+                coverageOfRunsWithoutStatus.getGroups().forEach(gr -> {
                     OctaneEntity listEntity = (OctaneEntity) gr.getValue();
                     String convertedStatus = convertNativeStatusToStatus(listEntity.getId());
                     appendCountToExistingGroupOrCreateNewOne(statusId2group, convertedStatus, gr.getCount());
@@ -120,7 +119,7 @@ public class CoverageUiHelper {
         addSkippedToRequiresAttention(statusId2group);
         statusId2group.remove(skippedStatus.getLogicalName());
 
-        int total = statusId2group.values().stream().mapToInt(o -> o.getCount()).sum();
+        int total = statusId2group.values().stream().mapToInt(GroupEntity::getCount).sum();
 
         return statusId2group.entrySet().stream()
                 .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptors.get(entry.getKey()), entry.getValue().getCount(), total))
@@ -280,7 +279,7 @@ public class CoverageUiHelper {
                 stackTrace = stackTrace.substring(0, MAX_STACK_LENGTH);
             }
 
-            log.error("Error StackTrace : %s", stackTrace);
+            log.error(String.format("Error StackTrace : %s", stackTrace));
 
             debugMap.put("error", String.format("%s : %s, cause : %s, stacktrace : %s", e.getClass().getName(),
                     e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : null, stackTrace));
