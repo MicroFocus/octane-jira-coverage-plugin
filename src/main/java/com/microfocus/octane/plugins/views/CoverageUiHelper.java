@@ -90,8 +90,8 @@ public class CoverageUiHelper {
         return outputEntity;
     }
 
-    private static List<MapBasedObject> getCoverageGroups(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
-        GroupEntityCollection coverage = OctaneRestManager.getCoverage(sc, octaneEntity, typeDescriptor, workspaceId);
+    private static List<MapBasedObject> getCoverageGroups(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, boolean hasSubtype) {
+        GroupEntityCollection coverage = OctaneRestManager.getCoverage(sc, octaneEntity, typeDescriptor, workspaceId, hasSubtype);
         Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
 
         //Octane may return on coverage group without status - it will be assigned to need attention status
@@ -235,7 +235,7 @@ public class CoverageUiHelper {
 
                         //coverage
                         start = System.currentTimeMillis();
-                        List<MapBasedObject> coverageGroups = getCoverageGroups(spaceConfiguration, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId());
+                        List<MapBasedObject> coverageGroups = getCoverageGroups(spaceConfiguration, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId(), aggDescriptor.isSubtyped());
                         perfMap.put("coverage", System.currentTimeMillis() - start);
 
                         //fill context map

@@ -15,6 +15,10 @@
 
 package com.microfocus.octane.plugins.configuration;
 
+import com.atlassian.util.concurrent.NotNull;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
@@ -23,36 +27,94 @@ import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.*;
-import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class OctaneRestManager {
 
     private static final Logger log = LoggerFactory.getLogger(OctaneRestManager.class);
 
-    public static GroupEntityCollection getCoverage(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
+    private static LoadingCache<String, VersionEntity> versionCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build((new CacheLoader<String, VersionEntity>() {
+                @Override
+                public VersionEntity load(@NotNull String spaceConfigId) {
+                    return getOctaneServerVersion(spaceConfigId);
+                }
+            }));
+
+    public static GroupEntityCollection getCoverage(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, boolean hasSubtype) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
 
         String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, sc.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
+        String queryParam = getQueryParamBasedOnTypeAndVersion(sc, octaneEntity, typeDescriptor, hasSubtype);
+        String responseStr = sc.getRestConnector().httpGet(url, Collections.singletonList(queryParam), headers).getResponseData();
+
+        return OctaneEntityParser.parseGroupCollection(responseStr);
+    }
+
+    private static String getQueryParamBasedOnTypeAndVersion(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, boolean hasSubtype) {
+        if (hasSubtype) {
+            VersionEntity versionEntity;
+            try {
+                versionEntity = versionCache.get(sc.getId());
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+
+            if (versionEntity != null) {
+                OctaneServerVersion octaneServerVersion = new OctaneServerVersion(versionEntity.getVersion());
+
+                if (octaneServerVersion.isGreaterOrEqual(new OctaneServerVersion(PluginConstants.FUGEES_VERSION))) {
+                    return getQueryForWorkItemNewVersion(octaneEntity, typeDescriptor);
+                }
+            }
+        }
+
+        return  getQueryParam(octaneEntity, typeDescriptor);
+    }
+
+    private static VersionEntity getOctaneServerVersion(String spaceConfigId) {
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
+
+        String url = "/admin/server/version";
+        Map<String, String> headers = createHeaderMapWithOctaneClientType();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
+
+        String response = sc.getRestConnector().httpGet(url, null, headers).getResponseData();
+
+        return OctaneEntityParser.parseServerVersion(response);
+    }
+
+    private static String getQueryParam(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor) {
         OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
                 .addGroupBy("status")
                 .addQueryCondition(new CrossQueryPhrase("test_of_last_run", new CrossQueryPhrase(typeDescriptor.getTestReferenceField(), createGetEntityCondition(octaneEntity))))
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"));
 
-        String queryParam = queryBuilder.build();
+        return queryBuilder.build();
+    }
 
-        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+    private static String getQueryForWorkItemNewVersion(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor) {
+        //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?&query="((work_items_of_last_run={(id='2348')})||(work_items_of_last_run={path='0000000001OT0001OU000212*'}))"&group_by=status
 
-        return OctaneEntityParser.parseGroupCollection(responseStr);
+        OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
+                .addGroupBy("status")
+                .addQueryCondition(new CrossQueryPhrase("work_items_of_last_run", new RawTextQueryPhrase("id='" + octaneEntity.getId() + "'")))
+                .addQueryCondition(new CrossQueryPhrase("work_items_of_last_run", createGetEntityCondition(octaneEntity)));
+
+        return queryBuilder.build();
     }
 
     public static GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
