@@ -13,4 +13,9 @@ public class PluginConstants {
 
     public static String PUBLIC_API_WORKSPACE_FORMAT = PUBLIC_API_SHAREDSPACE_FORMAT + "/workspaces/%s";
     public static String PUBLIC_API_WORKSPACE_LEVEL_ENTITIES = PUBLIC_API_WORKSPACE_FORMAT + "/%s";
+
+    //octane version
+    public static final String DEFAULT_BUILD = "9999";
+    public static final String SEPARATOR = ".";
+    public static final String FUGEES_VERSION = "15.1.90";
 }
