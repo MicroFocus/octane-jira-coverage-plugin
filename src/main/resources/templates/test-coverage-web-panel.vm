@@ -59,7 +59,7 @@
 
                 #end
             </li>
-            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> tests in ALM Octane</a>
+            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ALM Octane</a>
 
         </ul>
     </div>
