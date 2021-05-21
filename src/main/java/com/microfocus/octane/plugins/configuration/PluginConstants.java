@@ -4,6 +4,7 @@ public class PluginConstants {
 
     public static final int SPACE_CONTEXT = -1;
     public static final String PASSWORD_REPLACE = "__secret__password__"; // NON-NLS
+    public static final String PATH = "path";
 
     public static String URL_AUTHENTICATION = "/authentication/sign_in";
 

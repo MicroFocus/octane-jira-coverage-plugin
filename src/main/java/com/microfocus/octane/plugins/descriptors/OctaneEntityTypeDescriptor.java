@@ -57,9 +57,14 @@ public class OctaneEntityTypeDescriptor {
      */
     private String testReferenceField;
 
+    /**
+     * Name of the field for indirect test covering
+     */
+    private String indirectCoveringTestsField;
+
     private static final String TESTS_URL_FOR_DEFECTS = "&configuration={\"tabName\":\"%s\",\"relation_name\":\"test_to_work_items-gherkin_test-scenario_test-test_automated-test_manual-test_suite-target\"}";
 
-    public OctaneEntityTypeDescriptor(String typeName, String alias, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField) {
+    public OctaneEntityTypeDescriptor(String typeName, String alias, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, String indirectCoveringTestsField) {
         this.typeName = typeName;
         this.alias = alias;
         this.label = label;
@@ -68,6 +73,7 @@ public class OctaneEntityTypeDescriptor {
         this.nameForNavigation = nameForNavigation;
         this.testTabName = testTabName;
         this.testReferenceField = testReferenceField;
+        this.indirectCoveringTestsField = indirectCoveringTestsField;
     }
 
     public String getTypeAbbreviation() {
@@ -118,5 +124,9 @@ public class OctaneEntityTypeDescriptor {
 
     public String getAlias() {
         return alias;
+    }
+
+    public String getIndirectCoveringTestsField() {
+        return indirectCoveringTestsField;
     }
 }

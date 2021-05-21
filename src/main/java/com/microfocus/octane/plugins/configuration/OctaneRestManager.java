@@ -31,7 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLHandshakeException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -107,14 +110,22 @@ public class OctaneRestManager {
     }
 
     private static String getQueryForWorkItemNewVersion(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor) {
-        //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?&query="((work_items_of_last_run={(id='2348')})||(work_items_of_last_run={path='0000000001OT0001OU000212*'}))"&group_by=status
+//http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="((work_items_of_last_run={(id='1005')})||(work_items_of_last_run={(subtype+IN+'story','defect','feature';path='0000000000TH0000TJ*')}))"&group_by=status
 
-        OctaneQueryBuilder queryBuilder = OctaneQueryBuilder.create()
-                .addGroupBy("status")
-                .addQueryCondition(new CrossQueryPhrase("work_items_of_last_run", new RawTextQueryPhrase("id='" + octaneEntity.getId() + "'")))
-                .addQueryCondition(new CrossQueryPhrase("work_items_of_last_run", createGetEntityCondition(octaneEntity)));
+        String coverageFieldName = typeDescriptor.getIndirectCoveringTestsField();
+        String queryParamValue = String.format("\"((%s={(id='%s')})||(%s={(subtype IN 'story','defect','feature';path='%s')}))\"",
+                coverageFieldName,
+                octaneEntity.getId(),
+                coverageFieldName,
+                octaneEntity.getString(PluginConstants.PATH) + "*");
 
-        return queryBuilder.build();
+        try {
+            queryParamValue = URLEncoder.encode(queryParamValue, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to encode params.", e);
+        }
+
+        return "query=" + queryParamValue + "&group_by=status";
     }
 
     public static GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
@@ -157,8 +168,8 @@ public class OctaneRestManager {
     }
 
     private static QueryPhrase createGetEntityCondition(OctaneEntity octaneEntity) {
-        String path = octaneEntity.getString("path");
-        return new LogicalQueryPhrase("path", path + "*");
+        String path = octaneEntity.getString(PluginConstants.PATH);
+        return new LogicalQueryPhrase(PluginConstants.PATH, path + "*");
     }
 
     public static OctaneEntityCollection getEntitiesByCondition(SpaceConfiguration sc, long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
