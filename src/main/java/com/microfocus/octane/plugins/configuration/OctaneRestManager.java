@@ -88,7 +88,7 @@ public class OctaneRestManager {
         return  getQueryParam(octaneEntity, typeDescriptor);
     }
 
-    private static VersionEntity getOctaneServerVersion(String spaceConfigId) {
+    public static VersionEntity getOctaneServerVersion(String spaceConfigId) {
         SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
 
         String url = "/admin/server/version";

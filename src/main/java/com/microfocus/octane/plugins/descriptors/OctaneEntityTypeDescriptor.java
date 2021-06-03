@@ -15,6 +15,8 @@
 
 package com.microfocus.octane.plugins.descriptors;
 
+import com.microfocus.octane.plugins.configuration.*;
+
 public class OctaneEntityTypeDescriptor {
 
     /***
@@ -104,7 +106,11 @@ public class OctaneEntityTypeDescriptor {
     }
 
     public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId, String subtype) {
-        if (("defect").equals(subtype)) {
+        String spaceConfigurationId = ConfigurationUtil.getSpaceConfigurationIdByBaseurl(baseUrl, spaceId);
+        VersionEntity versionEntity = OctaneRestManager.getOctaneServerVersion(spaceConfigurationId);
+        OctaneServerVersion octaneServerVersion = new OctaneServerVersion(versionEntity.getVersion());
+
+        if (("defect").equals(subtype) && octaneServerVersion.isLessThan(new OctaneServerVersion(PluginConstants.GUNSNROSES_PUSH2))) {
             String defectTestsUrl = String.format(TESTS_URL_FOR_DEFECTS, getTestTabName());
 
             return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + defectTestsUrl;
