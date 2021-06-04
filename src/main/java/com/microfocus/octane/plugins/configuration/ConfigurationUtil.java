@@ -385,16 +385,4 @@ public class ConfigurationUtil {
 
         return usedJiraProjects;
     }
-
-    public static String getSpaceConfigurationIdByBaseurl(String baseurl, long spaceId) {
-        List<SpaceConfiguration> spaceConfigurations = ConfigurationManager.getInstance().getSpaceConfigurations();
-        if (spaceConfigurations.isEmpty())
-            return "";
-
-        for (SpaceConfiguration sc: spaceConfigurations)
-            if (sc.getLocationParts().getBaseUrl().equals(baseurl) && sc.getLocationParts().getSpaceId() == spaceId)
-                return sc.getId();
-
-        return "";
-    }
 }

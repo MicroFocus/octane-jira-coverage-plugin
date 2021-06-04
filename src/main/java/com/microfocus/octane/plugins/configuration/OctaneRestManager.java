@@ -44,13 +44,13 @@ public class OctaneRestManager {
 
     private static final Logger log = LoggerFactory.getLogger(OctaneRestManager.class);
 
-    private static LoadingCache<String, VersionEntity> versionCache = CacheBuilder
+    private static LoadingCache<SpaceConfiguration, VersionEntity> versionCache = CacheBuilder
             .newBuilder()
             .expireAfterWrite(30, TimeUnit.MINUTES)
-            .build((new CacheLoader<String, VersionEntity>() {
+            .build((new CacheLoader<SpaceConfiguration, VersionEntity>() {
                 @Override
-                public VersionEntity load(@NotNull String spaceConfigId) {
-                    return getOctaneServerVersion(spaceConfigId);
+                public VersionEntity load(@NotNull SpaceConfiguration sc) {
+                    return getOctaneServerVersion(sc);
                 }
             }));
 
@@ -71,7 +71,7 @@ public class OctaneRestManager {
         if (hasSubtype) {
             VersionEntity versionEntity;
             try {
-                versionEntity = versionCache.get(sc.getId());
+                versionEntity = versionCache.get(sc);
             } catch (ExecutionException e) {
                 throw new RuntimeException(e.getMessage());
             }
@@ -88,9 +88,7 @@ public class OctaneRestManager {
         return  getQueryParam(octaneEntity, typeDescriptor);
     }
 
-    public static VersionEntity getOctaneServerVersion(String spaceConfigId) {
-        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
-
+    public static VersionEntity getOctaneServerVersion(SpaceConfiguration sc) {
         String url = "/admin/server/version";
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);

@@ -64,7 +64,7 @@ public class OctaneEntityTypeDescriptor {
      */
     private String indirectCoveringTestsField;
 
-    private static final String TESTS_URL_FOR_DEFECTS = "&configuration={\"tabName\":\"%s\",\"relation_name\":\"test_to_work_items-gherkin_test-scenario_test-test_automated-test_manual-test_suite-target\"}";
+    private static final String TESTS_URL_FOR_DEFECTS = "&configuration={\"tabName\":\"relationships\",\"relation_name\":\"test_to_work_items-gherkin_test-scenario_test-test_automated-test_manual-test_suite-target\"}";
 
     public OctaneEntityTypeDescriptor(String typeName, String alias, String typeAbbreviation, String label, String typeColor, String nameForNavigation, String testTabName, String testReferenceField, String indirectCoveringTestsField) {
         this.typeName = typeName;
@@ -105,17 +105,14 @@ public class OctaneEntityTypeDescriptor {
         return octaneEntityUrl;
     }
 
-    public String buildTestTabEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId, String subtype) {
-        String spaceConfigurationId = ConfigurationUtil.getSpaceConfigurationIdByBaseurl(baseUrl, spaceId);
-        VersionEntity versionEntity = OctaneRestManager.getOctaneServerVersion(spaceConfigurationId);
+    public String buildTestTabEntityUrl(SpaceConfiguration sc, long workspaceId, String entityId, String subtype) {
+        VersionEntity versionEntity = OctaneRestManager.getOctaneServerVersion(sc);
         OctaneServerVersion octaneServerVersion = new OctaneServerVersion(versionEntity.getVersion());
 
         if (("defect").equals(subtype) && octaneServerVersion.isLessThan(new OctaneServerVersion(PluginConstants.GUNSNROSES_PUSH2))) {
-            String defectTestsUrl = String.format(TESTS_URL_FOR_DEFECTS, getTestTabName());
-
-            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + defectTestsUrl;
+            return buildEntityUrl(sc.getLocationParts().getBaseUrl(), sc.getLocationParts().getSpaceId(), workspaceId, entityId) + TESTS_URL_FOR_DEFECTS;
         } else {
-            return buildEntityUrl(baseUrl, spaceId, workspaceId, entityId) + "&tabName=" + getTestTabName();
+            return buildEntityUrl(sc.getLocationParts().getBaseUrl(), sc.getLocationParts().getSpaceId(), workspaceId, entityId) + "&tabName=" + getTestTabName();
         }
     }
 
