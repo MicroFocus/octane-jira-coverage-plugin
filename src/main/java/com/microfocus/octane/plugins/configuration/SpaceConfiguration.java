@@ -20,6 +20,8 @@ import com.microfocus.octane.plugins.rest.RestConnector;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
+import java.util.Objects;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SpaceConfiguration {
 
@@ -97,5 +99,18 @@ public class SpaceConfiguration {
 
     public void clearRestConnector() {
         restConnector = null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SpaceConfiguration that = (SpaceConfiguration) o;
+        return location.equals(that.location) && locationParts.equals(that.locationParts) && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(location, locationParts, id);
     }
 }
