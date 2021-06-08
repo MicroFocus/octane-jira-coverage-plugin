@@ -19,4 +19,5 @@ public class PluginConstants {
     public static final String DEFAULT_BUILD = "9999";
     public static final String SEPARATOR = ".";
     public static final String FUGEES_VERSION = "15.1.90";
+    public static final String GUNSNROSES_PUSH2 = "16.0.16";
 }

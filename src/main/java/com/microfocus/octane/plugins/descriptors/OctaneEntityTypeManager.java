@@ -28,7 +28,7 @@ public class OctaneEntityTypeManager {
         //TYPE
         OctaneEntityTypeDescriptor featureType = new OctaneEntityTypeDescriptor("feature", null, "F", "Feature", "#e57828", "work_item", "tests_in_backlog", "covered_content", "work_items_of_last_run");
         OctaneEntityTypeDescriptor storyType = new OctaneEntityTypeDescriptor("story", null, "US", "User Story", "#ffb000", "work_item", "tests_in_backlog", "covered_content", "work_items_of_last_run");
-        OctaneEntityTypeDescriptor defectType = new OctaneEntityTypeDescriptor("defect", null, "D", "Defect", "#b21646", "work_item", "relationships", "covered_content", "work_items_of_last_run");
+        OctaneEntityTypeDescriptor defectType = new OctaneEntityTypeDescriptor("defect", null, "D", "Defect", "#b21646", "work_item", "tests_in_backlog", "covered_content", "work_items_of_last_run");
 
         OctaneEntityTypeDescriptor requirementType = new OctaneEntityTypeDescriptor("requirement_document", null, "RD", "Requirement", "#0b8eac", "requirement", "tests_in_requirement", "covered_requirement", null);
         OctaneEntityTypeDescriptor applicationModuleType = new OctaneEntityTypeDescriptor("product_area", "application_module", "AM", "Application Module", "#43e4ff", "product_area", "tests-in-pa", "product_areas", null);
