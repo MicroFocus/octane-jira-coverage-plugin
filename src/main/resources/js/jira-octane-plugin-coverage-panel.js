@@ -36,9 +36,7 @@ function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
             //totals
             var totalRuns = data.totalExecutedTestsCount ? data.totalExecutedTestsCount + " last runs:" : "No last runs";
             $("#octane-total-runs").text(totalRuns);
-            if (data.totalTestsCount) {
-                $("#octane-total-tests").text(data.totalTestsCount);
-            }
+            $("#octane-total-tests").text(data.totalTestsCount);
 
             //coverage groups
             data.coverageGroups.forEach(function (entry) {
