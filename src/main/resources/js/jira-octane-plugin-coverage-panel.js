@@ -29,14 +29,20 @@ function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
             $("#octane-entity-icon").css("background-color", octaneEntity.typeColor);
             $("#octane-entity-url a").attr("href", octaneEntity.url);
             $("#octane-entity-url a").text(octaneEntity.id);
-            $("#view-tests-in-alm").attr("href", octaneEntity.testTabUrl);
             $("#octane-entity-name").text(octaneEntity.name);
             $("#octane-entity-name").attr("title", octaneEntity.name);
 
             //totals
             var totalRuns = data.totalExecutedTestsCount ? data.totalExecutedTestsCount + " last runs:" : "No last runs";
             $("#octane-total-runs").text(totalRuns);
-            $("#octane-total-tests").text(data.totalTestsCount);
+            if (data.totalTestsCount) {
+                $("#octane-total-tests").text(data.totalTestsCount);
+                $("#view-tests-in-alm").attr("href", octaneEntity.testTabUrl);
+
+            } else {
+                $("#view-tests-in-alm").text("No linked tests in ALM Octane");
+                $("#view-tests-in-alm").attr("style", "pointer-events: none; cursor: default; color: gray; font-weight: bold");
+            }
 
             //coverage groups
             data.coverageGroups.forEach(function (entry) {
