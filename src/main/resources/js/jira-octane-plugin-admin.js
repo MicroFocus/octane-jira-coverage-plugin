@@ -513,6 +513,10 @@
             validateWorkspaceRequiredFieldsFilled();
         });
 
+        $("#jiraIssueTypesSelector").change(function () {
+            clearErrorMessageIfDataIsPresent($("#jiraIssueTypesSelector").select2('data'), "#jiraIssueTypesSelectorError");
+        });
+
         $("#refreshOctaneEntityTypesButton").click(function (e) {
             e.preventDefault();
             reloadOctaneSupportedEntityTypes();
@@ -844,6 +848,10 @@
 
     function validateMissingOctaneSupportedEntityTypes(data, errorSelector, udfName) {
         return validateConditionAndUpdateErrorField(data.length !== 0, "No supported entities were found for mapping field: " + udfName, errorSelector);
+    }
+
+    function clearErrorMessageIfDataIsPresent(data, errorSelector) {
+        return validateConditionAndUpdateErrorField(data.length !== 0, '', errorSelector);
     }
 
     function validateConditionAndUpdateErrorField(condition, errorMessage, errorSelector) {
