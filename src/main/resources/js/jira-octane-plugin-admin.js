@@ -487,7 +487,7 @@
             }).done(function (data) {
                 setTimeout(function () {
                     $("#refreshOctaneEntityTypesSpinner").spinStop();
-                    $("#octaneEntityTypes").val(data);
+                    $("#octaneEntityTypes").val(data.join(", "));
                     validateWorkspaceRequiredFieldsFilled();
                     validateMissingOctaneSupportedEntityTypes(data, "#octaneEntityTypesError", udfName);
                 }, 1000);
@@ -511,6 +511,10 @@
 
         $("#workspace-dialog .required").change(function () {
             validateWorkspaceRequiredFieldsFilled();
+        });
+
+        $("#jiraIssueTypesSelector").change(function () {
+            clearErrorMessageIfDataIsPresent($("#jiraIssueTypesSelector").select2('data'), "#jiraIssueTypesSelectorError");
         });
 
         $("#refreshOctaneEntityTypesButton").click(function (e) {
@@ -582,7 +586,7 @@
                 spaceConfigId: $("#spaceConfSelector").select2('data').id,
                 spaceConfigName: $("#spaceConfSelector").select2('data').text,
                 octaneUdf: $("#octaneUdf").attr("value"),
-                octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(",") : [], //if empty value - send empty array
+                octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(", ") : [], //if empty value - send empty array
                 jiraIssueTypes: _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
                     return item.id;
                 }),//convert selected objects to array of strings
@@ -737,7 +741,7 @@
             $('#workspaceSelector').prop('disabled', true); //disable workspace selector
 
             $("#octaneUdf").val(rowModel.octaneUdf);//populate default value for new item
-            $("#octaneEntityTypes").val(rowModel.octaneEntityTypes);
+            $("#octaneEntityTypes").val(rowModel.octaneEntityTypes.join(", "));
             $("#jiraIssueTypesSelector").val(rowModel.jiraIssueTypes);
             $("#jiraProjectsSelector").val(rowModel.jiraProjects);
             $('#workspace-dialog-title').text("Edit");//set dialog title
@@ -844,6 +848,10 @@
 
     function validateMissingOctaneSupportedEntityTypes(data, errorSelector, udfName) {
         return validateConditionAndUpdateErrorField(data.length !== 0, "No supported entities were found for mapping field: " + udfName, errorSelector);
+    }
+
+    function clearErrorMessageIfDataIsPresent(data, errorSelector) {
+        return validateConditionAndUpdateErrorField(data.length !== 0, '', errorSelector);
     }
 
     function validateConditionAndUpdateErrorField(condition, errorMessage, errorSelector) {
