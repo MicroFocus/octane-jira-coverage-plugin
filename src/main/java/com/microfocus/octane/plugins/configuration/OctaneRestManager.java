@@ -270,9 +270,13 @@ public class OctaneRestManager {
                 myErrorMessage = "Network exception, proxy settings may be missing or misconfigured.";
             } else if (exc.getMessage().startsWith("Connection timed out")) {
                 myErrorMessage = "Timed out exception, proxy settings may be missing or misconfigured.";
-            }  else if (exc.getMessage().contains("Network Error")) {
+            } else if (exc.getMessage().contains("Network Error")) {
                 myErrorMessage = "Network error, proxy settings may be missing or misconfigured.";
-            }  else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
+            } else if (exc.getMessage().contains("unable to find valid certification")) {
+                myErrorMessage = "The store does not contain the appropriate certificate.";
+            } else if (exc.getMessage().contains("Request Error (invalid_request)")) {
+                myErrorMessage = "Invalid request, proxy settings may be missing or misconfigured.";
+            } else if (exc.getCause() != null && exc.getCause() instanceof UnknownHostException) {
                 myErrorMessage = "Location is not available.";
             } else {
                 myErrorMessage = exc.getMessage();
