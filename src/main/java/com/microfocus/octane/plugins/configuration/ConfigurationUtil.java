@@ -193,6 +193,8 @@ public class ConfigurationUtil {
         } catch (RestStatusException e) {
             String msg = parseExceptionMessage(e,spaceConfig);
             throw new IllegalArgumentException(msg);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Test connection failed: " + e.getMessage()); //rethrow IllegalArgumentExceptions, so it can catch the Runtime ones
         } catch (RuntimeException e){
             throw new IllegalArgumentException("Test connection failed: Error occurred while trying to test the connection. Please check the host.");
         } catch (Exception e) {
