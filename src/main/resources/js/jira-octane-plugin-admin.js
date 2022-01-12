@@ -247,6 +247,8 @@
                 if (request.responseText && request.responseText.includes('platform.workspace_not_found')) {
                     msg = "Workspace " + workspaceId + "  is not accessible.";
                     AJS.flag({type: 'error', close: 'auto', body: msg});
+                } else if (request.responseText && request.responseText.includes('platform.not_authorized')) {
+                    msg = "The client ID configured for workspace " + workspaceId + " does not have permission to access it.";
                 }
                 setTitle("Failed to fetch suggested fields from ALM Octane: " + msg, true);
             });
