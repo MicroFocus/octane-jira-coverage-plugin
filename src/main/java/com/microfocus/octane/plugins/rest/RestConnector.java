@@ -72,7 +72,7 @@ public class RestConnector {
         //Get LWSSO COOKIE
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_CONTENT_TYPE, HEADER_APPLICATION_JSON);
-        Response authResponse = doHttp("POST", PluginConstants.URL_AUTHENTICATION, null, jsonString, headers, true);
+        Response authResponse = doHttp("POST", PluginConstants.URL_AUTHENTICATION, null, null, null, jsonString, headers, true);
         if (authResponse.getStatusCode() == HttpStatus.SC_OK) {
             ret = true;
         }
@@ -96,34 +96,36 @@ public class RestConnector {
 
     public Response httpPut(String url, String data, Map<String, String> headers) {
 
-        return doHttp("PUT", url, null, data, headers);
+        return doHttp("PUT", url, null, null, null, data, headers);
     }
 
     public Response httpPost(String url, String data, Map<String, String> headers) {
 
-        return doHttp("POST", url, null, data, headers);
+        return doHttp("POST", url, null, null, null, data, headers);
     }
 
     public Response httpDelete(String url, Map<String, String> headers) {
 
-        return doHttp("DELETE", url, null, null, headers);
+        return doHttp("DELETE", url, null, null, null, null, headers);
     }
 
 
-    public Response httpGet(String url, List<String> queryParams) {
+    public Response httpGet(String url, List<String> queryParams, Integer limit, Integer offset) {
 
-        return httpGet(url, queryParams, null);
+        return httpGet(url, queryParams, limit, offset, null);
     }
 
-    public Response httpGet(String url, Collection<String> queryParams, Map<String, String> headers) {
+    public Response httpGet(String url, Collection<String> queryParams, Integer limit, Integer offset, Map<String, String> headers) {
 
-        return doHttp("GET", url, queryParams, null, headers);
+        return doHttp("GET", url, queryParams, limit, offset, null, headers);
     }
 
     /**
      * @param type        of the http operation: get post put delete
      * @param url         to work on
      * @param queryParams
+     * @param limit
+     * @param offset
      * @param data        to write, if a writable operation
      * @param headers     to use in the request
      * @return http response
@@ -132,15 +134,19 @@ public class RestConnector {
             String type,
             String url,
             Collection<String> queryParams,
+            Integer limit,
+            Integer offset,
             String data,
             Map<String, String> headers) {
-        return doHttp(type, url, queryParams, data, headers, false);
+        return doHttp(type, url, queryParams, limit, offset, data, headers, false);
     }
 
     /**
      * @param type        of the http operation: get post put delete
      * @param url         to work on
      * @param queryParams
+     * @param limit
+     * @param offset
      * @param data        to write, if a writable operation
      * @param headers     to use in the request
      * @param relogin     if equal to false and received 401 and supportRelogin is exist - trial to relogin will be done
@@ -150,6 +156,8 @@ public class RestConnector {
             String type,
             String url,
             Collection<String> queryParams,
+            Integer limit,
+            Integer offset,
             String data,
             Map<String, String> headers,
             boolean relogin) {
@@ -157,13 +165,20 @@ public class RestConnector {
 
         //add query params
         if ((queryParams != null) && !queryParams.isEmpty()) {
-
             if (url.contains("?")) {
                 url += "&";
             } else {
                 url += "?";
             }
             url += StringUtils.join(queryParams, "&");
+
+            if (limit != null) {
+                url += "&limit=" + limit.toString();
+            }
+
+            if (offset != null) {
+                url += "&offset=" + offset.toString();
+            }
         }
 
         long start = System.currentTimeMillis();
@@ -226,7 +241,7 @@ public class RestConnector {
                     }
 
                     if (reloginResult) {
-                        return doHttp(type, url, queryParams, data, headers, true);
+                        return doHttp(type, url, queryParams, limit, offset, data, headers, true);
                     }
                 }
             }

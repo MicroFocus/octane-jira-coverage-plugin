@@ -62,7 +62,7 @@ public class OctaneRestManager {
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
         String queryParam = getQueryParamBasedOnTypeAndVersion(sc, octaneEntity, typeDescriptor, hasSubtype);
-        String responseStr = sc.getRestConnector().httpGet(url, Collections.singletonList(queryParam), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Collections.singletonList(queryParam), null, null, headers).getResponseData();
 
         return OctaneEntityParser.parseGroupCollection(responseStr);
     }
@@ -93,7 +93,7 @@ public class OctaneRestManager {
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-        String response = sc.getRestConnector().httpGet(url, null, headers).getResponseData();
+        String response = sc.getRestConnector().httpGet(url, null, null, null, headers).getResponseData();
 
         return OctaneEntityParser.parseServerVersion(response);
     }
@@ -141,7 +141,7 @@ public class OctaneRestManager {
 
         String queryParam = queryBuilder.build();
 
-        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), null, null, headers).getResponseData();
         GroupEntityCollection col = OctaneEntityParser.parseGroupCollection(responseStr);
         return col;
     }
@@ -160,7 +160,7 @@ public class OctaneRestManager {
                 .addSelectedFields("id")
                 .build();
 
-        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryParam), null, null, headers).getResponseData();
         OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
         return col.getTotalCount();
     }
@@ -170,7 +170,7 @@ public class OctaneRestManager {
         return new LogicalQueryPhrase(PluginConstants.PATH, path + "*");
     }
 
-    public static OctaneEntityCollection getEntitiesByCondition(SpaceConfiguration sc, long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
+    public static OctaneEntityCollection getEntitiesByCondition(SpaceConfiguration sc, long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields, Integer limit, Integer offset) {
 
         String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).addSelectedFields(fields).build();
         String url;
@@ -185,7 +185,7 @@ public class OctaneRestManager {
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryCondition), headers).getResponseData();
+        String responseStr = sc.getRestConnector().httpGet(url, Arrays.asList(queryCondition), limit, offset, headers).getResponseData();
         OctaneEntityCollection col = OctaneEntityParser.parseCollection(responseStr);
         return col;
     }
@@ -204,7 +204,7 @@ public class OctaneRestManager {
 
         String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).build();
 
-        String entitiesCollectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+        String entitiesCollectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), null, null, headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
         List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toList());
 
@@ -230,7 +230,7 @@ public class OctaneRestManager {
                 .addQueryCondition(new InQueryPhrase("entity_name", OctaneEntityTypeManager.getSupportedTypes()))
                 .build();
 
-        String collectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
+        String collectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), null, null, headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(collectionStr);
         Set<String> foundJiraNames = fields.getData().stream().map(e -> e.getString("name")).filter(n -> n.toLowerCase().contains("jira")).collect(Collectors.toSet());
 
@@ -238,13 +238,14 @@ public class OctaneRestManager {
     }
 
     public static OctaneEntityCollection getWorkspaces(SpaceConfiguration spaceConfiguration) {
-        String getWorspacesUrl = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, spaceConfiguration.getLocationParts().getSpaceId(), "workspaces");
+        String getWorkspacesUrl = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES, spaceConfiguration.getLocationParts().getSpaceId(), "workspaces");
         String queryString = OctaneQueryBuilder.create().addSelectedFields("id", "name").build();
         Map<String, String> headers = new HashMap<>();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
-        String entitiesCollectionStr = spaceConfiguration.getRestConnector().httpGet(getWorspacesUrl, Arrays.asList(queryString), headers).getResponseData();
 
+        String entitiesCollectionStr = spaceConfiguration.getRestConnector().httpGet(getWorkspacesUrl, Arrays.asList(queryString), null, null, headers).getResponseData();
         OctaneEntityCollection workspaces = OctaneEntityParser.parseCollection(entitiesCollectionStr);
+
         if (workspaces.getData().isEmpty()) {
             throw new IllegalArgumentException("Incorrect space ID.");
         }
