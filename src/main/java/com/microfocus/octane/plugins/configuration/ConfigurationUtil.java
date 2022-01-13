@@ -342,7 +342,7 @@ public class ConfigurationUtil {
 
         List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
 
-        int limit = 50, offset = 0;
+        int limit = 500, offset = 0;
 
         OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"), limit, null);
 
