@@ -170,9 +170,9 @@ public class OctaneRestManager {
         return new LogicalQueryPhrase(PluginConstants.PATH, path + "*");
     }
 
-    public static OctaneEntityCollection getEntitiesByCondition(SpaceConfiguration sc, long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields) {
+    public static OctaneEntityCollection getEntitiesByCondition(SpaceConfiguration sc, long workspaceId, String collectionName, Collection<QueryPhrase> conditions, Collection<String> fields, Integer limit, Integer offset) {
 
-        String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).addSelectedFields(fields).build();
+        String queryCondition = OctaneQueryBuilder.create().addQueryConditions(conditions).addSelectedFields(fields).addPageSize(limit).addStartIndex(offset).build();
         String url;
         if (PluginConstants.SPACE_CONTEXT == workspaceId) {
             url = String.format(PluginConstants.PUBLIC_API_SHAREDSPACE_LEVEL_ENTITIES,

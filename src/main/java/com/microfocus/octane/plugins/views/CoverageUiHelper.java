@@ -183,7 +183,7 @@ public class CoverageUiHelper {
                 conditions.add(subTypeCondition);
             }
 
-            OctaneEntityCollection entities = OctaneRestManager.getEntitiesByCondition(sc, wc.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields);
+            OctaneEntityCollection entities = OctaneRestManager.getEntitiesByCondition(sc, wc.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields, null, null);
             if (!entities.getData().isEmpty()) {
                 return entities.getData().get(0);
             }
