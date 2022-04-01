@@ -8,6 +8,7 @@ import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
+import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.query.LogicalQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
@@ -341,7 +342,21 @@ public class ConfigurationUtil {
 
         List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
 
-        OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"));
+        int limit = 500, offset = 0;
+
+        OctaneEntityCollection workspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"), limit, null);
+
+        //repeat the call if the total count is higher than the limit (because of the pagination)
+        while (workspaces.getTotalCount() > workspaces.getData().size()) {
+            offset += limit;
+
+            OctaneEntityCollection nextPageOfWorkspaces = OctaneRestManager.getEntitiesByCondition(spConfig, PluginConstants.SPACE_CONTEXT, "workspaces", conditions, Arrays.asList("id", "name"), limit, offset);
+
+            List<OctaneEntity> newWorkspacesDataList = workspaces.getData();
+            newWorkspacesDataList.addAll(nextPageOfWorkspaces.getData());
+
+            workspaces.setData(newWorkspacesDataList);
+        }
 
         return workspaces.getData()
                 .stream()

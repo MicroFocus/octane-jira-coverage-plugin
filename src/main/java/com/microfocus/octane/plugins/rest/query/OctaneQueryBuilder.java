@@ -65,12 +65,16 @@ public class OctaneQueryBuilder {
     }
 
     public OctaneQueryBuilder addStartIndex(Integer startIndex) {
-        this.startIndex = startIndex;
+        if (startIndex != null) {
+            this.startIndex = startIndex;
+        }
         return this;
     }
 
-    public OctaneQueryBuilder addPageSize(int pageSize) {
-        this.pageSize = pageSize;
+    public OctaneQueryBuilder addPageSize(Integer pageSize) {
+        if (pageSize != null) {
+            this.pageSize = pageSize;
+        }
         return this;
     }
 
