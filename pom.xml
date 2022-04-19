@@ -15,6 +15,32 @@
     <name>ALM Octane - Test Management for Jira</name>
     <description>This ALM Octane plugin provides quality status directly on native Jira Epics, Stories, Issues or custom types. Jira users are able to quickly understand issue test status, and are provided a direct link to quality centric views for related tests, test trends, CI history and other associated information / dashboards.</description>
     <packaging>atlassian-plugin</packaging>
+
+    <properties>
+        <jira.version>8.20.7</jira.version>
+        <amps.version>8.0.2</amps.version>
+        <jira.software.application.version>8.20.7</jira.software.application.version>
+        <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
+        <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
+        <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
+        <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
+        <!-- TestKit version 6.x for JIRA 6.x -->
+        <testkit.version>6.3.11</testkit.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>11</maven.compiler.release>
+        <spotbugs.version>3.1.9</spotbugs.version>
+        <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+        <atlassian-util-concurrent.version>2.4.1</atlassian-util-concurrent.version>
+        <jaxb-impl.version>2.3.0</jaxb-impl.version>
+        <jaxb-core.version>2.3.0</jaxb-core.version>
+        <jaxb-api.version>2.3.0</jaxb-api.version>
+        <javax-activation.version>1.1</javax-activation.version>
+        <FastInfoset.version>1.2.1</FastInfoset.version>
+        <jakarta.xml.bind-api.version>4.0.0-RC1</jakarta.xml.bind-api.version>
+        <jvnet.staxex.version>2.1.0-M1</jvnet.staxex.version>
+        <jakarta.activation-api.version>2.1.0-RC1</jakarta.activation-api.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
@@ -252,28 +278,4 @@
             </plugin>
         </plugins>
     </build>
-    <properties>
-        <jira.version>8.20.7</jira.version>
-        <amps.version>8.0.2</amps.version>
-        <jira.software.application.version>8.20.7</jira.software.application.version>
-        <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
-        <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
-        <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
-        <!-- TestKit version 6.x for JIRA 6.x -->
-        <testkit.version>6.3.11</testkit.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>11</maven.compiler.release>
-        <spotbugs.version>3.1.9</spotbugs.version>
-        <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
-        <atlassian-util-concurrent.version>2.4.1</atlassian-util-concurrent.version>
-        <jaxb-impl.version>2.3.0</jaxb-impl.version>
-        <jaxb-core.version>2.3.0</jaxb-core.version>
-        <jaxb-api.version>2.3.0</jaxb-api.version>
-        <javax-activation.version>1.1</javax-activation.version>
-        <FastInfoset.version>1.2.1</FastInfoset.version>
-        <jakarta.xml.bind-api.version>4.0.0-RC1</jakarta.xml.bind-api.version>
-        <jvnet.staxex.version>2.1.0-M1</jvnet.staxex.version>
-        <jakarta.activation-api.version>2.1.0-RC1</jakarta.activation-api.version>
-    </properties>
 </project>
