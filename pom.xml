@@ -17,17 +17,19 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <jira.version>8.20.7</jira.version>
-        <amps.version>8.0.2</amps.version>
-        <jira.software.application.version>8.20.7</jira.software.application.version>
-        <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
+        <maven.compiler.release>11</maven.compiler.release>
+
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
         <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
-        <!-- TestKit version 6.x for JIRA 6.x -->
+
+        <jira.version>8.20.7</jira.version>
+        <jira.software.application.version>8.20.7</jira.software.application.version>
+        <amps.version>8.0.2</amps.version>
+
+        <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
+        <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
         <testkit.version>6.3.11</testkit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>11</maven.compiler.release>
         <spotbugs.version>3.1.9</spotbugs.version>
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
         <atlassian-util-concurrent.version>2.4.1</atlassian-util-concurrent.version>
