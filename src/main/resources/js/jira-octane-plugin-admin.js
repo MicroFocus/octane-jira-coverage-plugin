@@ -220,6 +220,7 @@
 
     function reloadPossibleJiraFields() {
         function setTitle(text, filled) {
+            AJS.$("#octane-possible-fields-tooltip").tooltip('destroy');
             $("#octane-possible-fields-tooltip").attr("title", text);
             AJS.$("#octane-possible-fields-tooltip").tooltip();
             $("#octane-possible-fields-tooltip").toggleClass("aui-iconfont-info-filled", filled);
