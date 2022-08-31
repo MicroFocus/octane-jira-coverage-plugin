@@ -1,7 +1,9 @@
 package com.microfocus.octane.plugins.configuration;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VersionEntity {
 
     private String version;
