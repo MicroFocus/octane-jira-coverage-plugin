@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microfocus.octane.plugins</groupId>
     <artifactId>jira-octane-quality-insight-plugin</artifactId>
-    <version>2022.0.1</version>
+    <version>2022.0.2</version>
     <organization>
         <name>Micro Focus ALM Octane</name>
         <url>https://www.microfocus.com/en-us/products/alm-octane/overview</url>
