@@ -1,27 +1,5 @@
 <script language="JavaScript" type="text/javascript">
-    jQuery(document).ready(function() {
-        console.log("octane plugin : document ready");
-        load(1);
-    });
-
-    function load(counter) {
-        var panelEl = jQuery("#octane-coverage-panel:not(.resolved)");
-
-        if (!panelEl.length) {
-            if(counter < 30) {
-                setTimeout(function () {
-                    load(counter + 1);
-                }, 150);
-            }
-        } else {
-            console.log("load successfully " + counter);
-            var projectKey = panelEl.attr("project-key");
-            var issueKey = panelEl.attr("issue-key");
-            var issueId = panelEl.attr("issue-id");
-            jQuery("#octane-coverage-panel").addClass("resolved");
-            loadOctaneCoverageWidget(projectKey, issueKey, issueId);
-        }
-    };
+    load(1);
 </script>
 
 <div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey"  class="ghx-container">
