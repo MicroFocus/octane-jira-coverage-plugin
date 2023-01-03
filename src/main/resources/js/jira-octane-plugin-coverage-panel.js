@@ -1,3 +1,26 @@
+jQuery(document).ready(function() {
+    load(1);
+});
+
+function load(counter) {
+    var panelEl = jQuery("#octane-coverage-panel:not(.resolved)");
+
+    if (!panelEl.length) {
+        if(counter < 30) {
+            setTimeout(function () {
+                load(counter + 1);
+            }, 150);
+        }
+    } else {
+        console.log("[coverage] octane plugin load successfully " + counter);
+        var projectKey = panelEl.attr("project-key");
+        var issueKey = panelEl.attr("issue-key");
+        var issueId = panelEl.attr("issue-id");
+        jQuery("#octane-coverage-panel").addClass("resolved");
+        loadOctaneCoverageWidget(projectKey, issueKey, issueId);
+    }
+}
+
 function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
     var query = "&project-key=" + projectKey + "&issue-key=" + issueKey + "&issue-id=" + issueId;
     var url = AJS.contextPath() + "/rest/octane-coverage/1.0/coverage?" + query;
