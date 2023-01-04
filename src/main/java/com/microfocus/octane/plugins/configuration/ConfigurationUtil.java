@@ -205,7 +205,7 @@ public class ConfigurationUtil {
 
     public static String parseExceptionMessage(RestStatusException e, SpaceConfiguration spaceConfig){
         if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
-            return String.format("Space id '%d' is not exist", spaceConfig.getLocationParts().getSpaceId());
+            return String.format("Space id '%d' does not exist", spaceConfig.getLocationParts().getSpaceId());
         } else {
             return "Test connection failed: " + e.getMessage();
         }
