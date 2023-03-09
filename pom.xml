@@ -19,13 +19,13 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- Multi Release JAR properties-->
         <java11-outputdirectory>${project.build.outputDirectory}/META-INF/versions/11</java11-outputdirectory>
         <java11-build-directory>${project.build.directory}/classes-java11</java11-build-directory>
-<!--required to build MRJAR?-->
-        <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven.compiler.version>3.11.0</maven.compiler.version>
-<!--END required to build MRJAR-->
+
 
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
         <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
@@ -242,7 +242,6 @@
                             <Multi-Release>true</Multi-Release>
                         </manifestEntries>
                     </archive>
-                    <skipIfEmpty>true</skipIfEmpty>
                 </configuration>
             </plugin>
             <plugin>
