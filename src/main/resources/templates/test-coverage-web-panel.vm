@@ -2,24 +2,27 @@
     load(1);
 </script>
 
-<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey"  class="ghx-container">
+<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey" issue-type="$issueType" class="ghx-container">
+    <div id="octane-workspaces-dropdown-section">
+        <input type="hidden" name="coverageWorkspaceSelector" id="coverageWorkspaceSelector" class="width--100"/>
+    </div>
     <div id="octane-entity-section" class="hidden">
         <ul class="item-details">
             <!-- octane  entity-->
             <div id="octane-entity">
-                <span id="octane-entity-icon">
-                    <span id="octane-entity-icon-text"></span>
-                </span>
-                <span id="octane-entity-url">
+                <div id="octane-entity-icon">
+                    <div id="octane-entity-icon-text"></div>
+                </div>
+                <div id="octane-entity-url">
                     <a target="_blank"></a>
-                </span>
-                <span class="octane-entity-url2name-splitter">|</span>
-                <span id="octane-entity-name"></span>
+                </div>
+                <div class="octane-entity-url2name-splitter">|</div>
+                <div id="octane-entity-name"></div>
             </div>
 
             <!-- test status-->
             <div id="octane-total-runs"></div>
-            <li>
+            <li id="octane-runs-list">
                 #foreach( $group in $runGroups )
                     <dl id="$group.get("id")" class="hidden">
                         <dt>
@@ -38,18 +41,19 @@
                 #end
             </li>
             <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ALM Octane</a>
+            <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in ALM Octane</a>
 
         </ul>
     </div>
-    <div id="octane-no-data-section" class="hidden">
+    <div id="octane-no-data-section" class="hidden" style="margin-top: 10px">
         <div>No corresponding entity is mapped in ALM Octane.</div>
     </div>
-    <div id="octane-no-valid-configuration-section" class="hidden">
+    <div id="octane-no-valid-configuration-section" class="hidden" style="margin-top: 10px">
         <div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
     </div>
     <div id="octane-debug-section" class="hidden">
     </div>
-    <div id="octane-loading-section">
+    <div id="octane-loading-section" style="margin-top: 10px">
         <p>Loading ...<span class="aui-icon aui-icon-wait" style="margin-left: 10px;"></span></p>
     </div>
 </div>

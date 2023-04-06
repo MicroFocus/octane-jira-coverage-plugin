@@ -44,6 +44,7 @@ public class TestCoverageWebPanel extends AbstractJiraContextProvider {
         Issue issue = (Issue) jiraHelper.getContextParams().get("issue");
         contextMap.put("issueKey", issue.getKey());
         contextMap.put("issueId", issue.getId());
+        contextMap.put("issueType", issue.getIssueType().getName());
         contextMap.put("projectKey", jiraHelper.getProject().getKey());
 
         return contextMap;

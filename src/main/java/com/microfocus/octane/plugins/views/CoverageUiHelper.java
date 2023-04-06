@@ -168,7 +168,7 @@ public class CoverageUiHelper {
         }
     }
 
-    private static OctaneEntity tryFindMatchingOctaneEntity(SpaceConfiguration sc, WorkspaceConfiguration wc, QueryPhrase jiraKeyCondition, AggregateDescriptor aggrDescriptor) {
+    private static OctaneEntity tryFindMatchingOctaneEntity(SpaceConfiguration sc, String workspaceId, QueryPhrase jiraKeyCondition, AggregateDescriptor aggrDescriptor) {
         try {
             List<QueryPhrase> conditions = new ArrayList<>();
             conditions.add(jiraKeyCondition);
@@ -183,7 +183,7 @@ public class CoverageUiHelper {
                 conditions.add(subTypeCondition);
             }
 
-            OctaneEntityCollection entities = OctaneRestManager.getEntitiesByCondition(sc, wc.getWorkspaceId(), aggrDescriptor.getCollectionName(), conditions, fields, null, null);
+            OctaneEntityCollection entities = OctaneRestManager.getEntitiesByCondition(sc, Long.parseLong(workspaceId), aggrDescriptor.getCollectionName(), conditions, fields, null, null);
             if (!entities.getData().isEmpty()) {
                 return entities.getData().get(0);
             }
@@ -196,7 +196,7 @@ public class CoverageUiHelper {
         return null;
     }
 
-    public static Map<String, Object> buildCoverageContextMap(String projectKey, String issueKey, String issueId) {
+    public static Map<String, Object> buildCoverageContextMap(String projectKey, String issueKey, String issueId, String workspaceConfigId, String workspaceId) {
 
         Map<String, Object> contextMap = new HashMap<>();
         Map<String, Object> debugMap = new HashMap<>();
@@ -206,7 +206,7 @@ public class CoverageUiHelper {
         long startTotal = System.currentTimeMillis();
         //if (configurationManager.isValidConfiguration()) {
         try {
-            WorkspaceConfiguration workspaceConfig = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream().filter(wc -> wc.getJiraProjects().contains(projectKey)).findFirst().get();
+            WorkspaceConfiguration workspaceConfig = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfigId, true).get();
             SpaceConfiguration spaceConfiguration = ConfigurationManager.getInstance().getSpaceConfigurationById(workspaceConfig.getSpaceConfigurationId(), true).get();
 
             QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(issueKey, issueId.toString()));
@@ -221,7 +221,7 @@ public class CoverageUiHelper {
                 }
                 if (isMatch) {
                     long start = System.currentTimeMillis();
-                    OctaneEntity octaneEntity = tryFindMatchingOctaneEntity(spaceConfiguration, workspaceConfig, jiraKeyCondition, aggDescriptor);
+                    OctaneEntity octaneEntity = tryFindMatchingOctaneEntity(spaceConfiguration, workspaceId, jiraKeyCondition, aggDescriptor);
                     long duration = System.currentTimeMillis() - start;
                     perfMap.put(aggDescriptor.getCollectionName(), duration);
                     if (octaneEntity != null) {

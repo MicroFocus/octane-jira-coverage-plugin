@@ -38,6 +38,7 @@
     <context>jira.view.issue</context>
     <context>atl.general</context>
     <dependency>com.atlassian.auiplugin:ajs</dependency>
+    <dependency>com.atlassian.auiplugin:aui-select2</dependency>
     <!--<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>-->
     <resource type="download" name="jira-octane-plugin-coverage-panel.js" location="/js/jira-octane-plugin-coverage-panel.js"/>
     <resource type="download" name="jira-octane-plugin-coverage-panel.css" location="/css/jira-octane-plugin-coverage-panel.css"/>

@@ -3,7 +3,7 @@ jQuery(document).ready(function() {
 });
 
 function load(counter) {
-    var panelEl = jQuery("#octane-coverage-panel:not(.resolved)");
+    const panelEl = jQuery("#octane-coverage-panel:not(.resolved)");
 
     if (!panelEl.length) {
         if(counter < 30) {
@@ -13,21 +13,72 @@ function load(counter) {
         }
     } else {
         console.log("[coverage] octane plugin load successfully " + counter);
-        var projectKey = panelEl.attr("project-key");
-        var issueKey = panelEl.attr("issue-key");
-        var issueId = panelEl.attr("issue-id");
+        const projectKey = panelEl.attr("project-key");
+        const issueKey = panelEl.attr("issue-key");
+        const issueId = panelEl.attr("issue-id");
+        const issueType = panelEl.attr("issue-type");
+
         jQuery("#octane-coverage-panel").addClass("resolved");
-        loadOctaneCoverageWidget(projectKey, issueKey, issueId);
+
+        loadOctaneWorkspaces(projectKey, issueKey, issueId, issueType);
     }
 }
 
-function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
-    var query = "&project-key=" + projectKey + "&issue-key=" + issueKey + "&issue-id=" + issueId;
-    var url = AJS.contextPath() + "/rest/octane-coverage/1.0/coverage?" + query;
+function loadOctaneWorkspaces(projectKey, issueKey, issueId, issueType) {
+    return new Promise(function (resolve, reject) {
+        const query = "project-key=" + projectKey + "&issue-type=" + issueType;
+        const dataUrl = AJS.contextPath() + "/rest/octane-coverage/1.0/coverage/octane-workspaces?" + query;
+
+        jQuery.ajax({url: dataUrl, type: "GET", dataType: "json", contentType: "application/json"})
+            .done(function (data) {
+                configureOctaneWorkspacesDropdown(data, projectKey, issueKey, issueId);
+            })
+            .fail(function (request) {
+                const msg = !request.responseText ? request.statusText : request.responseText;
+                reject(Error(msg));
+            });
+    });
+}
+
+function configureOctaneWorkspacesDropdown(data, projectKey, issueKey, issueId) {
+    const dropdownWorkspaces = _.sortBy(data, 'workspaceName').map(function (item) {
+        return {
+            "id": item.id, //workspaceConfigId
+            "workspaceId": item.workspaceId,
+            "text": item.workspaceName + " (" + item.spaceConfigName + ")"
+        }
+    })
+
+    AJS.$("#coverageWorkspaceSelector").auiSelect2({
+        multiple: false,
+        data: dropdownWorkspaces,
+    });
+
+    //ON-CHANGE
+    jQuery("#coverageWorkspaceSelector").change(async function () {
+        const selectedWorkspace = jQuery("#coverageWorkspaceSelector").auiSelect2('data');
+
+        hideAllSectionsAndShowLoading();
+        disableCoverageWorkspaceSelector();
+
+        await loadOctaneCoverageWidget(projectKey, issueKey, issueId, selectedWorkspace.id, selectedWorkspace.workspaceId)
+
+        if (dropdownWorkspaces.length !== 1) {
+            enableCoverageWorkspaceSelector();
+        }
+    });
+
+    const selectedWorkspace = dropdownWorkspaces[0];
+    jQuery("#coverageWorkspaceSelector").val(selectedWorkspace.id).trigger('change');
+}
+
+async function loadOctaneCoverageWidget(projectKey, issueKey, issueId, workspaceConfigId, workspaceId) {
+    const query = "&project-key=" + projectKey + "&issue-key=" + issueKey + "&issue-id=" + issueId + "&workspace-config-id=" + workspaceConfigId + "&workspace-id=" + workspaceId;
+    const url = AJS.contextPath() + "/rest/octane-coverage/1.0/coverage?" + query;
     console.log("[coverage] loadOctaneCoverageWidget :" + url);
 
     //do request
-    jQuery.ajax({
+    await jQuery.ajax({
         url: url, type: "GET", dataType: "json", contentType: "application/json"
     }).done(function (data) {
         var panelEl = jQuery("#octane-coverage-panel");
@@ -57,15 +108,22 @@ function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
             jQuery("#octane-entity-name").attr("title", octaneEntity.name);
 
             //totals
-            var totalRuns = data.totalExecutedTestsCount ? data.totalExecutedTestsCount + " last runs:" : "No last runs";
+            let totalRuns;
+            if (data.totalExecutedTestsCount) {
+                totalRuns = data.totalExecutedTestsCount + " last runs:";
+                jQuery("#octane-runs-list").removeClass("hidden");
+            } else {
+                totalRuns = "No last runs";
+                jQuery("#octane-runs-list").addClass("hidden");
+            }
             jQuery("#octane-total-runs").text(totalRuns);
+
             if (data.totalTestsCount) {
                 jQuery("#octane-total-tests").text(data.totalTestsCount);
                 jQuery("#view-tests-in-alm").attr("href", octaneEntity.testTabUrl);
-
+                showViewTestsInAlmSpan();
             } else {
-                jQuery("#view-tests-in-alm").text("No linked tests in ALM Octane");
-                jQuery("#view-tests-in-alm").attr("style", "pointer-events: none; cursor: default; color: gray; font-weight: bold");
+                showNoLinkedTestsInAlmSpan();
             }
 
             //coverage groups
@@ -89,4 +147,35 @@ function loadOctaneCoverageWidget(projectKey, issueKey, issueId) {
     }).fail(function (request, status, error) {
         console.log(request.responseText);
     });
+}
+
+function hideAllSectionsAndShowLoading() {
+    jQuery("#octane-entity-section").addClass('hidden');
+    jQuery("#octane-no-data-section").addClass('hidden');
+    jQuery("#octane-no-valid-configuration-section").addClass('hidden');
+    jQuery("#octane-loading-section").removeClass('hidden');
+}
+
+function disableCoverageWorkspaceSelector() {
+    jQuery('#coverageWorkspaceSelector').prop('disabled', true);
+
+    jQuery('#coverageWorkspaceSelector').addClass('pointer-events--none');
+    jQuery('#coverageWorkspaceSelector').addClass('opacity--50');
+}
+
+function enableCoverageWorkspaceSelector() {
+    jQuery('#coverageWorkspaceSelector').prop('disabled', false);
+
+    jQuery('#coverageWorkspaceSelector').removeClass('pointer-events--none');
+    jQuery('#coverageWorkspaceSelector').removeClass('opacity--50');
+}
+
+function showViewTestsInAlmSpan() {
+    jQuery('#view-tests-in-alm').removeClass('hidden');
+    jQuery('#no-linked-tests-in-alm').addClass('hidden');
+}
+
+function showNoLinkedTestsInAlmSpan() {
+    jQuery('#view-tests-in-alm').addClass('hidden');
+    jQuery('#no-linked-tests-in-alm').removeClass('hidden');
 }

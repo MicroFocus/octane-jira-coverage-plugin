@@ -23,8 +23,9 @@ import com.atlassian.plugin.web.Condition;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class TestCoverageWebPanelCondition implements Condition {
 
@@ -42,15 +43,16 @@ public class TestCoverageWebPanelCondition implements Condition {
     @Override
     public boolean shouldDisplay(Map<String, Object> map) {
         Project project = (Project) map.get("project");
-        Optional<WorkspaceConfiguration> workspaceConfigOpt = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
-                .filter(wc -> wc.getJiraProjects().contains(project.getKey())).findFirst();
-        if (workspaceConfigOpt.isPresent()) {
+
+        List<WorkspaceConfiguration> workspaceConfigs = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
+                .filter(wc -> wc.getJiraProjects().contains(project.getKey()))
+                .collect(Collectors.toList());
+
+        if (!workspaceConfigs.isEmpty()) {
             Issue issue = (Issue) map.get("issue");
             String issueType = issue.getIssueType().getName();
-            WorkspaceConfiguration workspaceConfig = workspaceConfigOpt.get();
-            if (workspaceConfig.getJiraIssueTypes().isEmpty() || workspaceConfig.getJiraIssueTypes().contains(issueType)) {
-                return true;
-            }
+
+            return workspaceConfigs.stream().anyMatch(workspaceConfig -> workspaceConfig.getJiraIssueTypes().contains(issueType));
         }
 
         return false;
