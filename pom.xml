@@ -252,7 +252,7 @@
                 <configuration>
                     <productVersion>${jira.version}</productVersion>
                     <productDataVersion>${jira.version}</productDataVersion>
-                    <jvmArgs>-Xms512m -Xmx4096m -XX:+ExplicitGCInvokesConcurrent</jvmArgs>
+                    <jvmArgs>-Xms2048m -Xmx4096m -XX:+ExplicitGCInvokesConcurrent</jvmArgs>
                     <extractDependencies>false</extractDependencies>
                     <applications>
                         <application>
