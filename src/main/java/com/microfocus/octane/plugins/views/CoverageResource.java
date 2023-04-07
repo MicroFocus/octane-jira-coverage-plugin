@@ -71,7 +71,7 @@ public class CoverageResource {
         }
 
         List<WorkspaceConfiguration> workspaceConfigsForProjectKey = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
-                .filter(wsc -> workspaceConfigContainsProjectAndIssueType(projectKey, issueType, wsc))
+                .filter(wsc -> doesWorkspaceConfigContainsProjectAndIssueType(projectKey, issueType, wsc))
                 .collect(Collectors.toList());
 
         List<Map<String, String>> wsConfigsMap = workspaceConfigsForProjectKey.stream()
@@ -81,7 +81,7 @@ public class CoverageResource {
         return Response.ok(wsConfigsMap).build();
     }
 
-    private static boolean workspaceConfigContainsProjectAndIssueType(String projectKey, String issueType, WorkspaceConfiguration workspaceConfiguration) {
+    private static boolean doesWorkspaceConfigContainsProjectAndIssueType(String projectKey, String issueType, WorkspaceConfiguration workspaceConfiguration) {
         return workspaceConfiguration.getJiraProjects().stream().anyMatch(jiraProject -> jiraProject.equals(projectKey))
                 && workspaceConfiguration.getJiraIssueTypes().stream().anyMatch(jiraIssueType -> jiraIssueType.equals(issueType));
     }
