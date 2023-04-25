@@ -13,9 +13,11 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.configuration;
+package com.microfocus.octane.plugins.configuration.v2;
 
 
+import com.microfocus.octane.plugins.configuration.LocationParts;
+import com.microfocus.octane.plugins.configuration.OctaneRestManager;
 import com.microfocus.octane.plugins.rest.RestConnector;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -23,7 +25,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SpaceConfiguration {
+public class SpaceConfigurationV2 {
 
     private String name;
     private String location;
@@ -39,7 +41,7 @@ public class SpaceConfiguration {
         return location;
     }
 
-    public SpaceConfiguration setLocation(String location) {
+    public SpaceConfigurationV2 setLocation(String location) {
         this.location = location;
         return this;
     }
@@ -48,7 +50,7 @@ public class SpaceConfiguration {
         return clientSecret;
     }
 
-    public SpaceConfiguration setClientSecret(String clientSecret) {
+    public SpaceConfigurationV2 setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
         return this;
     }
@@ -57,7 +59,7 @@ public class SpaceConfiguration {
         return clientId;
     }
 
-    public SpaceConfiguration setClientId(String clientId) {
+    public SpaceConfigurationV2 setClientId(String clientId) {
         this.clientId = clientId;
         return this;
     }
@@ -66,7 +68,7 @@ public class SpaceConfiguration {
         return id;
     }
 
-    public SpaceConfiguration setId(String id) {
+    public SpaceConfigurationV2 setId(String id) {
         this.id = id;
         return this;
     }
@@ -75,7 +77,7 @@ public class SpaceConfiguration {
         return locationParts;
     }
 
-    public SpaceConfiguration setLocationParts(LocationParts locationParts) {
+    public SpaceConfigurationV2 setLocationParts(LocationParts locationParts) {
         this.locationParts = locationParts;
         return this;
     }
@@ -84,7 +86,7 @@ public class SpaceConfiguration {
         return name;
     }
 
-    public SpaceConfiguration setName(String name) {
+    public SpaceConfigurationV2 setName(String name) {
         this.name = name;
         return this;
     }
@@ -105,7 +107,7 @@ public class SpaceConfiguration {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SpaceConfiguration that = (SpaceConfiguration) o;
+        SpaceConfigurationV2 that = (SpaceConfigurationV2) o;
         return location.equals(that.location) && locationParts.equals(that.locationParts) && id.equals(that.id);
     }
 

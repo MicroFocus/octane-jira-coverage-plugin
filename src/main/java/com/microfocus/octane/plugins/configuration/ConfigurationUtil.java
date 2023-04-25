@@ -5,6 +5,10 @@ import com.atlassian.jira.issue.IssueConstant;
 import com.microfocus.octane.plugins.admin.KeyValueItem;
 import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
 import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.configuration.v3.JiraConfigGrouping;
+import com.microfocus.octane.plugins.configuration.v3.OctaneConfigGrouping;
+import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.RestStatusException;
@@ -20,9 +24,12 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
+
 public class ConfigurationUtil {
 
     private static final String PARAM_SHARED_SPACE = "p"; // NON-NLS
+    private static final String OCTANE_WS_SEPARATOR = " - ";
 
     public static LocationParts parseUiLocation(String uiLocation) {
         String errorMsg = null;
@@ -130,13 +137,13 @@ public class ConfigurationUtil {
         }
 
         //convert
-        SpaceConfiguration sc = new SpaceConfiguration()
-                .setId(sco.getId())
-                .setName(sco.getName().trim())
-                .setLocation(sco.getLocation().trim())
-                .setLocationParts(locationParts)
-                .setClientId(sco.getClientId().trim())
-                .setClientSecret(clientSecret);
+        SpaceConfiguration sc = new SpaceConfiguration(
+                sco.getName().trim(),
+                sco.getLocation().trim(),
+                locationParts,
+                sco.getClientId().trim(),
+                clientSecret,
+                sco.getId());
 
         return sc;
     }
@@ -154,7 +161,6 @@ public class ConfigurationUtil {
     public static void doSpaceConfigurationUniquenessValidation(SpaceConfiguration spaceConfiguration, boolean isConnectionTested) {
         try {
             validateSpaceNameIsUnique(spaceConfiguration);
-            validateSpaceUrlIsUnique(spaceConfiguration);
         } catch (IllegalArgumentException ex) {
             if (isConnectionTested) {
                 throw new IllegalArgumentException("Connection is successful, but the following problem was found: " + ex.getMessage());
@@ -176,34 +182,22 @@ public class ConfigurationUtil {
         }
     }
 
-    private static void validateSpaceUrlIsUnique(SpaceConfiguration spaceConfiguration) {
-        Optional<SpaceConfiguration> opt = ConfigurationManager.getInstance().getSpaceConfigurations().stream()
-                .filter((s -> !s.getId().equals(spaceConfiguration.getId()) //don't check the same configuration
-                        && s.getLocationParts().getKey().equals(spaceConfiguration.getLocationParts().getKey())))
-                .findFirst();
-
-        if (opt.isPresent()) {
-            String msg = String.format("Space location is already defined in space configuration '%s'", opt.get().getName());
-            throw new IllegalArgumentException(msg);
-        }
-    }
-
     public static void validateSpaceConfigurationConnectivity(SpaceConfiguration spaceConfig) {
         try {
             OctaneRestManager.getWorkspaces(spaceConfig);
         } catch (RestStatusException e) {
-            String msg = parseExceptionMessage(e,spaceConfig);
+            String msg = parseExceptionMessage(e, spaceConfig);
             throw new IllegalArgumentException(msg);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Test connection failed: " + e.getMessage()); //rethrow IllegalArgumentExceptions, so it can catch the Runtime ones
-        } catch (RuntimeException e){
+        } catch (RuntimeException e) {
             throw new IllegalArgumentException("Test connection failed: Error occurred while trying to test the connection. Please check the host.");
         } catch (Exception e) {
             throw new IllegalArgumentException("Test connection failed: " + e.getMessage());
         }
     }
 
-    public static String parseExceptionMessage(RestStatusException e, SpaceConfiguration spaceConfig){
+    public static String parseExceptionMessage(RestStatusException e, SpaceConfiguration spaceConfig) {
         if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
             return String.format("Space id '%d' does not exist", spaceConfig.getLocationParts().getSpaceId());
         } else {
@@ -212,23 +206,22 @@ public class ConfigurationUtil {
     }
 
     public static WorkspaceConfigurationOutgoing convertToOutgoing(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name) {
-        WorkspaceConfigurationOutgoing result = new WorkspaceConfigurationOutgoing()
-                .setId(wc.getId())
-                .setSpaceConfigId(wc.getSpaceConfigurationId())
-                .setSpaceConfigName(spaceConfigurationId2Name.get(wc.getSpaceConfigurationId()))
-                .setWorkspaceId(Long.toString(wc.getWorkspaceId()))
-                .setWorkspaceName(wc.getWorkspaceName())
-                .setOctaneUdf(wc.getOctaneUdf())
-                .setOctaneEntityTypes(wc.getOctaneEntityTypes().stream()
+        return new WorkspaceConfigurationOutgoing(
+                wc.getId(),
+                wc.getSpaceConfigurationId(),
+                spaceConfigurationId2Name.get(wc.getSpaceConfigurationId()),
+                wc.getOctaneConfigGrouping().getOctaneWorkspaces().stream()
+                        .map(ows -> ows.getId() + " - " + ows.getName())
+                        .collect(Collectors.toSet()),
+                wc.getOctaneConfigGrouping().getOctaneUdf(),
+                wc.getOctaneConfigGrouping().getOctaneEntityTypes().stream()
                         .map(typeName -> {
                             OctaneEntityTypeDescriptor desc = OctaneEntityTypeManager.getByTypeName(typeName);
                             return desc == null ? "" : desc.getLabel();
                         })
-                        .collect(Collectors.toSet()))
-                .setJiraIssueTypes(wc.getJiraIssueTypes())
-                .setJiraProjects(wc.getJiraProjects());
-
-        return result;
+                        .collect(Collectors.toSet()),
+                wc.getJiraConfigGrouping().getIssueTypes(),
+                wc.getJiraConfigGrouping().getProjectNames());
     }
 
     public static WorkspaceConfiguration validateRequiredAndConvertToInternal(WorkspaceConfigurationOutgoing wco, boolean isNew) {
@@ -238,12 +231,8 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Space configuration is missing.");
         }
 
-        if (StringUtils.isEmpty(wco.getWorkspaceId())) {
-            throw new IllegalArgumentException("Workspace id is missing.");
-        }
-
-        if (StringUtils.isEmpty(wco.getWorkspaceName())) {
-            throw new IllegalArgumentException("Workspace name is missing.");
+        if (isEmpty(wco.getWorkspaces())) {
+            throw new IllegalArgumentException("Workspaces field is empty.");
         }
 
         if (wco.getOctaneEntityTypes().size() == 0) {
@@ -255,17 +244,30 @@ public class ConfigurationUtil {
         if (wco.getJiraIssueTypes().size() == 0) {
             throw new IllegalArgumentException("Jira issue types are missing");
         }
-        long workspaceId;
+
         try {
-            workspaceId = Long.parseLong(wco.getWorkspaceId());
+            wco.getWorkspaces().stream()
+                    .map(ws -> Long.parseLong(ws.split(OCTANE_WS_SEPARATOR)[0]));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Workspace Id must be numeric value");
+            throw new IllegalArgumentException("Workspace Ids must be numeric value");
         }
+
+        Set<OctaneWorkspace> octaneWorkspaces = wco.getWorkspaces().stream()
+                .map(ws -> {
+                    String[] wsParts = ws.split(OCTANE_WS_SEPARATOR, 2);
+
+                    if (wsParts.length < 2) {
+                        throw new IllegalArgumentException("Workspaces must have the following pattern: 'workspaceId - workspaceName'");
+                    }
+
+                    return new OctaneWorkspace(wsParts[0], wsParts[1]);
+                })
+                .collect(Collectors.toSet());
 
         SpaceConfiguration spaceConfiguration = ConfigurationManager.getInstance().getSpaceConfigurationById(wco.getSpaceConfigId(), true).get();
         validateSpaceConfigurationConnectivity(spaceConfiguration);
 
-        validateWorkspace(wco);
+        validateWorkspaces(octaneWorkspaces, wco.getSpaceConfigId());
         validateJiraIssuesList(wco);
         validateJiraProjectKey(wco);
 
@@ -280,31 +282,48 @@ public class ConfigurationUtil {
             }
         }
 
-        WorkspaceConfiguration wc = new WorkspaceConfiguration()
-                .setId(wco.getId())
-                .setSpaceConfigurationId(wco.getSpaceConfigId())
-                .setWorkspaceId(workspaceId)
-                .setWorkspaceName(wco.getWorkspaceName())
-                .setOctaneUdf(wco.getOctaneUdf())
-                .setOctaneEntityTypes(wco.getOctaneEntityTypes().stream()
-                        .map(label -> OctaneEntityTypeManager.getByLabel(label).getTypeName())
-                        .collect(Collectors.toSet()))
-                .setJiraIssueTypes(new HashSet<>(wco.getJiraIssueTypes()))
-                .setJiraProjects(new HashSet<>(wco.getJiraProjects()));
+        List<Set<String>> octaneWorkspacesEntityTypes = octaneWorkspaces.stream()
+                .map(OctaneWorkspace::getId)
+                .map(wsId -> ConfigurationUtil.getOctaneTypesList(wco.getSpaceConfigId(), wco.getOctaneUdf(), wsId))
+                .collect(Collectors.toList());
 
-        return wc;
+        Set<String> commonOctaneEntityTypes = retainAllSets(octaneWorkspacesEntityTypes);
+
+        return new WorkspaceConfiguration(
+                wco.getId(),
+                wco.getSpaceConfigId(),
+                new OctaneConfigGrouping(octaneWorkspaces,
+                        wco.getOctaneUdf(),
+                        commonOctaneEntityTypes.stream()
+                                .map(entityType -> OctaneEntityTypeManager.getByLabel(entityType).getTypeName())
+                                .collect(Collectors.toSet())
+                ),
+                new JiraConfigGrouping(wco.getJiraProjects(), wco.getJiraIssueTypes())
+        );
     }
 
-    private static void validateWorkspace(WorkspaceConfigurationOutgoing wco) {
-        Collection<KeyValueItem> validWorkspaces = getValidWorkspaces(wco.getSpaceConfigId(), wco.getId());
+    public static Set<String> retainAllSets(List<Set<String>> octaneWorkspacesEntityTypes) {
+        Set<String> commonOctaneEntityTypes = octaneWorkspacesEntityTypes.get(0);
 
-        if (validWorkspaces.stream().noneMatch(e -> e.getText().equals(wco.getWorkspaceName()))) {
-            throw new IllegalArgumentException("Workspace is not valid. Either it doesn't exist, it is not reachable/active or it is already used in another workspace configuration");
+        octaneWorkspacesEntityTypes.forEach(commonOctaneEntityTypes::retainAll);
+
+        return commonOctaneEntityTypes;
+    }
+
+    private static void validateWorkspaces(Set<OctaneWorkspace> octaneWorkspaces, String spaceConfigId) {
+        List<String> validWorkspaceIds = getValidWorkspaces(spaceConfigId).stream()
+                .map(KeyValueItem::getId)
+                .collect(Collectors.toList());
+
+        if (!validWorkspaceIds.containsAll(octaneWorkspaces.stream()
+                .map(OctaneWorkspace::getId)
+                .collect(Collectors.toList()))) {
+            throw new IllegalArgumentException("One of the selected workspace is not valid. Either it doesn't exist, it is not reachable/active");
         }
     }
 
     private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
-        Collection<KeyValueItem> validProjects = getValidProjects(wco.getId());
+        Collection<KeyValueItem> validProjects = getValidProjectsMap();
 
         if (!validProjects.stream()
                 .map(KeyValueItem::getId)
@@ -324,11 +343,10 @@ public class ConfigurationUtil {
         }
     }
 
-    public static Set<String> getOctaneTypesList(WorkspaceConfigurationOutgoing wco, String workspaceId) {
-        String spaceConfigurationId = wco.getSpaceConfigId();
-        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigurationId, true).get();
+    public static Set<String> getOctaneTypesList(String spaceConfigId, String octaneUdf, String workspaceId) {
+        SpaceConfiguration sc = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
 
-        List<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, Long.parseLong(workspaceId), wco.getOctaneUdf());
+        Set<String> octaneEntityTypes = OctaneRestManager.getSupportedOctaneTypes(sc, Long.parseLong(workspaceId), octaneUdf);
 
         return octaneEntityTypes
                 .stream()
@@ -336,9 +354,8 @@ public class ConfigurationUtil {
                 .collect(Collectors.toSet());
     }
 
-    public static Collection<KeyValueItem> getValidWorkspaces(String spaceConfigId, String workspaceConfId) {
+    public static Collection<KeyValueItem> getValidWorkspaces(String spaceConfigId) {
         SpaceConfiguration spConfig = ConfigurationManager.getInstance().getSpaceConfigurationById(spaceConfigId, true).get();
-        Set<Long> usedWorkspaces = getAlreadyUsedWorkspaces(workspaceConfId, spaceConfigId);
 
         List<QueryPhrase> conditions = Arrays.asList(new LogicalQueryPhrase("activity_level", 0));//only active workspaces
 
@@ -360,48 +377,15 @@ public class ConfigurationUtil {
 
         return workspaces.getData()
                 .stream()
-                .filter(e -> !usedWorkspaces.contains(Long.valueOf(e.getId())))
                 .map(e -> new KeyValueItem(e.getId(), e.getName()))
                 .collect(Collectors.toList());
     }
 
-    private static Set<Long> getAlreadyUsedWorkspaces(String currentWsConfigId, String spaceConfigId) {
-        Set<Long> usedWorkspaces = spaceConfigId == null ? new HashSet<>() : ConfigurationManager.getInstance().getWorkspaceConfigurations()
-                .stream()
-                .filter(w -> w.getSpaceConfigurationId().equals(spaceConfigId))
-                .map(WorkspaceConfiguration::getWorkspaceId)
-                .collect(Collectors.toSet());
-
-        if (currentWsConfigId != null) {
-            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(currentWsConfigId, true).get();
-            usedWorkspaces.remove(wc.getWorkspaceId());
-        }
-
-        return usedWorkspaces;
-    }
-
-
-    public static Collection<KeyValueItem> getValidProjects(String workspaceConfId) {
-        Set<String> usedJiraProjects = ConfigurationUtil.getAlreadyUsedJiraProjects(workspaceConfId);
-
+    public static Collection<KeyValueItem> getValidProjectsMap() {
         return ComponentAccessor.getProjectManager().getProjectObjects()
                 .stream()
-                .filter(e -> !usedJiraProjects.contains(e.getKey()))
-                .map(e -> new KeyValueItem(e.getKey(), e.getKey())).sorted(Comparator.comparing(KeyValueItem::getId))
+                .map(e -> new KeyValueItem(e.getKey(), e.getKey()))
+                .sorted(Comparator.comparing(KeyValueItem::getId))
                 .collect(Collectors.toList());
-    }
-
-    private static Set<String> getAlreadyUsedJiraProjects(String workspaceConfId) {
-        Set<String> usedJiraProjects = ConfigurationManager.getInstance().getWorkspaceConfigurations()
-                .stream()
-                .flatMap(c -> c.getJiraProjects().stream())
-                .collect(Collectors.toSet());
-
-        if (workspaceConfId != null) {
-            WorkspaceConfiguration wc = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfId, true).get();
-            usedJiraProjects.removeAll(wc.getJiraProjects());
-        }
-
-        return usedJiraProjects;
     }
 }

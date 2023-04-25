@@ -89,7 +89,7 @@
                 });
 
                 var deleteButtonEl = $('<button class=\"aui-button aui-button-link\">Delete</button>').click(function (e) {
-                    var msg = "Are you sure you want to delete '" + instance.model.attributes.workspaceName + "' workspace configuration?";
+                    var msg = "Are you sure you want to delete this workspace configuration?";
                     removeRow(msg, octanePluginContext.workspaceTable, instance);
                 });
 
@@ -105,8 +105,7 @@
             },
             columns: [
                 {id: "spaceConfigName", header: "Space Name"},
-                {id: "workspaceId", header: "Workspace Id"},
-                {id: "workspaceName", header: "Workspace Name"},
+                {id: "workspaces", header: "Workspaces", readView: ListReadView},
                 {id: "octaneUdf", header: "Mapping Field"},
                 {id: "octaneEntityTypes", header: "Entity Types", readView: ListReadView},
                 {id: "jiraIssueTypes", header: "Jira Issue Types", readView: ListReadView},
@@ -226,13 +225,13 @@
             $("#octane-possible-fields-tooltip").toggleClass("aui-iconfont-info-filled", filled);
         }
 
-        var workspaceId = $("#workspaceSelector").val();
+        var workspaceIds = $("#workspaceSelector").val();
         var spaceConfId = octanePluginContext.workspaceDialogData.spaceConf.id;
         octanePluginContext.workspaceDialogData.possibleJiraField = null;
-        if (workspaceId) {
+        if (workspaceIds) {
             setTitle("Searching...", false);
             $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/possible-jira-fields?space-config-id=" + spaceConfId + "&workspace-id=" + workspaceId,
+                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/possible-jira-fields?space-config-id=" + spaceConfId + "&workspace-ids=" + workspaceIds,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json"
@@ -473,17 +472,17 @@
 
         function reloadOctaneSupportedEntityTypes() {
             $("#octaneEntityTypes").val("");//clear before in order to avoid saving not-consistent data
-            var workspaceId = $("#workspaceSelector").val();
+            var workspaceIds = $("#workspaceSelector").val();
             var spaceConfId = octanePluginContext.workspaceDialogData.spaceConf.id;
             var udfName = $("#octaneUdf").attr("value");
-            if (workspaceId && udfName) {
+            if (workspaceIds && udfName) {
                 $("#refreshOctaneEntityTypesSpinner").spin();
             } else {
-                return;//don't load entity type if missing one of the workspaceId or udfName
+                return;//don't load entity type if missing one of the workspaceIds or udfName
             }
 
             $.ajax({
-                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/supported-octane-types?space-config-id=" + spaceConfId + "&workspace-id=" + workspaceId + "&udf-name=" + udfName,
+                url: octanePluginContext.octaneAdminBaseUrl + "workspaces/supported-octane-types?space-config-id=" + spaceConfId + "&workspace-ids=" + workspaceIds + "&udf-name=" + udfName,
                 type: "GET",
                 dataType: "json",
                 contentType: "application/json"
@@ -502,14 +501,21 @@
         $("#spaceConfSelector").change(function () {
             $("#workspaceSelector").val(null);
             fillWorkspaceDialogData($("#spaceConfSelector").select2('data').id);
+
+            hideElement("#workspaceConfigDialogError", true);
         });
 
         $("#workspaceSelector").change(function () {
             reloadPossibleJiraFields();
+
+            hideElement("#octaneUdfNote", $("#workspaceSelector").select2('data').length < 2);
+            hideElement("#workspaceConfigDialogError", true);
         });
 
         $("#workspace-dialog .affect-octane-entity-types").change(function () {
             reloadOctaneSupportedEntityTypes();
+
+            hideElement("#workspaceConfigDialogError", true);
         });
 
         $("#workspace-dialog .required").change(function () {
@@ -518,11 +524,19 @@
 
         $("#jiraIssueTypesSelector").change(function () {
             clearErrorMessageIfDataIsPresent($("#jiraIssueTypesSelector").select2('data'), "#jiraIssueTypesSelectorError");
+
+            hideElement("#workspaceConfigDialogError", true);
         });
 
         $("#refreshOctaneEntityTypesButton").click(function (e) {
             e.preventDefault();
             reloadOctaneSupportedEntityTypes();
+
+            hideElement("#workspaceConfigDialogError", true);
+        });
+
+        $("#jiraProjectsSelector").change(function () {
+            hideElement("#workspaceConfigDialogError", true);
         });
 
         //fixing focus on search control
@@ -543,7 +557,7 @@
             }
 
             //validate
-            var validationFailed = !validateMissingRequiredField($("#workspaceSelector").select2('data'), "#workspaceSelectorError");
+            var validationFailed = !validateMissingRequiredField($("#workspaceSelector").select2('data').length, "#workspaceSelectorError");
             validationFailed = !validateMissingRequiredField($("#spaceConfSelector").select2('data'), "#spaceConfSelectorError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#octaneUdf").attr("value"), "#octaneUdfError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#octaneEntityTypes").val(), "#octaneEntityTypesError") || validationFailed;
@@ -584,8 +598,7 @@
 
             //build model
             var modelForUpdate = {
-                workspaceId: $("#workspaceSelector").select2('data').id,
-                workspaceName: $("#workspaceSelector").select2('data').text,
+                workspaces: $("#workspaceSelector").select2('data').map(ws => ws.id + " - " + ws.text),
                 spaceConfigId: $("#spaceConfSelector").select2('data').id,
                 spaceConfigName: $("#spaceConfSelector").select2('data').text,
                 octaneUdf: $("#octaneUdf").attr("value"),
@@ -597,6 +610,11 @@
                     return item.id;
                 }),//convert selected objects to array of strings
             };
+
+            if (!validateExistingWorkspaceModel(modelForUpdate, rowModel)) {
+                enableWorkspaceSubmitButton(true);
+                return;
+            }
 
             var url = octanePluginContext.workspaceTable.options.resources.all;
             var requestType = "POST";
@@ -617,8 +635,7 @@
             }).done(function (data) {
                 if (editMode) {
                     var rowModel = octanePluginContext.workspaceCurrentRow.model.attributes;
-                    rowModel.workspaceId = data.workspaceId;
-                    rowModel.workspaceName = data.workspaceName;
+                    rowModel.workspaces = data.workspaces;
                     rowModel.spaceConfigId = data.spaceConfigId;
                     rowModel.spaceConfigName = data.spaceConfigName;
                     rowModel.octaneUdf = data.octaneUdf;
@@ -685,7 +702,7 @@
                     octanePluginContext.workspaceDialogData = data;
                     octanePluginContext.workspaceDialogData.spaceConf = {id: spaceConfId};
 
-                    fillCombo("#workspaceSelector", false, octanePluginContext.workspaceDialogData.workspaces);
+                    fillCombo("#workspaceSelector", true, octanePluginContext.workspaceDialogData.workspaces);
                     fillCombo("#jiraIssueTypesSelector", true, octanePluginContext.workspaceDialogData.issueTypes);
                     fillCombo("#jiraProjectsSelector", true, octanePluginContext.workspaceDialogData.projects);
 
@@ -729,10 +746,12 @@
         var editMode = !!octanePluginContext.workspaceCurrentRow;
         var rowModel = editMode ? octanePluginContext.workspaceCurrentRow.model.attributes : null;
         $("#workspace-dialog .error").text('');//clear previous error messages
+        hideElement("#workspaceConfigDialogError", true);
+        hideElement("#octaneUdfNote", true);
         removeSpaceTooltipInWorkspaceDialog();
 
         disableControlsInWorkspaceDialog(true);
-        fillEmptyCombo('#workspaceSelector', false);
+        fillEmptyCombo('#workspaceSelector', true);
         fillEmptyCombo('#jiraProjectsSelector', true);
         fillEmptyCombo('#jiraIssueTypesSelector', true);
 
@@ -740,7 +759,7 @@
             $("#spaceConfSelector").val(rowModel.spaceConfigId);
             $('#spaceConfSelector').prop('disabled', true); //disable workspace selector
 
-            $('#workspaceSelector').val([rowModel.workspaceId]);
+            $('#workspaceSelector').val(extractWorkspaceIdsFromWorkspaceField(rowModel.workspaces));
             $('#workspaceSelector').prop('disabled', true); //disable workspace selector
 
             $("#octaneUdf").val(rowModel.octaneUdf);//populate default value for new item
@@ -864,6 +883,58 @@
         } else {
             $(errorSelector).text('');
             return true;
+        }
+    }
+
+    function validateExistingWorkspaceModel(modelForUpdate, rowModel) {
+        let existingWorkspaceModels = octanePluginContext.workspaceTable.getModels().models;
+
+        if (rowModel) {
+            existingWorkspaceModels = existingWorkspaceModels.filter(wsModel => wsModel.id !== rowModel.id);
+        }
+
+        let isValid = !existingWorkspaceModels.some(function (wsModel) {
+            return areArraysElementsIdentical(modelForUpdate.workspaces, wsModel.attributes.workspaces) &&
+                modelForUpdate.spaceConfigId === wsModel.attributes.spaceConfigId &&
+                modelForUpdate.octaneUdf === wsModel.attributes.octaneUdf &&
+                areArraysElementsIdentical(modelForUpdate.octaneEntityTypes, wsModel.attributes.octaneEntityTypes) &&
+                areArraysElementsIdentical(modelForUpdate.jiraIssueTypes, wsModel.attributes.jiraIssueTypes) &&
+                areArraysElementsIdentical(modelForUpdate.jiraProjects, wsModel.attributes.jiraProjects);
+        });
+
+        hideElement("#workspaceConfigDialogError", isValid);
+
+        return isValid;
+    }
+
+    function extractWorkspaceIdsFromWorkspaceField(workspaces) {
+        return workspaces.map(ws => {
+            return ws.split(" - ", 2)[0];
+        }).filter(ws => ws);
+    }
+
+    function areArraysElementsIdentical(_arr1, _arr2) {
+        if (!Array.isArray(_arr1) || !Array.isArray(_arr2) || _arr1.length !== _arr2.length) {
+            return false;
+        }
+
+        const arr1 = _arr1.concat().sort();
+        const arr2 = _arr2.concat().sort();
+
+        for (let i = 0; i < arr1.length; i++) {
+            if (arr1[i] !== arr2[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function hideElement(element, condition) {
+        if (condition) {
+            $(element).addClass("hidden");
+        } else {
+            $(element).removeClass("hidden");
         }
     }
 

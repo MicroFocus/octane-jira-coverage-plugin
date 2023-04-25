@@ -19,8 +19,8 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import com.microfocus.octane.plugins.configuration.OctaneRestManager;
-import com.microfocus.octane.plugins.configuration.SpaceConfiguration;
-import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.AggregateDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
@@ -209,12 +209,12 @@ public class CoverageUiHelper {
             WorkspaceConfiguration workspaceConfig = ConfigurationManager.getInstance().getWorkspaceConfigurationById(workspaceConfigId, true).get();
             SpaceConfiguration spaceConfiguration = ConfigurationManager.getInstance().getSpaceConfigurationById(workspaceConfig.getSpaceConfigurationId(), true).get();
 
-            QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneUdf(), Arrays.asList(issueKey, issueId.toString()));
+            QueryPhrase jiraKeyCondition = new InQueryPhrase(workspaceConfig.getOctaneConfigGrouping().getOctaneUdf(), Arrays.asList(issueKey, issueId.toString()));
             boolean found = false;
             for (AggregateDescriptor aggDescriptor : OctaneEntityTypeManager.getAggregators()) {
                 boolean isMatch = false;
                 for (OctaneEntityTypeDescriptor entityDesc : aggDescriptor.getDescriptors()) {
-                    if (workspaceConfig.getOctaneEntityTypes().contains(entityDesc.getTypeName())) {
+                    if (workspaceConfig.getOctaneConfigGrouping().getOctaneEntityTypes().contains(entityDesc.getTypeName())) {
                         isMatch = true;
                         break;
                     }
@@ -230,18 +230,18 @@ public class CoverageUiHelper {
 
                         //totalTestsCount
                         start = System.currentTimeMillis();
-                        long totalTestCount = OctaneRestManager.getTotalTestsCount(spaceConfiguration, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId());
+                        long totalTestCount = OctaneRestManager.getTotalTestsCount(spaceConfiguration, octaneEntity, typeDescriptor, Long.parseLong(workspaceId));
                         perfMap.put("totalTestsCount", System.currentTimeMillis() - start);
 
                         //coverage
                         start = System.currentTimeMillis();
-                        List<MapBasedObject> coverageGroups = getCoverageGroups(spaceConfiguration, octaneEntity, typeDescriptor, workspaceConfig.getWorkspaceId(), aggDescriptor.isSubtyped());
+                        List<MapBasedObject> coverageGroups = getCoverageGroups(spaceConfiguration, octaneEntity, typeDescriptor, Long.parseLong(workspaceId), aggDescriptor.isSubtyped());
                         perfMap.put("coverage", System.currentTimeMillis() - start);
 
                         //fill context map
                         octaneEntity.put("url", typeDescriptor.buildEntityUrl(spaceConfiguration.getLocationParts().getBaseUrl(),
-                                spaceConfiguration.getLocationParts().getSpaceId(), workspaceConfig.getWorkspaceId(), octaneEntity.getId()));
-                        octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(spaceConfiguration, workspaceConfig.getWorkspaceId(),
+                                spaceConfiguration.getLocationParts().getSpaceId(), Long.parseLong(workspaceId), octaneEntity.getId()));
+                        octaneEntity.put("testTabUrl", typeDescriptor.buildTestTabEntityUrl(spaceConfiguration, Long.parseLong(workspaceId),
                                 octaneEntity.getId(), (String) octaneEntity.getFields().get("subtype")));
                         octaneEntity.put("typeAbbreviation", typeDescriptor.getTypeAbbreviation());
                         octaneEntity.put("typeColor", typeDescriptor.getTypeColor());

@@ -20,7 +20,8 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
-import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,27 +76,34 @@ public class CoverageResource {
                 .filter(wsc -> doesWorkspaceConfigContainsProjectAndIssueType(projectKey, issueType, wsc))
                 .collect(Collectors.toList());
 
-        List<Map<String, String>> wsConfigsMap = workspaceConfigsForProjectKey.stream()
-                .map(this::toMap)
+        List<Map<String, Object>> wsConfigsMap = workspaceConfigsForProjectKey.stream()
+                .map(this::toResponseMap)
                 .collect(Collectors.toList());
 
-        return Response.ok(wsConfigsMap).build();
+        ObjectMapper om = new ObjectMapper();
+        try {
+            return Response.ok(om.writeValueAsString(wsConfigsMap)).build();
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            return Response.serverError().entity("Could not deserialize workspace configs map: " + e.getMessage()).build();
+        }
     }
 
     private static boolean doesWorkspaceConfigContainsProjectAndIssueType(String projectKey, String issueType, WorkspaceConfiguration workspaceConfiguration) {
-        return workspaceConfiguration.getJiraProjects().stream().anyMatch(jiraProject -> jiraProject.equals(projectKey))
-                && workspaceConfiguration.getJiraIssueTypes().stream().anyMatch(jiraIssueType -> jiraIssueType.equals(issueType));
+        return workspaceConfiguration.getJiraConfigGrouping().getProjectNames().stream()
+                .anyMatch(jiraProjectName -> jiraProjectName.equals(projectKey))
+                && workspaceConfiguration.getJiraConfigGrouping().getIssueTypes().stream()
+                .anyMatch(jiraIssueType -> jiraIssueType.equals(issueType));
     }
 
-    private Map<String, String> toMap(WorkspaceConfiguration wsc) {
-        Map<String, String> map = new HashMap<>();
+    private Map<String, Object> toResponseMap(WorkspaceConfiguration wsc) {
+        Map<String, Object> responseMap = new HashMap<>();
 
-        map.put("id", wsc.getId());
-        map.put("spaceConfigId", wsc.getSpaceConfigurationId());
-        map.put("spaceConfigName", ConfigurationManager.getInstance().getSpaceConfigurationById(wsc.getSpaceConfigurationId(), false).get().getName());
-        map.put("workspaceId", String.valueOf(wsc.getWorkspaceId()));
-        map.put("workspaceName", wsc.getWorkspaceName());
+        responseMap.put("id", wsc.getId());
+        responseMap.put("spaceConfigId", wsc.getSpaceConfigurationId());
+        responseMap.put("spaceConfigName", ConfigurationManager.getInstance().getSpaceConfigurationById(wsc.getSpaceConfigurationId(), false).get().getName());
+        responseMap.put("octaneWorkspaces", wsc.getOctaneConfigGrouping().getOctaneWorkspaces());
 
-        return map;
+        return responseMap;
     }
 }

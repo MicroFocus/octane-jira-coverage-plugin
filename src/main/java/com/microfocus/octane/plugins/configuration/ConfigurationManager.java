@@ -20,16 +20,24 @@ import com.atlassian.jira.cluster.ClusterMessagingService;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
-import com.microfocus.octane.plugins.configuration.v1.ConfigurationCollectionV1;
-import com.microfocus.octane.plugins.configuration.v1.SpaceConfigurationV1;
+import com.microfocus.octane.plugins.configuration.v2.upgrader.UpgraderFromV1ToV2;
+import com.microfocus.octane.plugins.configuration.v3.ConfigurationCollection;
+import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.upgrader.UpgraderFromV2ToV3;
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.microfocus.octane.plugins.configuration.ConfigurationManagerConstants.*;
 
 
 public class ConfigurationManager implements ClusterMessageConsumer {
@@ -39,15 +47,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     private PluginSettingsFactory pluginSettingsFactory;
     private ClusterMessagingService clusterMessagingService;
 
-    private static final String PLUGIN_PREFIX = "com.microfocus.octane.plugins.";
-    private static final String CONFIGURATION_KEY_V1 = PLUGIN_PREFIX + "configuration";
-    private static final String CONFIGURATION_KEY_V2 = PLUGIN_PREFIX + "configuration_v2";
-    private static final String USER_FILTER_KEY = PLUGIN_PREFIX + "user.filter";
-    private static final String MESSAGE_CHANNEL = "OCTANE_CONFIG";
-
     private ConfigurationCollection configuration;
-
-    private static int CONFIGURATION_HARD_LIMIT_SIZE = 99000;
 
     //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
 
@@ -182,10 +182,12 @@ public class ConfigurationManager implements ClusterMessageConsumer {
 
     private ConfigurationCollection loadConfiguration() {
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        String confStr = ((String) settings.get(CONFIGURATION_KEY_V2));
+        String confStr = readConfigurationForDataKey(settings, CONFIGURATION_KEY_V3);
         log.info("Configuration is loading...");
-        if (confStr == null) {//create initial configuration
-            configuration = tryConvertFromPreviousVersion(settings);
+
+        if (confStr == null) {
+            configuration = upgradeConfigurationFromPreviousVersions(settings);
+
             if (configuration == null) {
                 configuration = new ConfigurationCollection();
             }
@@ -204,53 +206,27 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         return configuration;
     }
 
-    private ConfigurationCollection tryConvertFromPreviousVersion(PluginSettings settings) {
-        //try read previous version configuration
-        ConfigurationCollection tempConfiguration = null;
-        String confStrV1 = ((String) settings.get(CONFIGURATION_KEY_V1));
-        if (confStrV1 != null) {
-            try {
-                ConfigurationCollectionV1 configurationV1 = JsonHelper.deserialize(confStrV1, ConfigurationCollectionV1.class);
-                if (configurationV1.getSpaces().size() == 1) {
-                    SpaceConfigurationV1 scV1 = configurationV1.getSpaces().get(0);
-                    LocationParts locationParts = ConfigurationUtil.parseUiLocation(scV1.getLocation());
+    private ConfigurationCollection upgradeConfigurationFromPreviousVersions(PluginSettings settings) {
+        String confStrV2 = readConfigurationForDataKey(settings, CONFIGURATION_KEY_V2);
 
-                    SpaceConfiguration sc = new SpaceConfiguration()
-                            .setId(UUID.randomUUID().toString())
-                            .setClientId(scV1.getClientId())
-                            .setClientSecret(scV1.getClientSecret())
-                            .setLocation(scV1.getLocation())
-                            .setLocationParts(locationParts)
-                            .setName(locationParts.getKey());
+        if (confStrV2 != null) {
+            return UpgraderFromV2ToV3.upgradeConfigurationFromV2ToV3(confStrV2);
+        } else {
+            String confStrV1 = readConfigurationForDataKey(settings, CONFIGURATION_KEY_V1);
 
-                    List<WorkspaceConfiguration> wcList = new ArrayList<>();
-                    configurationV1.getSpaces().get(0).getWorkspaces().forEach(w -> {
-                        WorkspaceConfiguration wc = new WorkspaceConfiguration()
-                                .setId(UUID.randomUUID().toString())
-                                .setJiraIssueTypes(w.getJiraIssueTypes())
-                                .setJiraProjects(w.getJiraProjects())
-                                .setOctaneEntityTypes(w.getOctaneEntityTypes())
-                                .setOctaneUdf(w.getOctaneUdf())
-                                .setWorkspaceId(w.getWorkspaceId())
-                                .setWorkspaceName(w.getWorkspaceName())
-                                .setSpaceConfigurationId(sc.getId());
-                        wcList.add(wc);
-                    });
+            if (confStrV1 != null) {
+                UpgraderFromV1ToV2.upgradeConfigurationFromV1ToV2(settings, pluginSettingsFactory);
 
-                    tempConfiguration = new ConfigurationCollection();
-                    tempConfiguration.setSpaces(new ArrayList<>(Arrays.asList(sc)));
-                    tempConfiguration.setWorkspaces(wcList);
-
-                    if (configurationV1.getProxy() != null) {
-                        tempConfiguration.setProxy(configurationV1.getProxy());
-                        tempConfiguration.getProxy().setNonProxyHost("");
-                    }
-                }
-            } catch (Exception e) {
-                log.error("Failed tryConvertFromPreviousVersion : " + e.getMessage());
+                String newConfStrV2 = readConfigurationForDataKey(settings, CONFIGURATION_KEY_V2);
+                return UpgraderFromV2ToV3.upgradeConfigurationFromV2ToV3(newConfStrV2);
             }
         }
-        return tempConfiguration;
+
+        return null;
+    }
+
+    private String readConfigurationForDataKey(PluginSettings settings, String key) {
+        return ((String) settings.get(key));
     }
 
     private void persistConfiguration() {
@@ -260,7 +236,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         }
 
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        settings.put(CONFIGURATION_KEY_V2, confStr);
+        settings.put(CONFIGURATION_KEY_V3, confStr);
         sendConfigurationChangedMessage();
     }
 
@@ -312,7 +288,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     public String getUserFilter(String username) {
         if (username2Filter == null) {
             PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-            String str = ((String) settings.get(USER_FILTER_KEY));
+            String str = readConfigurationForDataKey(settings, USER_FILTER_KEY);
             if (str == null) {
                 username2Filter = new HashMap<>();
             } else {

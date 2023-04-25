@@ -12,7 +12,7 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-package com.microfocus.octane.plugins.configuration;
+package com.microfocus.octane.plugins.configuration.v3;
 
 import com.microfocus.octane.plugins.rest.ProxyConfiguration;
 
@@ -24,6 +24,9 @@ public class ConfigurationCollection {
     private List<SpaceConfiguration> spaces = new ArrayList<>();
     private List<WorkspaceConfiguration> workspaces = new ArrayList<>();
     private ProxyConfiguration proxy;
+
+    public ConfigurationCollection() {
+    }
 
     public List<SpaceConfiguration> getSpaces() {
         return spaces;

@@ -16,6 +16,7 @@
 package com.microfocus.octane.plugins.descriptors;
 
 import com.microfocus.octane.plugins.configuration.*;
+import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
 
 public class OctaneEntityTypeDescriptor {
 

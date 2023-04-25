@@ -19,6 +19,7 @@ import com.atlassian.util.concurrent.NotNull;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
 import com.microfocus.octane.plugins.rest.OctaneEntityParser;
@@ -190,7 +191,7 @@ public class OctaneRestManager {
         return col;
     }
 
-    public static List<String> getSupportedOctaneTypes(SpaceConfiguration sc, long workspaceId, String udfName) {
+    public static Set<String> getSupportedOctaneTypes(SpaceConfiguration sc, long workspaceId, String udfName) {
         long spaceId = sc.getLocationParts().getSpaceId();
         String entityCollectionUrl = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, spaceId, workspaceId, "metadata/fields");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
@@ -206,7 +207,7 @@ public class OctaneRestManager {
 
         String entitiesCollectionStr = sc.getRestConnector().httpGet(entityCollectionUrl, Arrays.asList(queryCondition), headers).getResponseData();
         OctaneEntityCollection fields = OctaneEntityParser.parseCollection(entitiesCollectionStr);
-        List<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toList());
+        Set<String> foundTypes = fields.getData().stream().map(e -> e.getString("entity_name")).collect(Collectors.toSet());
 
         return foundTypes;
     }

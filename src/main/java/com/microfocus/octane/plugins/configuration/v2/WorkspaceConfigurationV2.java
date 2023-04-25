@@ -13,21 +13,23 @@
  *     limitations under the License.
  */
 
-package com.microfocus.octane.plugins.configuration;
+package com.microfocus.octane.plugins.configuration.v2;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class WorkspaceConfiguration {
+public class WorkspaceConfigurationV2 {
 
     private String id;
     private String spaceConfigurationId;
+
     private long workspaceId;
-    private String workspaceName;
+    private String workspaceName; //OctaneWorkspace
     private String octaneUdf;
-    private Set<String> octaneEntityTypes;
+    private Set<String> octaneEntityTypes; //OctaneConfiguration
+
     private Set<String> jiraIssueTypes;
     private Set<String> jiraProjects;
 
@@ -35,7 +37,7 @@ public class WorkspaceConfiguration {
         return workspaceId;
     }
 
-    public WorkspaceConfiguration setWorkspaceId(long workspaceId) {
+    public WorkspaceConfigurationV2 setWorkspaceId(long workspaceId) {
         this.workspaceId = workspaceId;
         return this;
     }
@@ -44,7 +46,7 @@ public class WorkspaceConfiguration {
         return octaneUdf;
     }
 
-    public WorkspaceConfiguration setOctaneUdf(String octaneUdf) {
+    public WorkspaceConfigurationV2 setOctaneUdf(String octaneUdf) {
         this.octaneUdf = octaneUdf;
         return this;
     }
@@ -53,7 +55,7 @@ public class WorkspaceConfiguration {
         return octaneEntityTypes;
     }
 
-    public WorkspaceConfiguration setOctaneEntityTypes(Set<String> octaneEntityTypes) {
+    public WorkspaceConfigurationV2 setOctaneEntityTypes(Set<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
         return this;
     }
@@ -62,7 +64,7 @@ public class WorkspaceConfiguration {
         return jiraIssueTypes;
     }
 
-    public WorkspaceConfiguration setJiraIssueTypes(Set<String> jiraIssueTypes) {
+    public WorkspaceConfigurationV2 setJiraIssueTypes(Set<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
         return this;
     }
@@ -71,7 +73,7 @@ public class WorkspaceConfiguration {
         return jiraProjects;
     }
 
-    public WorkspaceConfiguration setJiraProjects(Set<String> jiraProjects) {
+    public WorkspaceConfigurationV2 setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
         return this;
     }
@@ -80,7 +82,7 @@ public class WorkspaceConfiguration {
         return workspaceName;
     }
 
-    public WorkspaceConfiguration setWorkspaceName(String workspaceName) {
+    public WorkspaceConfigurationV2 setWorkspaceName(String workspaceName) {
         this.workspaceName = workspaceName;
         return this;
     }
@@ -89,7 +91,7 @@ public class WorkspaceConfiguration {
         return id;
     }
 
-    public WorkspaceConfiguration setId(String id) {
+    public WorkspaceConfigurationV2 setId(String id) {
         this.id = id;
         return this;
     }
@@ -98,7 +100,7 @@ public class WorkspaceConfiguration {
         return spaceConfigurationId;
     }
 
-    public WorkspaceConfiguration setSpaceConfigurationId(String spaceConfigurationId) {
+    public WorkspaceConfigurationV2 setSpaceConfigurationId(String spaceConfigurationId) {
         this.spaceConfigurationId = spaceConfigurationId;
         return this;
     }

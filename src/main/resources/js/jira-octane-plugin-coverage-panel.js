@@ -41,13 +41,16 @@ function loadOctaneWorkspaces(projectKey, issueKey, issueId, issueType) {
 }
 
 function configureOctaneWorkspacesDropdown(data, projectKey, issueKey, issueId) {
-    const dropdownWorkspaces = _.sortBy(data, 'workspaceName').map(function (item) {
-        return {
-            "id": item.id, //workspaceConfigId
-            "workspaceId": item.workspaceId,
-            "text": item.workspaceName + " (" + item.spaceConfigName + ")"
-        }
-    })
+    let dropdownWorkspaces = _.sortBy(data.flatMap(wsConfig => {
+        return wsConfig.octaneWorkspaces.map(octaneWs => {
+            return {
+                "id": wsConfig.id + "-" + octaneWs.id,
+                "wsConfigId": wsConfig.id,
+                "workspaceId": octaneWs.id,
+                "text": octaneWs.name + " (" + wsConfig.spaceConfigName + ")"
+            }
+        })
+    }), 'text');
 
     AJS.$("#coverageWorkspaceSelector").auiSelect2({
         multiple: false,
@@ -61,7 +64,7 @@ function configureOctaneWorkspacesDropdown(data, projectKey, issueKey, issueId) 
         hideAllSectionsAndShowLoading();
         disableCoverageWorkspaceSelector();
 
-        await loadOctaneCoverageWidget(projectKey, issueKey, issueId, selectedWorkspace.id, selectedWorkspace.workspaceId)
+        await loadOctaneCoverageWidget(projectKey, issueKey, issueId, selectedWorkspace.wsConfigId, selectedWorkspace.workspaceId)
 
         if (dropdownWorkspaces.length !== 1) {
             enableCoverageWorkspaceSelector();
