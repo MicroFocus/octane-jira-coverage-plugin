@@ -34,11 +34,8 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "spaceConfigName")
     private String spaceConfigName;
 
-    @XmlElement(name = "workspaceId")
-    private String workspaceId;
-
-    @XmlElement(name = "workspaceName")
-    private String workspaceName;
+    @XmlElement(name = "workspaces")
+    private Set<String> workspaces;
 
     @XmlElement(name = "octaneUdf")
     private String octaneUdf;
@@ -52,49 +49,58 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "jiraProjects")
     private Set<String> jiraProjects;
 
+    public WorkspaceConfigurationOutgoing() {
+    }
+
+    public WorkspaceConfigurationOutgoing(String id, String spaceConfigId, String spaceConfigName, Set<String> workspaces, String octaneUdf, Set<String> octaneEntityTypes, Set<String> jiraIssueTypes, Set<String> jiraProjects) {
+        this.id = id;
+        this.spaceConfigId = spaceConfigId;
+        this.spaceConfigName = spaceConfigName;
+        this.workspaces = workspaces;
+        this.octaneUdf = octaneUdf;
+        this.octaneEntityTypes = octaneEntityTypes;
+        this.jiraIssueTypes = jiraIssueTypes;
+        this.jiraProjects = jiraProjects;
+    }
+
     public String getId() {
         return id;
     }
 
-    public WorkspaceConfigurationOutgoing setId(String id) {
+    public void setId(String id) {
         this.id = id;
-        return this;
     }
 
     public String getOctaneUdf() {
         return octaneUdf;
     }
 
-    public WorkspaceConfigurationOutgoing setOctaneUdf(String octaneUdf) {
+    public void setOctaneUdf(String octaneUdf) {
         this.octaneUdf = octaneUdf;
-        return this;
     }
 
     public Set<String> getOctaneEntityTypes() {
         return octaneEntityTypes;
     }
 
-    public WorkspaceConfigurationOutgoing setOctaneEntityTypes(Set<String> octaneEntityTypes) {
+    public void setOctaneEntityTypes(Set<String> octaneEntityTypes) {
         this.octaneEntityTypes = octaneEntityTypes;
-        return this;
     }
 
     public Set<String> getJiraIssueTypes() {
         return jiraIssueTypes;
     }
 
-    public WorkspaceConfigurationOutgoing setJiraIssueTypes(Set<String> jiraIssueTypes) {
+    public void setJiraIssueTypes(Set<String> jiraIssueTypes) {
         this.jiraIssueTypes = jiraIssueTypes;
-        return this;
     }
 
     public Set<String> getJiraProjects() {
         return jiraProjects;
     }
 
-    public WorkspaceConfigurationOutgoing setJiraProjects(Set<String> jiraProjects) {
+    public void setJiraProjects(Set<String> jiraProjects) {
         this.jiraProjects = jiraProjects;
-        return this;
     }
 
 
@@ -102,35 +108,23 @@ public class WorkspaceConfigurationOutgoing {
         return spaceConfigId;
     }
 
-    public WorkspaceConfigurationOutgoing setSpaceConfigId(String spaceConfigId) {
+    public void setSpaceConfigId(String spaceConfigId) {
         this.spaceConfigId = spaceConfigId;
-        return this;
     }
 
     public String getSpaceConfigName() {
         return spaceConfigName;
     }
 
-    public WorkspaceConfigurationOutgoing setSpaceConfigName(String spaceConfigName) {
+    public void setSpaceConfigName(String spaceConfigName) {
         this.spaceConfigName = spaceConfigName;
-        return this;
     }
 
-    public String getWorkspaceId() {
-        return workspaceId;
+    public Set<String> getWorkspaces() {
+        return workspaces;
     }
 
-    public WorkspaceConfigurationOutgoing setWorkspaceId(String workspaceId) {
-        this.workspaceId = workspaceId;
-        return this;
-    }
-
-    public String getWorkspaceName() {
-        return workspaceName;
-    }
-
-    public WorkspaceConfigurationOutgoing setWorkspaceName(String workspaceName) {
-        this.workspaceName = workspaceName;
-        return this;
+    public void setWorkspaces(Set<String> workspaces) {
+        this.workspaces = workspaces;
     }
 }

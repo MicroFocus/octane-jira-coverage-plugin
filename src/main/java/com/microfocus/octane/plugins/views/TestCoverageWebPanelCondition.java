@@ -21,7 +21,7 @@ import com.atlassian.jira.project.Project;
 import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.web.Condition;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
-import com.microfocus.octane.plugins.configuration.WorkspaceConfiguration;
+import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -45,14 +45,14 @@ public class TestCoverageWebPanelCondition implements Condition {
         Project project = (Project) map.get("project");
 
         List<WorkspaceConfiguration> workspaceConfigs = ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
-                .filter(wc -> wc.getJiraProjects().contains(project.getKey()))
+                .filter(wc -> wc.getJiraConfigGrouping().getProjectNames().contains(project.getKey()))
                 .collect(Collectors.toList());
 
         if (!workspaceConfigs.isEmpty()) {
             Issue issue = (Issue) map.get("issue");
             String issueType = issue.getIssueType().getName();
 
-            return workspaceConfigs.stream().anyMatch(workspaceConfig -> workspaceConfig.getJiraIssueTypes().contains(issueType));
+            return workspaceConfigs.stream().anyMatch(workspaceConfig -> workspaceConfig.getJiraConfigGrouping().getIssueTypes().contains(issueType));
         }
 
         return false;
