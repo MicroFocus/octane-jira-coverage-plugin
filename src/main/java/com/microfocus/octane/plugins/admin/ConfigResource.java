@@ -368,11 +368,11 @@ public class ConfigResource {
         }
     }
 
-    private boolean doesWorkspaceConfigurationAlreadyExists(WorkspaceConfiguration wc) {
+    private boolean doesWorkspaceConfigurationAlreadyExists(WorkspaceConfiguration wscToBeAdded) {
         return ConfigurationManager.getInstance().getWorkspaceConfigurations().stream()
-                .anyMatch(wsc -> wsc.getSpaceConfigurationId().equals(wc.getSpaceConfigurationId()) &&
-                        wsc.getOctaneConfigGrouping().equals(wc.getOctaneConfigGrouping()) &&
-                        wsc.getJiraConfigGrouping().equals(wc.getJiraConfigGrouping()));
+                .anyMatch(wsc -> wsc.getSpaceConfigurationId().equals(wscToBeAdded.getSpaceConfigurationId()) &&
+                        wsc.getOctaneConfigGrouping().equals(wscToBeAdded.getOctaneConfigGrouping()) &&
+                        wsc.getJiraConfigGrouping().equals(wscToBeAdded.getJiraConfigGrouping()));
     }
 
     private boolean hasPermission() {
