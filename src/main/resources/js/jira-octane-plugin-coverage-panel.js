@@ -101,6 +101,8 @@ async function loadOctaneCoverageWidget(projectKey, issueKey, issueId, workspace
         } else if (data.status === 'hasData') {
             jQuery("#octane-entity-section").removeClass("hidden");
 
+            clearOctaneRunGroups();
+
             //entity settings
             var octaneEntity = data.octaneEntity.fields;
             jQuery("#octane-entity-icon-text").text(octaneEntity.typeAbbreviation);
@@ -114,10 +116,8 @@ async function loadOctaneCoverageWidget(projectKey, issueKey, issueId, workspace
             let totalRuns;
             if (data.totalExecutedTestsCount) {
                 totalRuns = data.totalExecutedTestsCount + " last runs:";
-                jQuery("#octane-runs-list").removeClass("hidden");
             } else {
                 totalRuns = "No last runs";
-                jQuery("#octane-runs-list").addClass("hidden");
             }
             jQuery("#octane-total-runs").text(totalRuns);
 
@@ -150,6 +150,14 @@ async function loadOctaneCoverageWidget(projectKey, issueKey, issueId, workspace
     }).fail(function (request, status, error) {
         console.log(request.responseText);
     });
+}
+
+function clearOctaneRunGroups() {
+    const octaneRunsListEl = document.getElementById("octane-runs-list");
+    for (const child of octaneRunsListEl.children) {
+        var idSelector = "#" + child.id;
+        jQuery(idSelector).addClass("hidden");
+    }
 }
 
 function hideAllSectionsAndShowLoading() {
