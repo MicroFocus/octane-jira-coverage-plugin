@@ -22,24 +22,24 @@
 
             <!-- test status-->
             <div id="octane-total-runs"></div>
-            <li id="octane-runs-list">
-                #foreach( $group in $runGroups )
-                    <dl id="$group.get("id")" class="hidden">
-                        <dt>
-                            <div>
-                                <div class="octane-test-status-icon" style="background:$group.get("color")"/>
-                                <div class="octane-test-status-name" >$group.get("name")</div>
-                            </div>
-                        </dt>
-                        <dd>
-                            <span class="octane-test-status-count"></span>
-                            <span class="octane-test-status-percentage"></span>
-                        </dd>
+                <li id="octane-runs-list">
+                    #foreach( $group in $runGroups )
+                        <dl id="$group.get("id")" class="hidden">
+                            <dt>
+                                <div>
+                                    <div class="octane-test-status-icon" style="background:$group.get("color")"/>
+                                    <div class="octane-test-status-name" >$group.get("name")</div>
+                                </div>
+                            </dt>
+                            <dd>
+                                <span class="octane-test-status-count"></span>
+                                <span class="octane-test-status-percentage"></span>
+                            </dd>
 
-                    </dl>
+                        </dl>
 
-                #end
-            </li>
+                    #end
+                </li>
             <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ALM Octane</a>
             <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in ALM Octane</a>
 
