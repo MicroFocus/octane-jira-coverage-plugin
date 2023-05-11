@@ -25,13 +25,13 @@
                 <li id="octane-runs-list">
                     #foreach( $group in $runGroups )
                         <dl id="$group.get("id")" class="hidden">
-                            <dt>
+                            <dt style="display: inline-block">
                                 <div>
                                     <div class="octane-test-status-icon" style="background:$group.get("color")"/>
                                     <div class="octane-test-status-name" >$group.get("name")</div>
                                 </div>
                             </dt>
-                            <dd>
+                            <dd style="display: inline-block">
                                 <span class="octane-test-status-count"></span>
                                 <span class="octane-test-status-percentage"></span>
                             </dd>
