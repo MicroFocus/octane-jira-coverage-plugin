@@ -546,6 +546,13 @@
             $("div.select2-search input.select2-input").attr("tabindex", "0").focus();
         });
 
+        // hacky solution to show tooltip on select2 items (used because there is no API on select2 or auiselect2 for this)
+        $("#workspaceSelector").on("select2-open", function() {
+            Array.from(jQuery("#select2-drop")[0].children[0].children).forEach(function (item) {
+                item.title = item.firstChild.lastChild.textContent;
+            });
+        })
+
         AJS.$("#show-workspace-dialog").click(function (e) {
             e.preventDefault();
             showWorkspaceDialog();
