@@ -71,6 +71,13 @@ function configureOctaneWorkspacesDropdown(data, projectKey, issueKey, issueId) 
         }
     });
 
+    // hacky solution to show tooltip on select2 items (used because there is no API on select2 or auiselect2 for this)
+    AJS.$('#coverageWorkspaceSelector').on('select2-open', function () {
+        Array.from(jQuery("#select2-drop")[0].children[1].children).forEach(function (item) {
+            item.title = item.firstChild.lastChild.textContent;
+        });
+    });
+
     const selectedWorkspace = dropdownWorkspaces[0];
     jQuery("#coverageWorkspaceSelector").val(selectedWorkspace.id).trigger('change');
 }
