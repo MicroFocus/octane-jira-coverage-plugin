@@ -63,6 +63,7 @@ function configureOctaneWorkspacesDropdown(data, projectKey, issueKey, issueId) 
 
         hideAllSectionsAndShowLoading();
         disableCoverageWorkspaceSelector();
+        modifyCoverageWorkspaceSelectorTooltip(selectedWorkspace.text);
 
         await loadOctaneCoverageWidget(projectKey, issueKey, issueId, selectedWorkspace.wsConfigId, selectedWorkspace.workspaceId)
 
@@ -175,25 +176,30 @@ function hideAllSectionsAndShowLoading() {
 }
 
 function disableCoverageWorkspaceSelector() {
-    jQuery('#coverageWorkspaceSelector').prop('disabled', true);
+    jQuery("#coverageWorkspaceSelector").prop("disabled", true);
 
-    jQuery('#coverageWorkspaceSelector').addClass('pointer-events--none');
-    jQuery('#coverageWorkspaceSelector').addClass('opacity--50');
+    jQuery("#coverageWorkspaceSelector").addClass("pointer-events--none");
+    jQuery("#coverageWorkspaceSelector").addClass("opacity--50");
+}
+
+function modifyCoverageWorkspaceSelectorTooltip(tooltipText) {
+    jQuery("#s2id_coverageWorkspaceSelector").attr("title",  tooltipText);
+    jQuery("#octane-workspaces-dropdown-section").attr("title",  tooltipText);
 }
 
 function enableCoverageWorkspaceSelector() {
-    jQuery('#coverageWorkspaceSelector').prop('disabled', false);
+    jQuery("#coverageWorkspaceSelector").prop("disabled", false);
 
-    jQuery('#coverageWorkspaceSelector').removeClass('pointer-events--none');
-    jQuery('#coverageWorkspaceSelector').removeClass('opacity--50');
+    jQuery("#coverageWorkspaceSelector").removeClass("pointer-events--none");
+    jQuery("#coverageWorkspaceSelector").removeClass("opacity--50");
 }
 
 function showViewTestsInAlmSpan() {
-    jQuery('#view-tests-in-alm').removeClass('hidden');
-    jQuery('#no-linked-tests-in-alm').addClass('hidden');
+    jQuery("#view-tests-in-alm").removeClass("hidden");
+    jQuery("#no-linked-tests-in-alm").addClass("hidden");
 }
 
 function showNoLinkedTestsInAlmSpan() {
-    jQuery('#view-tests-in-alm').addClass('hidden');
-    jQuery('#no-linked-tests-in-alm').removeClass('hidden');
+    jQuery("#view-tests-in-alm").addClass("hidden");
+    jQuery("#no-linked-tests-in-alm").removeClass("hidden");
 }
