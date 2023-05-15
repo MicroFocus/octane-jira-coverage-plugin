@@ -228,15 +228,15 @@ public class ConfigurationUtil {
         //validation
 
         if (StringUtils.isEmpty(wco.getSpaceConfigId())) {
-            throw new IllegalArgumentException("Space configuration is missing.");
+            throw new IllegalArgumentException("Space configuration is missing");
         }
 
         if (isEmpty(wco.getWorkspaces())) {
-            throw new IllegalArgumentException("Workspaces field is empty.");
+            throw new IllegalArgumentException("Workspaces field is empty");
         }
 
         if (wco.getOctaneEntityTypes().size() == 0) {
-            throw new IllegalArgumentException("Octane entity types not found for given workspace and udf");
+            throw new IllegalArgumentException("Octane entity types list is empty");
         }
         if (wco.getJiraProjects().size() == 0) {
             throw new IllegalArgumentException("Jira projects are missing");
@@ -288,6 +288,10 @@ public class ConfigurationUtil {
                 .collect(Collectors.toList());
 
         Set<String> commonOctaneEntityTypes = retainAllSets(octaneWorkspacesEntityTypes);
+
+        if (isEmpty(commonOctaneEntityTypes)) {
+            throw new IllegalArgumentException("There are zero Octane entity types found for the given workspaces and udf");
+        }
 
         return new WorkspaceConfiguration(
                 wco.getId(),
