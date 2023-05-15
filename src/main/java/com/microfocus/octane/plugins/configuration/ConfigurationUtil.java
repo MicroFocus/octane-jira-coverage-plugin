@@ -289,6 +289,10 @@ public class ConfigurationUtil {
 
         Set<String> commonOctaneEntityTypes = retainAllSets(octaneWorkspacesEntityTypes);
 
+        if (isEmpty(commonOctaneEntityTypes)) {
+            throw new IllegalArgumentException("There are zero Octane entity types found for the given workspaces and udf");
+        }
+
         return new WorkspaceConfiguration(
                 wco.getId(),
                 wco.getSpaceConfigId(),
