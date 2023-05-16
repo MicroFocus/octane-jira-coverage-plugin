@@ -24,6 +24,7 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.isNull;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 public class ConfigurationUtil {
@@ -235,13 +236,10 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Workspaces field is empty");
         }
 
-        if (wco.getOctaneEntityTypes().size() == 0) {
-            throw new IllegalArgumentException("Octane entity types list is empty");
-        }
-        if (wco.getJiraProjects().size() == 0) {
+        if (isEmpty(wco.getJiraProjects())) {
             throw new IllegalArgumentException("Jira projects are missing");
         }
-        if (wco.getJiraIssueTypes().size() == 0) {
+        if (isEmpty(wco.getJiraIssueTypes())) {
             throw new IllegalArgumentException("Jira issue types are missing");
         }
 
@@ -291,6 +289,12 @@ public class ConfigurationUtil {
 
         if (isEmpty(commonOctaneEntityTypes)) {
             throw new IllegalArgumentException("There are zero Octane entity types found for the given workspaces and udf");
+        } else {
+            if (!isNull(wco.getOctaneEntityTypes()) && !commonOctaneEntityTypes.equals(wco.getOctaneEntityTypes())) {
+                throw new IllegalArgumentException("The Octane entity types provided does not match with the ones that are " +
+                        "found in Octane at the moment. Please review them once again and adapt the configuration properly " +
+                        "or remove the octaneEntityTypes field to autofill them with the right entity types (the ones which contains your udf)");
+            }
         }
 
         return new WorkspaceConfiguration(
