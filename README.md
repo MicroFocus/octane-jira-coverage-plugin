@@ -12,7 +12,7 @@ in the entity in ValueEdge which contains its corresponding JIRA issue key. Afte
 JIRA shows the ValueEdge test coverage and latest run statuses. For example, this is useful if you manage development
 in JIRA, and QA in ValueEdge.
 
-The plugin is for JIRA on-premises versions 7.x and 8.x.
+The plugin is for JIRA on-premises versions 8.x and 9.x.
 
 Supported ValueEdge versions: CP10 and later.
  
