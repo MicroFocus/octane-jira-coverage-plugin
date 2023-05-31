@@ -9,7 +9,7 @@
     <artifactId>jira-octane-quality-insight-plugin</artifactId>
     <version>2023.0.0</version>
     <organization>
-        <name>Micro Focus ALM Octane</name>
+        <name>Open Text ALM Octane</name>
         <url>https://www.microfocus.com/en-us/products/alm-octane/overview</url>
     </organization>
     <name>ALM Octane - Test Management for Jira</name>
