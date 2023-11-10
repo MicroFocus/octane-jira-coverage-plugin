@@ -1,20 +1,20 @@
 <html>
 <head>
-    <title>ALM Octane Configuration</title>
+    <title>ValueEdge Configuration</title>
     <meta name="decorator" content="atl.admin">
     $webResourceManager.requireResourcesForContext("jira-octane-plugin-admin-resource-context")
 </head>
 <body>
 
-<h2>ALM Octane Configuration <input type="button" class="aui-button" id="show-proxy-settings" value="Proxy Settings"></h2>
+<h2>ValueEdge Configuration <input type="button" class="aui-button" id="show-proxy-settings" value="Proxy Settings"></h2>
 
 <h3 class="formtitle">Spaces</h3>
-<p><button id="show-space-dialog" class="aui-button aui-button-link">Create</button> a new ALM Octane space configuration.</p>
+<p><button id="show-space-dialog" class="aui-button aui-button-link">Create</button> a new ValueEdge space configuration.</p>
 <table id="space-table"></table>
 </br>
 
 <h3 class="formtitle">Workspaces</h3>
-<p><button id="show-workspace-dialog" class="aui-button aui-button-link">Create</button> a new ALM Octane workspace configuration.</p>
+<p><button id="show-workspace-dialog" class="aui-button aui-button-link">Create</button> a new ValueEdge workspace configuration.</p>
 <table id="workspace-table"></table>
 
 <section id="space-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
@@ -35,7 +35,7 @@
                 <label for="location">Location<span class="aui-icon icon-required"></label>
                 <input type="text" id="location" name="location" class="text medium-long-field required">
                 <div class="error" id="locationError"></div>
-                <div class="description">Enter the URL of your ALM Octane application.
+                <div class="description">Enter the URL of your ValueEdge application.
                     <br/>For example: http://myServer.myCompany.com:8081/ui/?p=1001
                 </div>
             </div>
@@ -43,13 +43,13 @@
                 <label for="clientId">Client ID<span class="aui-icon icon-required"></label>
                 <input type="text" id="clientId" name="clientId" class="text medium-long-field required" autocomplete="off">
                 <div class="error" id="clientIdError"></div>
-                <div class="description">Client ID used for logging into the ALM Octane server</div>
+                <div class="description">Client ID used for logging into the ValueEdge server</div>
             </div>
             <div class="field-group">
                 <label for="clientSecret" >Client secret<span class="aui-icon icon-required"></label>
                 <input type="password" id="clientSecret" name="clientSecret" class="text medium-long-field required" autocomplete="off">
                 <div class="error" id="clientSecretError"></div>
-                <div class="description">Client secret used for logging into the ALM Octane server</div>
+                <div class="description">Client secret used for logging into the ValueEdge server</div>
             </div>
             <div class="field-group">
                 <div id="button-group" style="position: relative;">
@@ -92,7 +92,7 @@
                 <input type="text" id="octaneUdf" name="octaneUdf" class="text medium-long-field required affect-octane-entity-types">
                 <span id="octane-possible-fields-tooltip" class="aui-icon aui-icon-small aui-iconfont-info-circle" style="margin-left: 9px;" title=""></span>
                 <div class="error"  id="octaneUdfError"></div>
-                <div class="description">ALM Octane user-defined field for mapping Jira issues.</div>
+                <div class="description">ValueEdge user-defined field for mapping Jira issues.</div>
                 <div id="octaneUdfNote" class="description hidden">Note: Please use the same user-defined field for all selected workspaces.</div>
             </div>
             <div class="field-group">
@@ -101,13 +101,13 @@
                 <span id="refreshOctaneEntityTypesSpinner"></span>
                 <button id="refreshOctaneEntityTypesButton" class="aui-button aui-button-subtle" resolved=""><span class="aui-icon aui-icon-small aui-iconfont-refresh"></span></button>
                 <div class="error"  id="octaneEntityTypesError"></div>
-                <div class="description">ALM Octane entity types that have the 'Mapping field' defined.</div>
+                <div class="description">ValueEdge entity types that have the 'Mapping field' defined.</div>
             </div>
             <div class="field-group">
                 <label for="jiraProjectsSelector">Jira project keys<span class="aui-icon icon-required">(required)</span></label>
                 <input type='hidden' name='jiraProjectsSelector' id='jiraProjectsSelector' class="text medium-long-field required"/>
                 <div class="error"  id="jiraProjectsSelectorError"></div>
-                <div class="description">Supported Jira projects. Each Jira project can be selected for one ALM Octane workspace only.</div>
+                <div class="description">Supported Jira projects. Each Jira project can be selected for one ValueEdge workspace only.</div>
             </div>
             <div class="field-group">
                 <label for="jiraIssueTypesSelector">Jira issue types<span class="aui-icon icon-required">(required)</span></label>

@@ -38,18 +38,18 @@
 
                         </dl>
 
-                    #end
-                </li>
-            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ALM Octane</a>
-            <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in ALM Octane</a>
+                #end
+            </li>
+            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ValueEdge</a>
+            <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in ValueEdge</a>
 
         </ul>
     </div>
     <div id="octane-no-data-section" class="hidden" style="margin-top: 10px">
-        <div>No corresponding entity is mapped in ALM Octane.</div>
+        <div>No corresponding entity is mapped in ValueEdge.</div>
     </div>
     <div id="octane-no-valid-configuration-section" class="hidden" style="margin-top: 10px">
-        <div>No valid <a href="$configUrl" target="_blank">ALM Octane configuration</a>.</div>
+        <div>No valid <a href="$configUrl" target="_blank">ValueEdge configuration</a>.</div>
     </div>
     <div id="octane-debug-section" class="hidden">
     </div>
