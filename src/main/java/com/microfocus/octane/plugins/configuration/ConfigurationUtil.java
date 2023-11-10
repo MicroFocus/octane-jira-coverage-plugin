@@ -257,11 +257,11 @@ public class ConfigurationUtil {
         //validation
 
         if (StringUtils.isEmpty(wco.getSpaceConfigId())) {
-            throw new IllegalArgumentException("Space configuration is missing");
+            throw new IllegalArgumentException("Space configuration is missing.");
         }
 
         if (isEmpty(wco.getWorkspaces())) {
-            throw new IllegalArgumentException("Workspaces field is empty");
+            throw new IllegalArgumentException("Workspaces field is empty.");
         }
 
         if (isEmpty(wco.getJiraProjects())) {
