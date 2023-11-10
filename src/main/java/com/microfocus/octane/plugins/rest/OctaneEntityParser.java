@@ -138,7 +138,7 @@ public class OctaneEntityParser {
         try {
             return objectMapper.readValue(serverVersion, VersionEntity.class);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to parse ALM Octane server version:" + e.getMessage());
+            throw new RuntimeException("Failed to parse ValueEdge server version:" + e.getMessage());
         }
     }
 }

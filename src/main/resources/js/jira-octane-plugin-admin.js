@@ -237,7 +237,7 @@
                 contentType: "application/json"
             }).done(function (data) {
                 if (data && data.length) {
-                    setTitle("Suggested ALM Octane fields: " + data.join(",") + ". Double-click to set '" + data[0] + "' as value.", true);
+                    setTitle("Suggested ValueEdge fields: " + data.join(",") + ". Double-click to set '" + data[0] + "' as value.", true);
                     octanePluginContext.workspaceDialogData.possibleJiraField = data[0];
                 } else {
                     setTitle("No suggested fields are found.");
@@ -250,7 +250,7 @@
                 } else if (request.responseText && request.responseText.includes('platform.not_authorized')) {
                     msg = "The client ID configured for workspace " + workspaceId + " does not have permission to access it.";
                 }
-                setTitle("Failed to fetch suggested fields from ALM Octane: " + msg, true);
+                setTitle("Failed to fetch suggested fields from ValueEdge: " + msg, true);
             });
         } else {
             setTitle("Select a workspace to show the list of suggested mapping fields that include 'jira' in their name.", false);

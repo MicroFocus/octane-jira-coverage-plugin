@@ -236,7 +236,7 @@ public class ConfigurationUtil {
         }
 
         if (wco.getOctaneEntityTypes().size() == 0) {
-            throw new IllegalArgumentException("Octane entity types not found for given workspace and udf");
+            throw new IllegalArgumentException("ValueEdge entity types not found for given workspace and udf");
         }
         if (wco.getJiraProjects().size() == 0) {
             throw new IllegalArgumentException("Jira projects are missing");
