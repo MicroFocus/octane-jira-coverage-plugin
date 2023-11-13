@@ -38,8 +38,8 @@
 
                     </dl>
 
-                #end
-            </li>
+                    #end
+                </li>
             <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ValueEdge</a>
             <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in ValueEdge</a>
 

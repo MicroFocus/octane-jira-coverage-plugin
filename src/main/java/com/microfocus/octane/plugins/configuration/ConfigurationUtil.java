@@ -316,11 +316,11 @@ public class ConfigurationUtil {
         Set<String> commonOctaneEntityTypes = retainAllSets(octaneWorkspacesEntityTypes);
 
         if (isEmpty(commonOctaneEntityTypes)) {
-            throw new IllegalArgumentException("There are zero Octane entity types found for the given workspaces and udf");
+            throw new IllegalArgumentException("There are zero ValueEdge entity types found for the given workspaces and udf");
         } else {
             if (!isNull(wco.getOctaneEntityTypes()) && !commonOctaneEntityTypes.equals(wco.getOctaneEntityTypes())) {
-                throw new IllegalArgumentException("The Octane entity types provided does not match with the ones that are " +
-                        "found in Octane at the moment. Please review them once again and adapt the configuration properly " +
+                throw new IllegalArgumentException("The ValueEdge entity types provided does not match with the ones that are " +
+                        "found in ValueEdge at the moment. Please review them once again and adapt the configuration properly " +
                         "or remove the octaneEntityTypes field to autofill them with the right entity types (the ones which contains your udf)");
             }
         }

@@ -7,10 +7,10 @@
  
 ## Overview:
 The test coverage plugin enables you to see quality from ValueEdge within JIRA, for JIRA issues that have parallel 
-ValueEdge features/users stories/defects/tasks/requirements. To do this, you need to have a user-defined field (UDF) 
-in the entity in ValueEdge which contains its corresponding JIRA issue key. After you configure the plugin,
-JIRA shows the ValueEdge test coverage and latest run statuses. For example, this is useful if you manage development
-in JIRA, and QA in ValueEdge.
+ValueEdge features/users stories/defects/tasks/requirements/application modules. To do this, you need to have a 
+user-defined field (UDF) in the entity in ValueEdge which contains its corresponding JIRA issue key. After you configure 
+the plugin, JIRA shows the ValueEdge test coverage and latest run statuses. For example, this is useful if you manage 
+development in JIRA, and QA in ValueEdge.
 
 The plugin is for JIRA on-premises versions 8.x and 9.x.
 
