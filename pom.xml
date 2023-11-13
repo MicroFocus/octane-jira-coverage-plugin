@@ -9,8 +9,8 @@
     <artifactId>jira-octane-quality-insight-plugin</artifactId>
     <version>24.4</version>
     <organization>
-        <name>OpenText ValueEdge</name>
-        <url>https://www.microfocus.com/en-us/products/alm-octane/overview</url>
+        <name>OT ValueEdge</name>
+        <url>https://www.microfocus.com/en-us/products/valueedge-agile/overview</url>
     </organization>
     <name>ValueEdge - Test Management for Jira</name>
     <description>This ValueEdge plugin provides quality status directly on native Jira Epics, Stories, Issues or custom types. Jira users are able to quickly understand issue test status, and are provided a direct link to quality centric views for related tests, test trends, CI history and other associated information / dashboards.</description>

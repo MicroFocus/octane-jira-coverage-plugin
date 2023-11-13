@@ -1,6 +1,6 @@
 # ValueEdge Quality Insight Plugin for Atlassian Jira
 
-[Official documentation](https://admhelp.microfocus.com/octane/en/16.1.100-16.2.100/Online/Content/UserGuide/jira-octane-plugin.htm)
+[Official documentation](https://admhelp.microfocus.com/octane/en/latest/Online/Content/UserGuide/jira-octane-plugin.htm)
 
 [OpenText Marketplace]( https://marketplace.microfocus.com/appdelivery/content/alm-octane-test-management-for-jira-plugin)
 
