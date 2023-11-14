@@ -9,7 +9,7 @@
     <artifactId>jira-octane-quality-insight-plugin</artifactId>
     <version>24.4</version>
     <organization>
-        <name>Open Text ALM Octane</name>
+        <name>Open Text ValueEdge</name>
         <url>https://www.microfocus.com/en-us/products/valueedge-agile/overview</url>
     </organization>
     <name>ValueEdge - Test Management for Jira</name>
