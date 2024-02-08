@@ -21,8 +21,10 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <!-- Multi Release JAR properties-->
-        <java11-outputdirectory>${project.build.outputDirectory}/META-INF/versions/11</java11-outputdirectory>
+        <java11-output-directory>${project.build.outputDirectory}/META-INF/versions/11</java11-output-directory>
         <java11-build-directory>${project.build.directory}/classes-java11</java11-build-directory>
+        <java17-output-directory>${project.build.outputDirectory}/META-INF/versions/17</java17-output-directory>
+        <java17-build-directory>${project.build.directory}/classes-java17</java17-build-directory>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven.compiler.version>3.11.0</maven.compiler.version>
 
@@ -30,15 +32,15 @@
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
         <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
 
-        <jira.version>9.3.0</jira.version>
-        <jira.software.application.version>9.3.0</jira.software.application.version>
-        <amps.version>8.6.0</amps.version>
+        <jira.version>9.5.1</jira.version>
+        <jira.software.application.version>9.5.1</jira.software.application.version>
+        <amps.version>8.13.1</amps.version>
 
         <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
         <testkit.version>6.3.11</testkit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spotbugs.version>3.1.9</spotbugs.version>
+        <spotbugs.version>4.2.0</spotbugs.version>
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
         <atlassian-util-concurrent.version>2.4.1</atlassian-util-concurrent.version>
         <jaxb-impl.version>2.3.0</jaxb-impl.version>
@@ -49,6 +51,8 @@
         <jakarta.xml.bind-api.version>4.0.0-RC1</jakarta.xml.bind-api.version>
         <jvnet.staxex.version>2.1.0-M1</jvnet.staxex.version>
         <jakarta.activation-api.version>2.1.0-RC1</jakarta.activation-api.version>
+
+
     </properties>
 
     <dependencies>
@@ -227,7 +231,21 @@
                             <compileSourceRoots>
                                 <compileSourceRoot>${project.basedir}/src/main/java11</compileSourceRoot>
                             </compileSourceRoots>
-                            <outputDirectory>${project.build.outputDirectory}/META-INF/versions/11</outputDirectory>
+                            <outputDirectory>${java11-output-directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>compile-java-17</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>17</release>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java17</compileSourceRoot>
+                            </compileSourceRoots>
+                            <outputDirectory>${java17-output-directory}</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
