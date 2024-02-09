@@ -51,8 +51,6 @@
         <jakarta.xml.bind-api.version>4.0.0-RC1</jakarta.xml.bind-api.version>
         <jvnet.staxex.version>2.1.0-M1</jvnet.staxex.version>
         <jakarta.activation-api.version>2.1.0-RC1</jakarta.activation-api.version>
-
-
     </properties>
 
     <dependencies>
