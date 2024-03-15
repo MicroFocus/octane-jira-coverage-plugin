@@ -32,11 +32,11 @@
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
         <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
 
-        <jira.version>9.5.1</jira.version>
-        <jira.software.application.version>9.5.1</jira.software.application.version>
+        <jira.version>9.11.1</jira.version>
+        <jira.software.application.version>9.11.1</jira.software.application.version>
         <amps.version>8.13.1</amps.version>
 
-        <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
+        <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
         <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
         <testkit.version>6.3.11</testkit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -107,23 +107,67 @@
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>jta</groupId>
+                    <groupId>javax.transaction</groupId>
                     <artifactId>jta</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>wink-client</groupId>
+                    <artifactId>wink-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>lucene-extras</groupId>
+                    <artifactId>lucene-extras</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-text</groupId>
+                    <artifactId>commons-text</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>webwork</groupId>
+                    <artifactId>webwork</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.atlassian.sal</groupId>
+                    <artifactId>sal-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-httpclient</groupId>
+                    <artifactId>commons-httpclient</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
-            <groupId>jta</groupId>
+            <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
             <version>1.0.1b</version>
             <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.11.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.0.0-jre</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.atlassian.sal</groupId>
             <artifactId>sal-api</artifactId>
             <version>3.1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>3.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
