@@ -107,11 +107,11 @@
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>wink-client</groupId>
+                    <groupId>org.apache.wink</groupId>
                     <artifactId>wink-client</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>lucene-extras</groupId>
+                    <groupId>com.atlassian</groupId>
                     <artifactId>lucene-extras</artifactId>
                 </exclusion>
                 <exclusion>
@@ -123,7 +123,7 @@
                     <artifactId>guava</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>webwork</groupId>
+                    <groupId>opensymphony</groupId>
                     <artifactId>webwork</artifactId>
                 </exclusion>
                 <exclusion>
@@ -133,6 +133,18 @@
                 <exclusion>
                     <groupId>commons-httpclient</groupId>
                     <artifactId>commons-httpclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.atlassian.velocity</groupId>
+                    <artifactId>atlassian-velocity</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.atlassian.crowd</groupId>
+                    <artifactId>embedded-crowd-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -151,13 +163,13 @@
         <dependency>
             <groupId>com.atlassian.sal</groupId>
             <artifactId>sal-api</artifactId>
-            <version>3.1.2</version>
+            <version>5.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
