@@ -31,6 +31,7 @@ package com.microfocus.octane.plugins.rest;
 
 import com.google.common.base.Charsets;
 import com.microfocus.octane.plugins.configuration.PluginConstants;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -268,8 +269,7 @@ public class RestConnector {
         String contentType = null;
 
         //attach cookie information if such exists
-        if ((cookieString != null) && !cookieString.isEmpty()) {
-
+        if ((cookieString != null) && !cookieString.isEmpty() && !hasCRLF(cookieString)) {
             con.setRequestProperty("Cookie", cookieString);
         }
 
@@ -297,10 +297,9 @@ public class RestConnector {
                 con.setRequestProperty("Content-Type", contentType);
             }
 
-            OutputStream out = con.getOutputStream();
-            out.write(data.getBytes(Charsets.UTF_8));
-            out.flush();
-            out.close();
+            try (OutputStream out = con.getOutputStream()) {
+                out.write(data.getBytes(Charsets.UTF_8));
+            }
         }
     }
 
@@ -336,8 +335,10 @@ public class RestConnector {
                 container.write(buf, 0, read);
             }
 
-            ret.setResponseData(container.toString(Charsets.UTF_8.name()));
+            ret.setResponseData(container.toString(Charsets.UTF_8));
         }
+
+        IOUtils.closeQuietly(inputStream);
 
         try {
             ret.setStatusCode(con.getResponseCode());
@@ -345,10 +346,9 @@ public class RestConnector {
             ret.setStatusCode(0);
         }
 
-
         ret.setResponseHeaders(con.getHeaderFields());
 
-        return ret;/**/
+        return ret;
     }
 
     private void updateCookies(Response response) {
@@ -429,10 +429,10 @@ public class RestConnector {
     private void setSSLSocketFactory(HttpsURLConnection httpsURLConnection) {
         if (sslContext == null) {
             try {
-                sslContext = SSLContext.getInstance("SSL");
+                sslContext = SSLContext.getInstance("TLSv1.2");
                 sslContext.init(null, getTrustManagers(), new java.security.SecureRandom());
 
-            } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException | RuntimeException e) {
                 log.warn("Failed to create SSLContext " + e.getMessage());
             }
         }
@@ -477,5 +477,9 @@ public class RestConnector {
                     + ((tmArr.length > 0) ? "First one is :" + tmArr[0].getClass().getCanonicalName() : ""));
             return tmArr;
         }
+    }
+
+    private static boolean hasCRLF(String text) {
+        return text.indexOf('\r') != -1 || text.indexOf('\n') != -1;
     }
 }
