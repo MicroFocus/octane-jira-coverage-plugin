@@ -321,10 +321,11 @@ public class RestConnector {
             if (inputStream != null) {
                 ByteArrayOutputStream container = new ByteArrayOutputStream();
 
-                byte[] buf = new byte[1024];
+                byte[] buffer = new byte[1024];
                 int read;
-                while ((read = inputStream.read(buf, 0, 1024)) > 0) {
-                    container.write(buf, 0, read);
+
+                while ((read = inputStream.read(buffer, 0, 1024)) > 0) {
+                    container.write(buffer, 0, read);
                 }
 
                 ret.setResponseData(container.toString(Charsets.UTF_8));
@@ -336,14 +337,7 @@ public class RestConnector {
             ret.setFailure(e);
             ret.setResponseData(e.getMessage());//set default error message
         } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    ret.setFailure(e);
-                    ret.setResponseData(e.getMessage());
-                }
-            }
+            IOUtils.closeQuietly();
         }
 
         try {
