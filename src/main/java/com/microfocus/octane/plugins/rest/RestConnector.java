@@ -313,32 +313,38 @@ public class RestConnector {
 
         Response ret = new Response();
 
-        InputStream inputStream;
+        InputStream inputStream = null;
         //select the source of the input bytes, first try "regular" input
         try {
-            inputStream = con.getInputStream();
-        } catch (Exception e) {
-            /*if the connection to the server somehow failed, for example 404 or 500, con.getInputStream() will throw an exception, which we'll keep.
-            we'll also store the body of the exception page, in the response data. */
-            inputStream = con.getErrorStream();
-            ret.setFailure(e);
-            ret.setResponseData(e.getMessage());//set default error message
-        }
+            inputStream = (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) ? con.getInputStream() : con.getErrorStream();
+            //this actually takes the data from the previously decided stream (error or input) and stores it in a byte[] inside the response
+            if (inputStream != null) {
+                ByteArrayOutputStream container = new ByteArrayOutputStream();
 
-        //this actually takes the data from the previously decided stream (error or input) and stores it in a byte[] inside the response
-        if (inputStream != null) {
-            ByteArrayOutputStream container = new ByteArrayOutputStream();
+                byte[] buf = new byte[1024];
+                int read;
+                while ((read = inputStream.read(buf, 0, 1024)) > 0) {
+                    container.write(buf, 0, read);
+                }
 
-            byte[] buf = new byte[1024];
-            int read;
-            while ((read = inputStream.read(buf, 0, 1024)) > 0) {
-                container.write(buf, 0, read);
+                ret.setResponseData(container.toString(Charsets.UTF_8));
             }
 
-            ret.setResponseData(container.toString(Charsets.UTF_8));
+        } catch (IOException e) {
+            /*if the connection to the server somehow failed, for example 404 or 500, con.getInputStream() will throw an exception, which we'll keep.
+            we'll also store the body of the exception page, in the response data. */
+            ret.setFailure(e);
+            ret.setResponseData(e.getMessage());//set default error message
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    ret.setFailure(e);
+                    ret.setResponseData(e.getMessage());
+                }
+            }
         }
-
-        IOUtils.closeQuietly(inputStream);
 
         try {
             ret.setStatusCode(con.getResponseCode());
