@@ -337,7 +337,7 @@ public class RestConnector {
             ret.setFailure(e);
             ret.setResponseData(e.getMessage());//set default error message
         } finally {
-            IOUtils.closeQuietly();
+            IOUtils.closeQuietly(inputStream);
         }
 
         try {
