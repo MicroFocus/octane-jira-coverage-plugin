@@ -47,6 +47,8 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -278,7 +280,6 @@ public class CoverageUiHelper {
         } catch (RestStatusException e) {
             if (e.getResponse().getStatusCode() == 401) {
                 //credentials issue
-
             } else {
                 log.error("Failed to fill ContextMap (RestStatusException) : " + e.getMessage());
             }
@@ -297,7 +298,29 @@ public class CoverageUiHelper {
             debugMap.put("error", String.format("%s : %s, cause : %s, stacktrace : %s", e.getClass().getName(),
                     e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : null, stackTrace));
         }
-        //}
+
+        if (debugMap.containsKey("error")) {
+            String errorValue = debugMap.get("error").toString();
+
+            int jsonStartIndex = errorValue.indexOf("{");
+            int jsonEndIndex = errorValue.lastIndexOf("}");
+
+            if (jsonStartIndex != -1 && jsonEndIndex != -1) {
+                String jsonSubstring = errorValue.substring(jsonStartIndex, jsonEndIndex + 1);
+
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = mapper.readTree(jsonSubstring);
+                    String errorCode = node.get("error_code").asText();
+
+                    if ("platform.exceeds_max_total_count".equals(errorCode)) {
+                        contextMap.put("status", "exceedsMaxTotalCount");
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to get error code : " + e.getMessage());
+                }
+            }
+        }
 
         if (!contextMap.containsKey("status")) {
             contextMap.put("status", "noValidConfiguration");

@@ -51,6 +51,9 @@
     <div id="octane-no-valid-configuration-section" class="hidden" style="margin-top: 10px">
         <div>No valid <a href="$configUrl" target="_blank">ValueEdge configuration</a>.</div>
     </div>
+    <div id="octane-exceeds-max-total-count-section" class="hidden" style="margin-top: 10px">
+        <div>There are too many runs to fetch from ValueEdge for this issue. You can contact your ValueEdge administrator.</div>
+    </div>
     <div id="octane-debug-section" class="hidden">
     </div>
     <div id="octane-loading-section" style="margin-top: 10px">
