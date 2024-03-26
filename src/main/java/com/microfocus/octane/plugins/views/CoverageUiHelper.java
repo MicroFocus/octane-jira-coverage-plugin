@@ -47,8 +47,6 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +61,7 @@ public class CoverageUiHelper {
     private static NumberFormat countFormat = NumberFormat.getInstance();
     private static NumberFormat percentFormatter = NumberFormat.getPercentInstance();
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
+    private final static String EXCEEDS_MAX_TOTAL_COUNT = "platform.exceeds_max_total_count";
     private static final Logger log = LoggerFactory.getLogger(CoverageUiHelper.class);
 
     //TEST TYPES
@@ -280,7 +279,10 @@ public class CoverageUiHelper {
         } catch (RestStatusException e) {
             if (e.getResponse().getStatusCode() == 401) {
                 //credentials issue
-            } else {
+            } else if (e.getResponse().getStatusCode() == 400 && EXCEEDS_MAX_TOTAL_COUNT.equals(e.getErrorCode())) {
+                contextMap.put("status", "exceedsMaxTotalCount");
+            }
+            else {
                 log.error("Failed to fill ContextMap (RestStatusException) : " + e.getMessage());
             }
             debugMap.put("error", String.format("RestStatusException %s, Error : %s ", e.getResponse().getStatusCode(), e.getMessage()));
@@ -297,29 +299,6 @@ public class CoverageUiHelper {
 
             debugMap.put("error", String.format("%s : %s, cause : %s, stacktrace : %s", e.getClass().getName(),
                     e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : null, stackTrace));
-        }
-
-        if (debugMap.containsKey("error")) {
-            String errorValue = debugMap.get("error").toString();
-
-            int jsonStartIndex = errorValue.indexOf("{");
-            int jsonEndIndex = errorValue.lastIndexOf("}");
-
-            if (jsonStartIndex != -1 && jsonEndIndex != -1) {
-                String jsonSubstring = errorValue.substring(jsonStartIndex, jsonEndIndex + 1);
-
-                try {
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonNode node = mapper.readTree(jsonSubstring);
-                    String errorCode = node.get("error_code").asText();
-
-                    if ("platform.exceeds_max_total_count".equals(errorCode)) {
-                        contextMap.put("status", "exceedsMaxTotalCount");
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to get error code : " + e.getMessage());
-                }
-            }
         }
 
         if (!contextMap.containsKey("status")) {
