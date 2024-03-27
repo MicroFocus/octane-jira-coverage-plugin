@@ -313,10 +313,9 @@ public class RestConnector {
 
         Response ret = new Response();
 
-        InputStream inputStream = null;
         //select the source of the input bytes, first try "regular" input
-        try {
-            inputStream = (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) ? con.getInputStream() : con.getErrorStream();
+        try(InputStream inputStream = (con.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) ? con.getInputStream() : con.getErrorStream()) {
+
             //this actually takes the data from the previously decided stream (error or input) and stores it in a byte[] inside the response
             if (inputStream != null) {
                 ByteArrayOutputStream container = new ByteArrayOutputStream();
@@ -336,8 +335,6 @@ public class RestConnector {
             we'll also store the body of the exception page, in the response data. */
             ret.setFailure(e);
             ret.setResponseData(e.getMessage());//set default error message
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
 
         try {
