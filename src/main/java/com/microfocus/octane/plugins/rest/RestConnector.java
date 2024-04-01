@@ -327,7 +327,7 @@ public class RestConnector {
                     container.write(buffer, 0, read);
                 }
 
-                ret.setResponseData(container.toString(Charsets.UTF_8));
+                ret.setResponseData(container.toString(Charsets.UTF_8.name()));
             }
 
         } catch (IOException e) {
