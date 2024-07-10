@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microfocus.octane.plugins</groupId>
     <artifactId>jira-octane-quality-insight-plugin</artifactId>
-    <version>CE-24.2.1</version>
+    <version>CE-24.3</version>
     <organization>
         <name>Open Text</name>
         <url>https://www.opentext.com/</url>
