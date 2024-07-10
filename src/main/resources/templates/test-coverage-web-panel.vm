@@ -40,16 +40,16 @@
 
                 #end
             </li>
-            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in ValueEdge</a>
-            <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in ValueEdge</a>
+            <a target="_blank" id="view-tests-in-alm" >View <span id="octane-total-tests"></span> linked tests in Core Software Delivery Platform</a>
+            <a target="_blank" id="no-linked-tests-in-alm" style="pointer-events: none; cursor: default; color: gray; font-weight: bold" >No linked tests in Core Software Delivery Platform</a>
 
         </ul>
     </div>
     <div id="octane-no-data-section" class="hidden" style="margin-top: 10px">
-        <div>No corresponding entity is mapped in ValueEdge.</div>
+        <div>No corresponding entity is mapped in Core Software Delivery Platform.</div>
     </div>
     <div id="octane-no-valid-configuration-section" class="hidden" style="margin-top: 10px">
-        <div>No valid <a href="$configUrl" target="_blank">ValueEdge configuration</a>.</div>
+        <div>No valid <a href="$configUrl" target="_blank">Core Software Delivery Platform configuration</a>.</div>
     </div>
     <div id="octane-exceeds-max-total-count-section" class="hidden" style="margin-top: 10px">
         <div>There are too many results to display (>2000). Please refine your filters.</div>
