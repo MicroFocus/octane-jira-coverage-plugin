@@ -114,7 +114,7 @@ public class OctaneEntityTypeDescriptor {
     }
 
     public String buildEntityUrl(String baseUrl, long spaceId, long workspaceId, String entityId) {
-        String octaneEntityUrl = String.format("%s/ui/?p=%s/%s#/entity-navigation?entityType=%s&id=%s",
+        String octaneEntityUrl = String.format("%s/ui/entity-navigation?p=%s/%s&entityType=%s&id=%s",
                 baseUrl, spaceId, workspaceId,
                 this.getNameForNavigation(), entityId);
         return octaneEntityUrl;
