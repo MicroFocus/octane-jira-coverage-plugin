@@ -39,5 +39,5 @@ public class ConfigurationManagerConstants {
 
     public static final String MESSAGE_CHANNEL = "OCTANE_CONFIG";
 
-    public static final int CONFIGURATION_HARD_LIMIT_SIZE = 99000;
+    public static final int CONFIGURATION_HARD_LIMIT_SIZE = 240000;
 }
