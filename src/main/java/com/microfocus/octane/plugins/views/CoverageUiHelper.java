@@ -31,6 +31,10 @@ package com.microfocus.octane.plugins.views;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.util.concurrent.NotNull;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import com.microfocus.octane.plugins.configuration.OctaneRestManager;
 import com.microfocus.octane.plugins.configuration.OctaneServerVersion;
@@ -55,14 +59,24 @@ import org.slf4j.LoggerFactory;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.microfocus.octane.plugins.configuration.OctaneRestManager.versionCache;
 import static com.microfocus.octane.plugins.configuration.PluginConstants.FUGEES_VERSION;
 import static com.microfocus.octane.plugins.configuration.PluginConstants.WORK_ITEM;
 
 public class CoverageUiHelper {
+
+    private static LoadingCache<SpaceConfiguration, VersionEntity> versionCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build((new CacheLoader<SpaceConfiguration, VersionEntity>() {
+                @Override
+                public VersionEntity load(@NotNull SpaceConfiguration sc) {
+                    return OctaneRestManager.getOctaneServerVersion(sc);
+                }
+            }));
 
     private static Map<String, TestStatusDescriptor> testStatusDescriptorsByLogicalName = new HashMap<>();
     public static Map<String, TestStatusDescriptor> testStatusDescriptorsByTestCoverageKey = new HashMap<>();
@@ -127,7 +141,7 @@ public class CoverageUiHelper {
         try {
             versionEntity = versionCache.get(sc);
         } catch (ExecutionException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("Failed to get the version for space config " + sc, e);
         }
 
         OctaneServerVersion octaneServerVersion = new OctaneServerVersion(versionEntity.getVersion());
