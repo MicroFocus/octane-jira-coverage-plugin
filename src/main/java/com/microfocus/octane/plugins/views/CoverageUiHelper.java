@@ -33,6 +33,8 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 import com.microfocus.octane.plugins.configuration.OctaneRestManager;
+import com.microfocus.octane.plugins.configuration.OctaneServerVersion;
+import com.microfocus.octane.plugins.configuration.VersionEntity;
 import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.AggregateDescriptor;
@@ -52,12 +54,18 @@ import org.slf4j.LoggerFactory;
 
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.microfocus.octane.plugins.configuration.OctaneRestManager.versionCache;
+import static com.microfocus.octane.plugins.configuration.PluginConstants.FUGEES_VERSION;
+import static com.microfocus.octane.plugins.configuration.PluginConstants.WORK_ITEM;
+
 public class CoverageUiHelper {
 
-    private static Map<String, TestStatusDescriptor> testStatusDescriptors = new HashMap<>();
+    private static Map<String, TestStatusDescriptor> testStatusDescriptorsByLogicalName = new HashMap<>();
+    public static Map<String, TestStatusDescriptor> testStatusDescriptorsByTestCoverageKey = new HashMap<>();
     private static NumberFormat countFormat = NumberFormat.getInstance();
     private static NumberFormat percentFormatter = NumberFormat.getPercentInstance();
     private final static String UDF_NOT_DEFINED_IN_OCTANE = "platform.unknown_field";
@@ -65,27 +73,34 @@ public class CoverageUiHelper {
     private static final Logger log = LoggerFactory.getLogger(CoverageUiHelper.class);
 
     //TEST TYPES
-    private static final TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "run_status_passed", "Passed", "#1aac60", 1);
-    private static final TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "run_status_failed", "Failed", "#e5004c", 2);
-    private static final TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "run_status_requires_attention", "Requires Attention", "#fcdb1f", 3);
-    private static final TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "run_status_planned", "Planned", "#2fd6c3", 4);
-    private static final TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "run_status_skipped", "Skipped", "#5216ac", 5);
+    private static final TestStatusDescriptor passedStatus = new TestStatusDescriptor("list_node.run_status.passed", "run_status_passed", "passed", "Passed", "#1aac60", 1);
+    private static final TestStatusDescriptor failedStatus = new TestStatusDescriptor("list_node.run_status.failed", "run_status_failed", "failed", "Failed", "#e5004c", 2);
+    private static final TestStatusDescriptor needAttentionStatus = new TestStatusDescriptor("list_node.run_status.requires_attention", "run_status_requires_attention", "needsAttention", "Requires Attention", "#fcdb1f", 3);
+    private static final TestStatusDescriptor plannedStatus = new TestStatusDescriptor("list_node.run_status.planned", "run_status_planned", "planned", "Planned", "#2fd6c3", 4);
+    private static final TestStatusDescriptor skippedStatus = new TestStatusDescriptor("list_node.run_status.skipped", "run_status_skipped", "skipped", "Skipped", "#5216ac", 5);
 
     static {
         percentFormatter.setMinimumFractionDigits(1);
         percentFormatter.setMinimumFractionDigits(1);
 
         //BY LOGICAL NAME
-        testStatusDescriptors.put(passedStatus.getLogicalName(), passedStatus);
-        testStatusDescriptors.put(failedStatus.getLogicalName(), failedStatus);
-        testStatusDescriptors.put(plannedStatus.getLogicalName(), plannedStatus);
-        testStatusDescriptors.put(skippedStatus.getLogicalName(), skippedStatus);
-        testStatusDescriptors.put(needAttentionStatus.getLogicalName(), needAttentionStatus);
+        testStatusDescriptorsByLogicalName.put(passedStatus.getLogicalName(), passedStatus);
+        testStatusDescriptorsByLogicalName.put(failedStatus.getLogicalName(), failedStatus);
+        testStatusDescriptorsByLogicalName.put(plannedStatus.getLogicalName(), plannedStatus);
+        testStatusDescriptorsByLogicalName.put(skippedStatus.getLogicalName(), skippedStatus);
+        testStatusDescriptorsByLogicalName.put(needAttentionStatus.getLogicalName(), needAttentionStatus);
+
+        //BY TEST COVERAGE KEY
+        testStatusDescriptorsByTestCoverageKey.put(passedStatus.getTestCoverageKey(), passedStatus);
+        testStatusDescriptorsByTestCoverageKey.put(failedStatus.getTestCoverageKey(), failedStatus);
+        testStatusDescriptorsByTestCoverageKey.put(plannedStatus.getTestCoverageKey(), plannedStatus);
+        testStatusDescriptorsByTestCoverageKey.put(skippedStatus.getTestCoverageKey(), skippedStatus);
+        testStatusDescriptorsByTestCoverageKey.put(needAttentionStatus.getTestCoverageKey(), needAttentionStatus);
     }
 
     public static List<MapBasedObject> getAllCoverageGroups() {
-        return testStatusDescriptors.keySet().stream()
-                .map(key -> convertGroupEntityToUiEntity(testStatusDescriptors.get(key), 0, 0))
+        return testStatusDescriptorsByLogicalName.keySet().stream()
+                .map(key -> convertGroupEntityToUiEntity(testStatusDescriptorsByLogicalName.get(key), 0, 0))
                 .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
                 .collect(Collectors.toList());
     }
@@ -105,47 +120,81 @@ public class CoverageUiHelper {
         return outputEntity;
     }
 
-    private static List<MapBasedObject> getCoverageGroups(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, boolean hasSubtype) {
-        GroupEntityCollection coverage = OctaneRestManager.getCoverage(sc, octaneEntity, typeDescriptor, workspaceId, hasSubtype);
-        Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
+    private static List<MapBasedObject> getCoverageGroups(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
 
-        //Octane may return on coverage group without status - it will be assigned to need attention status
-        //if need attention group already exists - we will add count to it
-        //if need attention group does not exist - we will create new one
-        Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
-        if (groupWithoutStatusOpt.isPresent()) {
-            GroupEntityCollection coverageOfRunsWithoutStatus = OctaneRestManager.getNativeStatusCoverageForRunsWithoutStatus(sc, octaneEntity, typeDescriptor, workspaceId);
-            int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(GroupEntity::getCount).sum();
-            //validate that count in group without status equals to received runsWithoutStatusCount
-            if (groupWithoutStatusOpt.get().getCount() == runsWithoutStatusCount) {
-                coverageOfRunsWithoutStatus.getGroups().forEach(gr -> {
-                    OctaneEntity listEntity = (OctaneEntity) gr.getValue();
-                    String convertedStatus = convertNativeStatusToStatus(listEntity.getId());
-                    appendCountToExistingGroupOrCreateNewOne(statusId2group, convertedStatus, gr.getCount());
-                });
-            } else {
-                //if we receive different numbers -> put all not-statused items to need attention
-                appendCountToExistingGroupOrCreateNewOne(statusId2group, needAttentionStatus.getLogicalName(), groupWithoutStatusOpt.get().getCount());
-            }
+        boolean isWorkItemEntity = octaneEntity.getType().equals(WORK_ITEM);
+        VersionEntity versionEntity;
+        try {
+            versionEntity = versionCache.get(sc);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e.getMessage());
         }
 
-        //in order to align with Octane test coverage tooltip
-        //we add skipped category to requires attention
-        addSkippedToRequiresAttention(statusId2group);
-        statusId2group.remove(skippedStatus.getLogicalName());
+        OctaneServerVersion octaneServerVersion = new OctaneServerVersion(versionEntity.getVersion());
 
-        int total = statusId2group.values().stream().mapToInt(GroupEntity::getCount).sum();
+        if (isWorkItemEntity && octaneServerVersion.isGreaterOrEqual(new OctaneServerVersion(FUGEES_VERSION))) {
+            Map<String, Integer> statusCount = OctaneRestManager.getCoverageByTestCoverageField(sc, octaneEntity, workspaceId);
 
-        return statusId2group.entrySet().stream()
-                .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptors.get(entry.getKey()), entry.getValue().getCount(), total))
-                .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
-                .collect(Collectors.toList());
+            addSkippedToRequiresAttentionAndRemoveItForTestCoverage(statusCount);
+
+            int total = statusCount.values().stream().mapToInt(Integer::intValue).sum();
+
+            return statusCount.entrySet().stream()
+                    .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptorsByTestCoverageKey.get(entry.getKey()), entry.getValue(), total))
+                    .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
+                    .collect(Collectors.toList());
+        } else {
+            GroupEntityCollection coverage = OctaneRestManager.getCoverage(sc, octaneEntity, typeDescriptor, workspaceId);
+            Map<String, GroupEntity> statusId2group = coverage.getGroups().stream().filter(gr -> gr.getValue() != null).collect(Collectors.toMap(g -> ((OctaneEntity) g.getValue()).getId(), Function.identity()));
+
+            //Octane may return on coverage group without status - it will be assigned to need attention status
+            //if need attention group already exists - we will add count to it
+            //if need attention group does not exist - we will create new one
+            Optional<GroupEntity> groupWithoutStatusOpt = coverage.getGroups().stream().filter(gr -> gr.getValue() == null).findFirst();
+            if (groupWithoutStatusOpt.isPresent()) {
+                GroupEntityCollection coverageOfRunsWithoutStatus = OctaneRestManager.getNativeStatusCoverageForRunsWithoutStatus(sc, octaneEntity, typeDescriptor, workspaceId);
+                int runsWithoutStatusCount = coverageOfRunsWithoutStatus.getGroups().stream().mapToInt(GroupEntity::getCount).sum();
+                //validate that count in group without status equals to received runsWithoutStatusCount
+                if (groupWithoutStatusOpt.get().getCount() == runsWithoutStatusCount) {
+                    coverageOfRunsWithoutStatus.getGroups().forEach(gr -> {
+                        OctaneEntity listEntity = (OctaneEntity) gr.getValue();
+                        String convertedStatus = convertNativeStatusToStatus(listEntity.getId());
+                        appendCountToExistingGroupOrCreateNewOne(statusId2group, convertedStatus, gr.getCount());
+                    });
+                } else {
+                    //if we receive different numbers -> put all not-statused items to need attention
+                    appendCountToExistingGroupOrCreateNewOne(statusId2group, needAttentionStatus.getLogicalName(), groupWithoutStatusOpt.get().getCount());
+                }
+            }
+
+            //in order to align with Octane test coverage tooltip
+            //we add skipped category to requires attention
+            addSkippedToRequiresAttention(statusId2group);
+            statusId2group.remove(skippedStatus.getLogicalName());
+
+            int total = statusId2group.values().stream().mapToInt(GroupEntity::getCount).sum();
+
+            return statusId2group.entrySet().stream()
+                    .map(entry -> convertGroupEntityToUiEntity(testStatusDescriptorsByLogicalName.get(entry.getKey()), entry.getValue().getCount(), total))
+                    .sorted(Comparator.comparing(a -> (Integer) a.get("order")))
+                    .collect(Collectors.toList());
+        }
     }
 
     private static void addSkippedToRequiresAttention(Map<String, GroupEntity> statusId2group) {
         if (statusId2group.containsKey(skippedStatus.getLogicalName())) {
             int skippedCount = statusId2group.get(skippedStatus.getLogicalName()).getCount();
             appendCountToExistingGroupOrCreateNewOne(statusId2group, needAttentionStatus.getLogicalName(), skippedCount);
+        }
+    }
+
+    private static void addSkippedToRequiresAttentionAndRemoveItForTestCoverage(Map<String, Integer> statusCount) {
+        if (statusCount.containsKey(skippedStatus.getTestCoverageKey())) {
+            int skippedCount = statusCount.get(skippedStatus.getTestCoverageKey());
+
+            statusCount.put(needAttentionStatus.getTestCoverageKey(), skippedCount + statusCount.getOrDefault(needAttentionStatus.getTestCoverageKey(), 0));
+
+            statusCount.remove(skippedStatus.getTestCoverageKey());
         }
     }
 
@@ -250,7 +299,7 @@ public class CoverageUiHelper {
 
                         //coverage
                         start = System.currentTimeMillis();
-                        List<MapBasedObject> coverageGroups = getCoverageGroups(spaceConfiguration, octaneEntity, typeDescriptor, Long.parseLong(workspaceId), aggDescriptor.isSubtyped());
+                        List<MapBasedObject> coverageGroups = getCoverageGroups(spaceConfiguration, octaneEntity, typeDescriptor, Long.parseLong(workspaceId));
                         perfMap.put("coverage", System.currentTimeMillis() - start);
 
                         //fill context map

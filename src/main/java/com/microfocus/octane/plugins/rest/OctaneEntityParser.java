@@ -40,7 +40,11 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
+import static com.microfocus.octane.plugins.views.CoverageUiHelper.testStatusDescriptorsByTestCoverageKey;
 
 public class OctaneEntityParser {
 
@@ -154,5 +158,21 @@ public class OctaneEntityParser {
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse Core Software Delivery Platform server version:" + e.getMessage());
         }
+    }
+
+    public static Map<String, Integer> parseTestCoverageJson(JSONObject testCoverageJson) {
+        Map<String, Integer> testCoverage = new HashMap<>();
+
+        testStatusDescriptorsByTestCoverageKey.keySet().forEach(testCoverageKey -> {
+            try {
+                if (testCoverageJson.getInt(testCoverageKey) != 0) {
+                    testCoverage.put(testCoverageKey, testCoverageJson.getInt(testCoverageKey));
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException("Failed to retrieve status descriptor from the test coverage field:", e);
+            }
+        });
+
+        return testCoverage;
     }
 }

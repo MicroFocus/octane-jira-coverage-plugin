@@ -42,6 +42,9 @@ public class PluginConstants {
 
     public static String PUBLIC_API_WORKSPACE_FORMAT = PUBLIC_API_SHAREDSPACE_FORMAT + "/workspaces/%s";
     public static String PUBLIC_API_WORKSPACE_LEVEL_ENTITIES = PUBLIC_API_WORKSPACE_FORMAT + "/%s";
+    public static String PUBLIC_API_WORKSPACE_LEVEL_SPECIFIC_ENTITY = PUBLIC_API_WORKSPACE_LEVEL_ENTITIES + "/%s";
+
+    public static String WORK_ITEM = "work_item";
 
     //octane version
     public static final String DEFAULT_BUILD = "9999";
