@@ -31,10 +31,6 @@ package com.microfocus.octane.plugins.configuration;
 
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
-import com.atlassian.util.concurrent.NotNull;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
@@ -48,30 +44,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLHandshakeException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.microfocus.octane.plugins.configuration.PluginConstants.LAST_RUNS_FIELD;
+import static com.microfocus.octane.plugins.configuration.PluginConstants.WORK_ITEMS;
 import static com.microfocus.octane.plugins.rest.OctaneEntityParser.parseTestCoverageJson;
 
 public class OctaneRestManager {
 
     private static final Logger log = LoggerFactory.getLogger(OctaneRestManager.class);
-
-    public static LoadingCache<SpaceConfiguration, VersionEntity> versionCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(30, TimeUnit.MINUTES)
-            .build((new CacheLoader<SpaceConfiguration, VersionEntity>() {
-                @Override
-                public VersionEntity load(@NotNull SpaceConfiguration sc) {
-                    return getOctaneServerVersion(sc);
-                }
-            }));
 
     public static GroupEntityCollection getCoverage(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
@@ -89,16 +72,16 @@ public class OctaneRestManager {
     public static Map<String, Integer> getCoverageByTestCoverageField(SpaceConfiguration sc, OctaneEntity octaneEntity, long workspaceId) {
         //http://localhost:9090/dev/api/shared_spaces/1001/workspaces/1002/work_items/2007?fields=last_runs
 
-        String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_SPECIFIC_ENTITY, sc.getLocationParts().getSpaceId(), workspaceId, "work_items", octaneEntity.getId());
+        String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_SPECIFIC_ENTITY, sc.getLocationParts().getSpaceId(), workspaceId, WORK_ITEMS, octaneEntity.getId());
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-        String queryParam = OctaneQueryBuilder.create().addSelectedFields("last_runs").build();
+        String queryParam = OctaneQueryBuilder.create().addSelectedFields(LAST_RUNS_FIELD).build();
         String responseStr = sc.getRestConnector().httpGet(url, Collections.singletonList(queryParam), headers).getResponseData();
 
         try {
             OctaneEntity responseEntity = OctaneEntityParser.parseEntity(new JSONObject(responseStr));
-            String testCoverageField = responseEntity.getString("last_runs");
+            String testCoverageField = responseEntity.getString(LAST_RUNS_FIELD);
 
             JSONObject testCoverageJson = new JSONObject(testCoverageField);
 

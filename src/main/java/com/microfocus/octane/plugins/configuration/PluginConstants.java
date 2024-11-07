@@ -45,6 +45,9 @@ public class PluginConstants {
     public static String PUBLIC_API_WORKSPACE_LEVEL_SPECIFIC_ENTITY = PUBLIC_API_WORKSPACE_LEVEL_ENTITIES + "/%s";
 
     public static String WORK_ITEM = "work_item";
+    public static String WORK_ITEMS = "work_items";
+
+    public static String LAST_RUNS_FIELD = "last_runs";
 
     //octane version
     public static final String DEFAULT_BUILD = "9999";
