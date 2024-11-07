@@ -29,6 +29,8 @@
 
 package com.microfocus.octane.plugins.configuration;
 
+import com.atlassian.jira.util.json.JSONException;
+import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.util.concurrent.NotNull;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -55,11 +57,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.microfocus.octane.plugins.rest.OctaneEntityParser.parseTestCoverageJson;
+
 public class OctaneRestManager {
 
     private static final Logger log = LoggerFactory.getLogger(OctaneRestManager.class);
 
-    private static LoadingCache<SpaceConfiguration, VersionEntity> versionCache = CacheBuilder
+    public static LoadingCache<SpaceConfiguration, VersionEntity> versionCache = CacheBuilder
             .newBuilder()
             .expireAfterWrite(30, TimeUnit.MINUTES)
             .build((new CacheLoader<SpaceConfiguration, VersionEntity>() {
@@ -69,38 +73,39 @@ public class OctaneRestManager {
                 }
             }));
 
-    public static GroupEntityCollection getCoverage(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId, boolean hasSubtype) {
+    public static GroupEntityCollection getCoverage(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {
         //http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="test_of_last_run={product_areas={(id IN '2001')}}"&group_by=status
 
         String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_ENTITIES, sc.getLocationParts().getSpaceId(), workspaceId, "runs/groups");
         Map<String, String> headers = createHeaderMapWithOctaneClientType();
         headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-        String queryParam = getQueryParamBasedOnTypeAndVersion(sc, octaneEntity, typeDescriptor, hasSubtype);
+        String queryParam = getQueryParam(octaneEntity, typeDescriptor);
         String responseStr = sc.getRestConnector().httpGet(url, Collections.singletonList(queryParam), headers).getResponseData();
 
         return OctaneEntityParser.parseGroupCollection(responseStr);
     }
 
-    private static String getQueryParamBasedOnTypeAndVersion(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, boolean hasSubtype) {
-        if (hasSubtype) {
-            VersionEntity versionEntity;
-            try {
-                versionEntity = versionCache.get(sc);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e.getMessage());
-            }
+    public static Map<String, Integer> getCoverageByTestCoverageField(SpaceConfiguration sc, OctaneEntity octaneEntity, long workspaceId) {
+        //http://localhost:9090/dev/api/shared_spaces/1001/workspaces/1002/work_items/2007?fields=last_runs
 
-            if (versionEntity != null) {
-                OctaneServerVersion octaneServerVersion = new OctaneServerVersion(versionEntity.getVersion());
+        String url = String.format(PluginConstants.PUBLIC_API_WORKSPACE_LEVEL_SPECIFIC_ENTITY, sc.getLocationParts().getSpaceId(), workspaceId, "work_items", octaneEntity.getId());
+        Map<String, String> headers = createHeaderMapWithOctaneClientType();
+        headers.put(RestConnector.HEADER_ACCEPT, RestConnector.HEADER_APPLICATION_JSON);
 
-                if (octaneServerVersion.isGreaterOrEqual(new OctaneServerVersion(PluginConstants.FUGEES_VERSION))) {
-                    return getQueryForWorkItemNewVersion(octaneEntity, typeDescriptor);
-                }
-            }
+        String queryParam = OctaneQueryBuilder.create().addSelectedFields("last_runs").build();
+        String responseStr = sc.getRestConnector().httpGet(url, Collections.singletonList(queryParam), headers).getResponseData();
+
+        try {
+            OctaneEntity responseEntity = OctaneEntityParser.parseEntity(new JSONObject(responseStr));
+            String testCoverageField = responseEntity.getString("last_runs");
+
+            JSONObject testCoverageJson = new JSONObject(testCoverageField);
+
+            return parseTestCoverageJson(testCoverageJson);
+        } catch (JSONException e) {
+            throw new RuntimeException("Failed to convert response to entity object:" + e.getMessage());
         }
-
-        return  getQueryParam(octaneEntity, typeDescriptor);
     }
 
     public static VersionEntity getOctaneServerVersion(SpaceConfiguration sc) {
@@ -120,25 +125,6 @@ public class OctaneRestManager {
                 .addQueryCondition(new RawTextQueryPhrase("!test_of_last_run={null}"));
 
         return queryBuilder.build();
-    }
-
-    private static String getQueryForWorkItemNewVersion(OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor) {
-//http://localhost:8080/api/shared_spaces/1001/workspaces/1002/runs/groups?query="((work_items_of_last_run={(id='1005')})||(work_items_of_last_run={(subtype+IN+'story','defect','feature';path='0000000000TH0000TJ*')}))"&group_by=status
-
-        String coverageFieldName = typeDescriptor.getIndirectCoveringTestsField();
-        String queryParamValue = String.format("\"((%s={(id='%s')})||(%s={(subtype IN 'story','defect','feature';path='%s')}))\"",
-                coverageFieldName,
-                octaneEntity.getId(),
-                coverageFieldName,
-                octaneEntity.getString(PluginConstants.PATH) + "*");
-
-        try {
-            queryParamValue = URLEncoder.encode(queryParamValue, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Failed to encode params.", e);
-        }
-
-        return "query=" + queryParamValue + "&group_by=status";
     }
 
     public static GroupEntityCollection getNativeStatusCoverageForRunsWithoutStatus(SpaceConfiguration sc, OctaneEntity octaneEntity, OctaneEntityTypeDescriptor typeDescriptor, long workspaceId) {

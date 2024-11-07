@@ -35,14 +35,16 @@ public class TestStatusDescriptor {
     private String title;
     private String color;
     private String key;
+    private String testCoverageKey;
     private int order;
 
-    public TestStatusDescriptor(String logicalName, String key, String title, String color, int order) {
+    public TestStatusDescriptor(String logicalName, String key, String testCoverageKey, String title, String color, int order) {
         this.logicalName = logicalName;
         this.title = title;
         this.color = color;
         this.order = order;
         this.key = key;
+        this.testCoverageKey = testCoverageKey;
     }
 
     public String getTitle() {
@@ -63,5 +65,9 @@ public class TestStatusDescriptor {
 
     public String getKey() {
         return key;
+    }
+
+    public String getTestCoverageKey() {
+        return testCoverageKey;
     }
 }
