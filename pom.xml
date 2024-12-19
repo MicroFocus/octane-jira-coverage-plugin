@@ -32,9 +32,9 @@
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
         <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
 
-        <jira.version>9.11.1</jira.version>
-        <jira.software.application.version>9.11.1</jira.software.application.version>
-        <amps.version>8.13.1</amps.version>
+        <jira.version>10.3.0</jira.version>
+        <jira.software.application.version>10.3.0</jira.software.application.version>
+        <amps.version>9.0.4</amps.version>
 
         <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
         <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
@@ -42,37 +42,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spotbugs.version>4.2.0</spotbugs.version>
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
-        <atlassian-util-concurrent.version>2.4.1</atlassian-util-concurrent.version>
         <jaxb-impl.version>2.3.0</jaxb-impl.version>
         <jaxb-core.version>2.3.0</jaxb-core.version>
         <jaxb-api.version>2.3.0</jaxb-api.version>
         <javax-activation.version>1.1</javax-activation.version>
         <FastInfoset.version>1.2.1</FastInfoset.version>
-        <jakarta.xml.bind-api.version>4.0.0-RC1</jakarta.xml.bind-api.version>
-        <jvnet.staxex.version>2.1.0-M1</jvnet.staxex.version>
-        <jakarta.activation-api.version>2.1.0-RC1</jakarta.activation-api.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>${jakarta.xml.bind-api.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.sun.xml.fastinfoset</groupId>
             <artifactId>FastInfoset</artifactId>
             <version>${FastInfoset.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jvnet.staxex</groupId>
-            <artifactId>stax-ex</artifactId>
-            <version>${jvnet.staxex.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.activation</groupId>
-            <artifactId>jakarta.activation-api</artifactId>
-            <version>${jakarta.activation-api.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -151,6 +132,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.4</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>33.0.0-jre</version>
@@ -195,7 +181,7 @@
             <groupId>com.atlassian.plugin</groupId>
             <artifactId>atlassian-spring-scanner-annotation</artifactId>
             <version>${atlassian.spring.scanner.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.atlassian.plugin</groupId>
@@ -229,14 +215,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.8.9</version>
-        </dependency>
-        <dependency>
-            <groupId>com.atlassian.util.concurrent</groupId>
-            <artifactId>atlassian-util-concurrent</artifactId>
-            <version>${atlassian-util-concurrent.version}</version>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>osgi-resource-locator</artifactId>
+            <version>2.4.0</version>
+            <scope>provided</scope>
         </dependency>
         <!-- Uncomment to use TestKit in your project. Details at https://bitbucket.org/atlassian/jira-testkit -->
         <!-- You can read more about TestKit at https://developer.atlassian.com/display/JIRADEV/Plugin+Tutorial+-+Smarter+integration+testing+with+TestKit -->
