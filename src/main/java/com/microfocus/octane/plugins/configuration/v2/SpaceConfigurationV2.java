@@ -30,11 +30,11 @@
 package com.microfocus.octane.plugins.configuration.v2;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.microfocus.octane.plugins.configuration.LocationParts;
 import com.microfocus.octane.plugins.configuration.OctaneRestManager;
 import com.microfocus.octane.plugins.rest.RestConnector;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.util.Objects;
 
