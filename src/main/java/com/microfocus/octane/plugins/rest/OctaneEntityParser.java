@@ -32,12 +32,12 @@ package com.microfocus.octane.plugins.rest;
 import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microfocus.octane.plugins.configuration.VersionEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntityCollection;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.HashMap;

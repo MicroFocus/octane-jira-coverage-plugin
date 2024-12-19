@@ -29,7 +29,7 @@
 
 package com.microfocus.octane.plugins.configuration.v3;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkspaceConfiguration {

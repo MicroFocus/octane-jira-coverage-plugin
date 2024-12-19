@@ -29,7 +29,7 @@
 
 package com.microfocus.octane.plugins.configuration.v1;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.Set;
 

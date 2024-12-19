@@ -30,7 +30,8 @@
 
 package com.microfocus.octane.plugins.rest;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -51,7 +52,8 @@ public class RestStatusException extends RuntimeException {
 
         try {
             if (response.getResponseData().startsWith("{")) {
-                Map statusData = new Gson().fromJson(response.getResponseData(), Map.class);
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> statusData = objectMapper.readValue(response.getResponseData(), new TypeReference<Map<String, Object>>() {});
                 error_code = (String) statusData.get("error_code");
                 description = (String) statusData.get("description");
             }
