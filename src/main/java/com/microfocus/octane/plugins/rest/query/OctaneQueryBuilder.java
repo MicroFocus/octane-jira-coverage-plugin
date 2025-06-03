@@ -33,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -154,14 +155,16 @@ public class OctaneQueryBuilder {
         // query="id='100'"
         if (queryConditions != null && !queryConditions.isEmpty()) {
             String splitter = "";
-            sb.append("&").append("query=\"");
+            sb.append("&").append("query=");
 
             //query="id>100;status='open';(rank>10||rank<20)"
 
-            String join = queryConditions.stream().map(q -> buildPhraseString(q)).collect(Collectors.joining(";"));
-            sb.append(join);
+            String queryValue = "\"" + queryConditions.stream()
+                    .map(OctaneQueryBuilder::buildPhraseString)
+                    .collect(Collectors.joining(";")) + "\"";
+            String encodedQuery = encodeParam(queryValue);
 
-            sb.append("\"");
+            sb.append(encodedQuery);
         }
     }
 
@@ -194,7 +197,7 @@ public class OctaneQueryBuilder {
             InQueryPhrase inQueryPhrase = (InQueryPhrase) phrase;
             StringBuilder sb = new StringBuilder("(");
             sb.append(inQueryPhrase.getFieldName());
-            sb.append("+IN+");
+            sb.append(" IN ");
 
             String values = inQueryPhrase.getValues().stream().map(v -> getExpressionValueString(v)).collect(Collectors.joining(","));
             sb.append(values);
@@ -249,14 +252,10 @@ public class OctaneQueryBuilder {
     }
 
     public static String encodeParam(String param) {
-        String ret;
-
         try {
-            ret = URLEncoder.encode(param, "UTF-8");
+            return URLEncoder.encode(param, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
-            ret = "";
+            throw new IllegalArgumentException("Failed to encode params.", e);
         }
-
-        return ret;
     }
 }
