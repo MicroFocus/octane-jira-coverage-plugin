@@ -346,7 +346,8 @@ public class CoverageUiHelper {
                 contextMap.put("status", "exceedsMaxTotalCount");
             }
             else {
-                log.error("Failed to fill ContextMap (RestStatusException) : " + e.getMessage());
+                log.error(String.format("Failed to fill ContextMap (RestStatusException): %s, Cause: %s, Status Code: %s, Error Code: %s, Response Data: %s, Response: %s",
+                        e.getMessage(), e.getCause(), e.getResponse().getStatusCode(), e.getErrorCode(), e.getResponse().getResponseData(), e.getResponse()));
             }
             debugMap.put("error", String.format("RestStatusException %s, Error : %s ", e.getResponse().getStatusCode(), e.getMessage()));
         } catch (Exception e) {
