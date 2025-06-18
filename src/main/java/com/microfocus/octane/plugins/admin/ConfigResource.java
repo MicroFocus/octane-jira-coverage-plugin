@@ -100,6 +100,7 @@ public class ConfigResource {
 
             return Response.ok(data).build();
         } catch (Exception e) {
+            log.error(String.format("Cause: %s, Message: %s, Stack trace: %s" , e.getCause(), e.getMessage(), Arrays.toString(e.getStackTrace())));
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
