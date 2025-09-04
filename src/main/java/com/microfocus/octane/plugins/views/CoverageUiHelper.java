@@ -43,6 +43,7 @@ import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.AggregateDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeDescriptor;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
+import com.microfocus.octane.plugins.rest.RequestTimedOutException;
 import com.microfocus.octane.plugins.rest.RestStatusException;
 import com.microfocus.octane.plugins.rest.entities.MapBasedObject;
 import com.microfocus.octane.plugins.rest.entities.OctaneEntity;
@@ -339,6 +340,8 @@ public class CoverageUiHelper {
             if (!found) {
                 contextMap.put("status", "noData");
             }
+        } catch (RequestTimedOutException e) {
+            contextMap.put("status", "readTimedOut");
         } catch (RestStatusException e) {
             if (e.getResponse().getStatusCode() == 401) {
                 //credentials issue

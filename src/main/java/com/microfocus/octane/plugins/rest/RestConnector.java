@@ -212,6 +212,9 @@ public class RestConnector {
 
             prepareHttpRequest(con, headers, data, cookieString);
 
+            con.setConnectTimeout(20000);
+            con.setReadTimeout(45000);
+
             con.connect();
             Response ret = retrieveHtmlResponse(con);
             long end = System.currentTimeMillis();
@@ -244,6 +247,11 @@ public class RestConnector {
                     }
                 }
             }
+
+            if (e.getResponse().getStatusCode() == 0 && e.getResponse().getResponseData().equals("Read timed out")) {
+                throw new RequestTimedOutException(e.getResponse());
+            }
+
             throw e;//rethrow
         } catch (Exception e) {
             long end = System.currentTimeMillis();

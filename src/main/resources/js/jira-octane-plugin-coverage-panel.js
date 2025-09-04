@@ -108,6 +108,8 @@ async function loadOctaneCoverageWidget(projectKey, issueKey, issueId, workspace
             jQuery("#octane-no-valid-configuration-section").removeClass("hidden");
         } else if (data.status === 'exceedsMaxTotalCount') {
             jQuery("#octane-exceeds-max-total-count-section").removeClass("hidden");
+        } else if (data.status === 'readTimedOut') {
+            jQuery("#octane-read-timed-out-section").removeClass("hidden");
         } else if (data.status === 'hasData') {
             jQuery("#octane-entity-section").removeClass("hidden");
 
@@ -175,6 +177,7 @@ function hideAllSectionsAndShowLoading() {
     jQuery("#octane-no-data-section").addClass('hidden');
     jQuery("#octane-no-valid-configuration-section").addClass('hidden');
     jQuery("#octane-exceeds-max-total-count-section").addClass('hidden');
+    jQuery("#octane-read-timed-out-section").addClass('hidden');
     jQuery("#octane-loading-section").removeClass('hidden');
 }
 

@@ -54,6 +54,9 @@
     <div id="octane-exceeds-max-total-count-section" class="hidden" style="margin-top: 10px">
         <div>There are too many results to display (>2000). Please refine your filters.</div>
     </div>
+    <div id="octane-read-timed-out-section" class="hidden" style="margin-top: 10px">
+        <div>Request timed out. Please contact your administrator.</div>
+    </div>
     <div id="octane-debug-section" class="hidden">
     </div>
     <div id="octane-loading-section" style="margin-top: 10px">
