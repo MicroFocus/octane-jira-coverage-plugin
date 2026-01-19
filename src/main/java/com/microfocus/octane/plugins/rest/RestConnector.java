@@ -242,15 +242,18 @@ public class RestConnector {
                             refreshAccessToken();
                             retryResult = true;
                             String msg = String.format("Received status %s. OIDC token refresh succeeded.", e.getResponse().getStatusCode());
-                            log.warn(msg);
+
+                            log.info(msg);
                         } else {
                             retryResult = login();
                             String msg = String.format("Received status %s. Relogin succeeded.", e.getResponse().getStatusCode());
-                            log.warn(msg);
+
+                            log.info(msg);
                         }
-                    } catch (Exception ex) {
+                    } catch (IOException ex) {
                         String msg = String.format("Received status %s. Refresh/login failed %s", e.getResponse().getStatusCode(), ex.getMessage());
-                        log.warn(msg);
+
+                        log.error(msg);
                     }
 
                     if (retryResult) {
