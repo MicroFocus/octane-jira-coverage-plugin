@@ -348,10 +348,10 @@
             location: rowModel.location,
             clientId: rowModel.clientId,
             clientSecret: rowModel.clientSecret,
-            oidcEnabled: $("#oidcEnabled").is(":checked"),
-            discoveryUrl: $("#discoveryUrl").attr("value").trim(),
-            oidcClientId: $("#oidcClientId").attr("value").trim(),
-            oidcClientSecret: $("#oidcClientSecret").attr("value")
+            oidcEnabled: rowModel.oidcEnabled,
+            discoveryUrl: rowModel.discoveryUrl,
+            oidcClientId: rowModel.oidcClientId,
+            oidcClientSecret: rowModel.oidcClientSecret
         };
 
         //send
