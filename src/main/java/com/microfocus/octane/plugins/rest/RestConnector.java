@@ -70,6 +70,7 @@ public class RestConnector {
     private ProxyConfiguration proxyConfiguration;
     private SSLContext sslContext;
     private static final Logger log = LoggerFactory.getLogger(RestConnector.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private boolean oidcEnabled;
     private String discoveryUrl;
@@ -79,7 +80,6 @@ public class RestConnector {
     public boolean login() {
         boolean ret = false;
         clearAll();
-        ObjectMapper mapper = new ObjectMapper();
         String jsonString = null;
         HashMap<String, String> authData = new HashMap<>();
         authData.put("user", user);
@@ -465,7 +465,6 @@ public class RestConnector {
 
     private String getTokenEndpointFromDiscovery() throws IOException {
         String discoveryJson = httpGetAbsolute(discoveryUrl);
-        ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(discoveryJson);
         String tokenEndpoint = node.path(OIDC_DISCOVERY_TOKEN_ENDPOINT).asText();
 
@@ -501,7 +500,6 @@ public class RestConnector {
     }
 
     private String extractAccessToken(String jsonResponse, String errorMessage) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(jsonResponse);
         String accessToken = node.path(OIDC_ACCESS_TOKEN_FIELD).asText();
 
