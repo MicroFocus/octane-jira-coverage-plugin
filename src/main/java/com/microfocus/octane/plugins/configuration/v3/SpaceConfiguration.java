@@ -33,8 +33,8 @@ package com.microfocus.octane.plugins.configuration.v3;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.microfocus.octane.plugins.configuration.LocationParts;
-import com.microfocus.octane.plugins.configuration.OctaneRestManager;
 import com.microfocus.octane.plugins.rest.RestConnector;
+import com.microfocus.octane.plugins.configuration.OctaneRestManager;
 
 import java.util.Objects;
 
@@ -47,6 +47,10 @@ public class SpaceConfiguration {
     private String clientId;
     private String clientSecret;
     private String id;
+    private Boolean oidcEnabled;
+    private String discoveryUrl;
+    private String oidcClientId;
+    private String oidcClientSecret;
 
     @JsonIgnore
     private RestConnector restConnector;
@@ -61,6 +65,19 @@ public class SpaceConfiguration {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.id = id;
+    }
+
+    public SpaceConfiguration(String name, String location, LocationParts locationParts, String clientId, String clientSecret, String id, Boolean oidcEnabled, String discoveryUrl, String oidcClientId, String oidcClientSecret) {
+        this.name = name;
+        this.location = location;
+        this.locationParts = locationParts;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+        this.id = id;
+        this.oidcEnabled = oidcEnabled;
+        this.discoveryUrl = discoveryUrl;
+        this.oidcClientId = oidcClientId;
+        this.oidcClientSecret = oidcClientSecret;
     }
 
     public String getName() {
@@ -111,10 +128,51 @@ public class SpaceConfiguration {
         this.id = id;
     }
 
+    public Boolean getOidcEnabled() {
+        return oidcEnabled;
+    }
+
+    public void setOidcEnabled(Boolean oidcEnabled) {
+        this.oidcEnabled = oidcEnabled;
+    }
+
+    public String getDiscoveryUrl() {
+        return discoveryUrl;
+    }
+
+    public void setDiscoveryUrl(String discoveryUrl) {
+        this.discoveryUrl = discoveryUrl;
+    }
+
+    public String getOidcClientId() {
+        return oidcClientId;
+    }
+
+    public void setOidcClientId(String oidcClientId) {
+        this.oidcClientId = oidcClientId;
+    }
+
+    public String getOidcClientSecret() {
+        return oidcClientSecret;
+    }
+
+    public void setOidcClientSecret(String oidcClientSecret) {
+        this.oidcClientSecret = oidcClientSecret;
+    }
+
     @JsonIgnore
     public RestConnector getRestConnector() {
         if (restConnector == null) {
-            restConnector = OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
+            if (getOidcEnabled()) {
+                RestConnector rc = new RestConnector();
+                rc.setBaseUrl(getLocationParts().getBaseUrl());
+                rc.setCredentials(getClientId(), getClientSecret());
+                rc.setOidcConfiguration(getDiscoveryUrl(), getOidcClientId(), getOidcClientSecret(), getOidcEnabled());
+
+                return rc;
+            } else {
+                return OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
+            }
         }
         return restConnector;
     }

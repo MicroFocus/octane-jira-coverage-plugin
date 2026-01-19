@@ -35,6 +35,7 @@ import com.microfocus.octane.plugins.tools.JsonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class UpgraderFromV2ToV3 {
                                 workspaceConfigurationV2.getId(),
                                 workspaceConfigurationV2.getSpaceConfigurationId(),
                                 new OctaneConfigGrouping(
-                                        new HashSet<>(List.of(
+                                        new HashSet<>(Collections.singletonList(
                                                 new OctaneWorkspace(
                                                         String.valueOf(workspaceConfigurationV2.getWorkspaceId()),
                                                         workspaceConfigurationV2.getWorkspaceName()

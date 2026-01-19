@@ -29,6 +29,7 @@
 
 package com.microfocus.octane.plugins.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.microfocus.octane.plugins.configuration.PluginConstants;
@@ -38,11 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -52,6 +51,8 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static com.microfocus.octane.plugins.configuration.PluginConstants.*;
+
 
 public class RestConnector {
 
@@ -59,6 +60,7 @@ public class RestConnector {
     public final static String HEADER_APPLICATION_JSON = "application/json";
     public final static String HEADER_APPLICATION_XML = "application/xml";
     public final static String HEADER_CONTENT_TYPE = "Content-Type";
+    public final static String HEADER_AUTHORIZATION = "Authorization";
 
     protected Map<String, String> cookies = new HashMap<>();
 
@@ -68,6 +70,11 @@ public class RestConnector {
     private ProxyConfiguration proxyConfiguration;
     private SSLContext sslContext;
     private static final Logger log = LoggerFactory.getLogger(RestConnector.class);
+
+    private boolean oidcEnabled;
+    private String discoveryUrl;
+    private String oidcClientId;
+    private String oidcClientSecret;
 
     public boolean login() {
         boolean ret = false;
@@ -229,17 +236,24 @@ public class RestConnector {
             if ((e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) ||
                     (e.getResponse().getStatusCode() == 0 && e.getResponse().getResponseData().equals("Error writing to server"))) {
                 if (!relogin) {
-                    boolean reloginResult = false;
+                    boolean retryResult = false;
                     try {
-                        reloginResult = login();
-                        String msg = String.format("Received status %s. Relogin succeeded.", e.getResponse().getStatusCode());
-                        log.warn(msg);
+                        if (oidcEnabled) {
+                            refreshAccessToken();
+                            retryResult = true;
+                            String msg = String.format("Received status %s. OIDC token refresh succeeded.", e.getResponse().getStatusCode());
+                            log.warn(msg);
+                        } else {
+                            retryResult = login();
+                            String msg = String.format("Received status %s. Relogin succeeded.", e.getResponse().getStatusCode());
+                            log.warn(msg);
+                        }
                     } catch (Exception ex) {
-                        String msg = String.format("Received status %s. Relogin failed %s", e.getResponse().getStatusCode(), ex.getMessage());
+                        String msg = String.format("Received status %s. Refresh/login failed %s", e.getResponse().getStatusCode(), ex.getMessage());
                         log.warn(msg);
                     }
 
-                    if (reloginResult) {
+                    if (retryResult) {
                         return doHttp(type, url, queryParams, data, headers, true);
                     }
                 }
@@ -420,6 +434,188 @@ public class RestConnector {
     public void setCredentials(String user, String password) {
         this.user = user;
         this.password = password;
+    }
+
+    public void setAccessTokenCookie(String accessToken) {
+        if (StringUtils.isNotEmpty(accessToken)) {
+            cookies.put(OIDC_COOKIE_NAME, accessToken);
+        }
+    }
+
+    public void setOidcConfiguration(String discoveryUrl, String oidcClientId, String oidcClientSecret, Boolean oidcEnabled) {
+        this.discoveryUrl = discoveryUrl;
+        this.oidcClientId = oidcClientId;
+        this.oidcClientSecret = oidcClientSecret;
+        this.oidcEnabled = oidcEnabled;
+    }
+
+    private void refreshAccessToken() throws IOException {
+        if (!oidcEnabled) {
+            throw new IllegalStateException("OIDC not configured");
+        }
+
+        String tokenEndpoint = getTokenEndpointFromDiscovery();
+        String idpAccessToken = obtainIdpAccessToken(tokenEndpoint);
+        String octaneAccessToken = exchangeOctaneToken(idpAccessToken);
+        setAccessTokenCookie(octaneAccessToken);
+    }
+
+    private String getTokenEndpointFromDiscovery() throws IOException {
+        String discoveryJson = httpGetAbsolute(discoveryUrl);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(discoveryJson);
+        String tokenEndpoint = node.path(OIDC_DISCOVERY_TOKEN_ENDPOINT).asText();
+
+        if (StringUtils.isEmpty(tokenEndpoint)) {
+            throw new IllegalArgumentException("token_endpoint missing in discovery document");
+        }
+
+        return tokenEndpoint;
+    }
+
+    private String obtainIdpAccessToken(String tokenEndpoint) throws IOException {
+        Map<String, String> form = new HashMap<>();
+        form.put(OIDC_PARAM_GRANT_TYPE, OIDC_GRANT_TYPE_CLIENT_CREDENTIALS);
+        form.put(OIDC_PARAM_CLIENT_ID, user);
+        form.put(OIDC_PARAM_CLIENT_SECRET, password);
+
+        String tokenResponse = httpPostFormAbsolute(tokenEndpoint, form);
+
+        return extractAccessToken(tokenResponse, "IDP did not return access_token");
+    }
+
+    private String exchangeOctaneToken(String idpAccessToken) throws IOException {
+        String url = baseUrl + OIDC_OCTANE_TOKEN_PATH;
+
+        Map<String, String> form = new HashMap<>();
+        form.put(OIDC_PARAM_GRANT_TYPE, OIDC_GRANT_TYPE_TOKEN_EXCHANGE);
+        form.put(OIDC_PARAM_SUBJECT_TOKEN_TYPE, OIDC_SUBJECT_TOKEN_TYPE);
+        form.put(OIDC_PARAM_SUBJECT_TOKEN, idpAccessToken);
+
+        String response = httpPostFormAbsolute(url, form, oidcClientId, oidcClientSecret);
+
+        return extractAccessToken(response, "Octane did not return access_token");
+    }
+
+    private String extractAccessToken(String jsonResponse, String errorMessage) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(jsonResponse);
+        String accessToken = node.path(OIDC_ACCESS_TOKEN_FIELD).asText();
+
+        if (StringUtils.isEmpty(accessToken)) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        return accessToken;
+    }
+
+    private String httpGetAbsolute(String url) throws IOException {
+        HttpURLConnection con = openConnectionForAbsoluteUrl(url, "GET");
+        con.setRequestProperty(HEADER_ACCEPT, HEADER_APPLICATION_JSON);
+
+        return readResponse(con, url);
+    }
+
+    private String httpPostFormAbsolute(String url, Map<String, String> form) throws IOException {
+        return httpPostFormAbsolute(url, form, null, null);
+    }
+
+    private String httpPostFormAbsolute(String url, Map<String, String> form, String clientId, String clientSecret) throws IOException {
+        HttpURLConnection con = openConnectionForAbsoluteUrl(url, "POST");
+        con.setDoOutput(true);
+        con.setRequestProperty(HEADER_CONTENT_TYPE, OIDC_CONTENT_TYPE_FORM);
+
+        if (clientId != null && clientSecret != null) {
+            String basicAuth = Base64.getEncoder().encodeToString((clientId + ":" + clientSecret).getBytes(Charsets.UTF_8));
+            con.setRequestProperty(HEADER_AUTHORIZATION, "Basic " + basicAuth);
+        }
+
+        writeFormBody(con, form);
+
+        return readResponse(con, url);
+    }
+
+    private HttpURLConnection openConnectionForAbsoluteUrl(String urlString, String method) throws IOException {
+        URL urlObj = new URL(urlString);
+        HttpURLConnection con;
+
+        if (proxyConfiguration == null) {
+            con = (HttpURLConnection) urlObj.openConnection();
+        } else {
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConfiguration.getHost(), proxyConfiguration.getPort()));
+            con = (HttpURLConnection) urlObj.openConnection(proxy);
+
+            if (StringUtils.isNotEmpty(proxyConfiguration.getUsername()) && StringUtils.isNotEmpty(proxyConfiguration.getPassword())) {
+                Authenticator authenticator = new Authenticator() {
+                    public PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(proxyConfiguration.getUsername(), proxyConfiguration.getPassword().toCharArray());
+                    }
+                };
+
+                Authenticator.setDefault(authenticator);
+            }
+        }
+
+        if (con instanceof HttpsURLConnection) {
+            setSSLSocketFactory((HttpsURLConnection) con);
+        }
+        con.setRequestMethod(method);
+
+        return con;
+    }
+
+    private String buildFormBody(Map<String, String> form) {
+        StringBuilder sb = new StringBuilder();
+
+        for (Map.Entry<String, String> entry : form.entrySet()) {
+            if (sb.length() > 0) {
+                sb.append('&');
+            }
+
+            try {
+                sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.name()))
+                        .append('=')
+                        .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.name()));
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalArgumentException("Failed to encode params.", e);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private void writeFormBody(HttpURLConnection con, Map<String, String> form) throws IOException {
+        String body = buildFormBody(form);
+
+        try (OutputStream os = con.getOutputStream()) {
+            os.write(body.getBytes(Charsets.UTF_8));
+        }
+    }
+
+    private String readResponse(HttpURLConnection con, String url) throws IOException {
+        int responseCode = con.getResponseCode();
+
+        try (InputStream is = (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) ? con.getInputStream() : con.getErrorStream()) {
+            String response = (is != null) ? readStreamToString(is) : "";
+
+            if (responseCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
+                throw new IllegalArgumentException("HTTP " + responseCode + " calling " + url + ": " + response);
+            }
+
+            return response;
+        }
+    }
+
+    private String readStreamToString(InputStream is) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+
+        while ((length = is.read(buffer)) != -1) {
+            result.write(buffer, 0, length);
+        }
+
+        return result.toString(StandardCharsets.UTF_8.name());
     }
 
     private void setSSLSocketFactory(HttpsURLConnection httpsURLConnection) {
