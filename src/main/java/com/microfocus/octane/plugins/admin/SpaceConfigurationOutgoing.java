@@ -53,6 +53,18 @@ public class SpaceConfigurationOutgoing {
     @XmlElement(name = "name")
     private String name;
 
+    @XmlElement(name = "oidcEnabled")
+    private Boolean oidcEnabled;
+
+    @XmlElement(name = "discoveryUrl")
+    private String discoveryUrl;
+
+    @XmlElement(name = "oidcClientId")
+    private String oidcClientId;
+
+    @XmlElement(name = "oidcClientSecret")
+    private String oidcClientSecret;
+
     public String getId() {
         return id;
     }
@@ -95,6 +107,46 @@ public class SpaceConfigurationOutgoing {
 
     public SpaceConfigurationOutgoing setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public Boolean getOidcEnabled() {
+        return oidcEnabled;
+    }
+
+    public SpaceConfigurationOutgoing setOidcEnabled(Boolean oidcEnabled) {
+        this.oidcEnabled = oidcEnabled;
+
+        return this;
+    }
+
+    public String getDiscoveryUrl() {
+        return discoveryUrl;
+    }
+
+    public SpaceConfigurationOutgoing setDiscoveryUrl(String discoveryUrl) {
+        this.discoveryUrl = discoveryUrl;
+
+        return this;
+    }
+
+    public String getOidcClientId() {
+        return oidcClientId;
+    }
+
+    public SpaceConfigurationOutgoing setOidcClientId(String oidcClientId) {
+        this.oidcClientId = oidcClientId;
+
+        return this;
+    }
+
+    public String getOidcClientSecret() {
+        return oidcClientSecret;
+    }
+
+    public SpaceConfigurationOutgoing setOidcClientSecret(String oidcClientSecret) {
+        this.oidcClientSecret = oidcClientSecret;
+
         return this;
     }
 }

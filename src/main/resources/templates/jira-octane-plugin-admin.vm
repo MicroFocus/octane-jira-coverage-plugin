@@ -52,6 +52,29 @@
                 <div class="description">Client secret used for logging into the Core Software Delivery Platform server</div>
             </div>
             <div class="field-group">
+                <label for="oidcEnabled">Enable OIDC (OAuth2)</label>
+                <input type="checkbox" id="oidcEnabled" name="oidcEnabled" class="checkbox">
+                <div class="description">When enabled, the plugin authenticates using OIDC (OAuth 2.0) and token exchange.</div>
+            </div>
+            <div class="field-group">
+                <label for="discoveryUrl">OIDC Discovery URL<span class="aui-icon icon-required"></span></label>
+                <input type="text" id="discoveryUrl" name="discoveryUrl" class="text medium-long-field required" autocomplete="off">
+                <div class="error" id="discoveryUrlError"></div>
+                <div class="description">OIDC Discovery endpoint, e.g. https://idp.com/.well-known/openid-configuration</div>
+            </div>
+            <div class="field-group">
+                <label for="oidcClientId">OIDC Client ID<span class="aui-icon icon-required"></span></label>
+                <input type="text" id="oidcClientId" name="oidcClientId" class="text medium-long-field required" autocomplete="off">
+                <div class="error" id="oidcClientIdError"></div>
+                <div class="description">OIDC Client ID configured in Octane SSO (sso.conf)</div>
+            </div>
+            <div class="field-group">
+                <label for="oidcClientSecret">OIDC Client Secret<span class="aui-icon icon-required"></span></label>
+                <input type="password" id="oidcClientSecret" name="oidcClientSecret" class="text medium-long-field required" autocomplete="off">
+                <div class="error" id="oidcClientSecretError"></div>
+                <div class="description">OIDC Client Secret configured in Octane SSO (sso.conf)</div>
+            </div>
+            <div class="field-group">
                 <div id="button-group" style="position: relative;">
                     <input type="button" class="aui-button" id="dialog-test-space-connection" value="Test connection">
                     <span id="space-save-status" class="aui-icon aui-icon-small"></span>

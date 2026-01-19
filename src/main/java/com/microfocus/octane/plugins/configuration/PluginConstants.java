@@ -54,4 +54,20 @@ public class PluginConstants {
     public static final String SEPARATOR = ".";
     public static final String FUGEES_VERSION = "15.1.90";
     public static final String GUNSNROSES_PUSH2 = "16.0.16";
+
+    // OIDC Constants
+    public static final String OIDC_GRANT_TYPE_CLIENT_CREDENTIALS = "client_credentials";
+    public static final String OIDC_GRANT_TYPE_TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
+    public static final String OIDC_SUBJECT_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token";
+    public static final String OIDC_CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+    public static final String OIDC_OCTANE_TOKEN_PATH = "/osp/a/au/auth/oauth2/token";
+    public static final String OIDC_DISCOVERY_TOKEN_ENDPOINT = "token_endpoint";
+    public static final String OIDC_ACCESS_TOKEN_FIELD = "access_token";
+    public static final String OIDC_COOKIE_NAME = "access_token";
+
+    public static final String OIDC_PARAM_GRANT_TYPE = "grant_type";
+    public static final String OIDC_PARAM_CLIENT_ID = "client_id";
+    public static final String OIDC_PARAM_CLIENT_SECRET = "client_secret";
+    public static final String OIDC_PARAM_SUBJECT_TOKEN_TYPE = "subject_token_type";
+    public static final String OIDC_PARAM_SUBJECT_TOKEN = "subject_token";
 }

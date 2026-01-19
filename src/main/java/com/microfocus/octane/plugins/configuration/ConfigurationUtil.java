@@ -137,6 +137,15 @@ public class ConfigurationUtil {
             throw new IllegalArgumentException("Client secret is required");
         }
 
+        if (sco.getOidcEnabled()) {
+            if (StringUtils.isEmpty(sco.getDiscoveryUrl())) {
+                throw new IllegalArgumentException("OIDC Discovery URL is required when OIDC is enabled");
+            }
+            if (StringUtils.isEmpty(sco.getOidcClientId()) || StringUtils.isEmpty(sco.getOidcClientSecret())) {
+                throw new IllegalArgumentException("Octane OIDC client credentials are required when OIDC is enabled");
+            }
+        }
+
         LocationParts locationParts = null;
         try {
             locationParts = parseUiLocation(sco.getLocation().trim());
@@ -146,6 +155,7 @@ public class ConfigurationUtil {
         }
 
         String clientSecret = sco.getClientSecret();
+        String oidcClientSecret = sco.getOidcClientSecret();
         if (isNew) {
             //validate id is missing
             if (StringUtils.isNotEmpty(sco.getId())) {
@@ -163,28 +173,39 @@ public class ConfigurationUtil {
             if (PluginConstants.PASSWORD_REPLACE.equals(clientSecret) && !isNew) {
                 clientSecret = opt.get().getClientSecret();
             }
+
+            if (sco.getOidcEnabled()) {
+                if (PluginConstants.PASSWORD_REPLACE.equals(oidcClientSecret)) {
+                    oidcClientSecret = opt.get().getOidcClientSecret();
+                }
+            }
         }
 
         //convert
-        SpaceConfiguration sc = new SpaceConfiguration(
+        return new SpaceConfiguration(
                 sco.getName().trim(),
                 sco.getLocation().trim(),
                 locationParts,
                 sco.getClientId().trim(),
                 clientSecret,
-                sco.getId());
-
-        return sc;
+                sco.getId(),
+                sco.getOidcEnabled(),
+                sco.getDiscoveryUrl(),
+                sco.getOidcClientId(),
+                oidcClientSecret);
     }
 
     public static SpaceConfigurationOutgoing convertToOutgoing(SpaceConfiguration sc) {
-        SpaceConfigurationOutgoing sco = new SpaceConfigurationOutgoing()
+        return new SpaceConfigurationOutgoing()
                 .setId(sc.getId())
                 .setName(sc.getName())
                 .setLocation(sc.getLocation())
                 .setClientSecret(PluginConstants.PASSWORD_REPLACE)
-                .setClientId(sc.getClientId());
-        return sco;
+                .setClientId(sc.getClientId())
+                .setDiscoveryUrl(sc.getDiscoveryUrl())
+                .setOidcClientId(sc.getOidcClientId())
+                .setOidcClientSecret(PluginConstants.PASSWORD_REPLACE)
+                .setOidcEnabled(sc.getOidcEnabled());
     }
 
     public static void doSpaceConfigurationUniquenessValidation(SpaceConfiguration spaceConfiguration, boolean isConnectionTested) {
