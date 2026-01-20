@@ -250,6 +250,8 @@ public class ConfigurationUtil {
     public static String parseExceptionMessage(RestStatusException e, SpaceConfiguration spaceConfig) {
         if (e.getStatus() == 404 && e.getMessage().contains("SharedSpaceNotFoundException")) {
             return String.format("Space id '%d' does not exist", spaceConfig.getLocationParts().getSpaceId());
+        } else if (e.getStatus() == 401 && e.getMessage().contains("Not Authenticated")) {
+            return "Authentication failed: Please check client ID and client secret";
         } else {
             return "Test connection failed: " + e.getMessage();
         }
