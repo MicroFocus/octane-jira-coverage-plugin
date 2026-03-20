@@ -35,21 +35,19 @@ import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.components.api.InitService;
 import com.microfocus.octane.plugins.configuration.ConfigurationManager;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @ExportAsService({InitService.class})
 @Named("initService")
 public class InitServiceImpl implements InitService {
 
-    @ComponentImport
     private final PluginSettingsFactory pluginSettingsFactory;
 
-    @ComponentImport
     ClusterMessagingService clusterMessagingService;
 
     @Inject
-    public InitServiceImpl(final PluginSettingsFactory pluginSettingsFactory, ClusterMessagingService clusterMessagingService) {
+    public InitServiceImpl(@ComponentImport final PluginSettingsFactory pluginSettingsFactory,@ComponentImport ClusterMessagingService clusterMessagingService) {
         this.pluginSettingsFactory = pluginSettingsFactory;
         ConfigurationManager.getInstance().init(pluginSettingsFactory, clusterMessagingService);
     }

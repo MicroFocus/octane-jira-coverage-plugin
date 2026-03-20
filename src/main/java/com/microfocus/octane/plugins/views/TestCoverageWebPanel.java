@@ -35,14 +35,14 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Scanned
+@Named
 public class TestCoverageWebPanel extends AbstractJiraContextProvider {
 
     private static final Logger log = LoggerFactory.getLogger(TestCoverageWebPanel.class);
