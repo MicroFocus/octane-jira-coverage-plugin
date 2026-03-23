@@ -830,15 +830,14 @@
             $("#oidcClientSecret").val(model.oidcClientSecret);
 
             $('#space-dialog-title').text("Edit");//set dialog title
-            $('#oidcEnabled').prop('checked', false);
         } else {//new item
             $("#name").val("");
             $("#location").val("");
             $("#clientId").val("");
             $("#clientSecret").val("");
 
-
             $('#space-dialog-title').text("Create");//set dialog title
+            $('#oidcEnabled').prop('checked', false);
         }
 
         AJS.dialog2("#space-dialog").show();
