@@ -287,7 +287,11 @@
             name: $("#name").val().trim(),
             location: $("#location").val().trim(),
             clientId: $("#clientId").val().trim(),
-            clientSecret: $("#clientSecret").val().trim()
+            clientSecret: $("#clientSecret").val().trim(),
+            oidcEnabled: $("#oidcEnabled").is(":checked"),
+            discoveryUrl: $("#discoveryUrl").attr("value").trim(),
+            oidcClientId: $("#oidcClientId").attr("value").trim(),
+            oidcClientSecret: $("#oidcClientSecret").attr("value")
         };
 
         var isEditMode = !!octanePluginContext.spaceCurrentRow;
@@ -343,7 +347,11 @@
             name: rowModel.name,
             location: rowModel.location,
             clientId: rowModel.clientId,
-            clientSecret: rowModel.clientSecret
+            clientSecret: rowModel.clientSecret,
+            oidcEnabled: rowModel.oidcEnabled,
+            discoveryUrl: rowModel.discoveryUrl,
+            oidcClientId: rowModel.oidcClientId,
+            oidcClientSecret: rowModel.oidcClientSecret
         };
 
         //send
@@ -418,7 +426,11 @@
                 name: $("#name").val().trim(),
                 location: $("#location").val().trim(),
                 clientId: $("#clientId").val().trim(),
-                clientSecret: $("#clientSecret").val().trim()
+                clientSecret: $("#clientSecret").val().trim(),
+                oidcEnabled: $("#oidcEnabled").is(":checked"),
+                discoveryUrl: $("#discoveryUrl").attr("value").trim(),
+                oidcClientId: $("#oidcClientId").attr("value").trim(),
+                oidcClientSecret: $("#oidcClientSecret").attr("value")
             };
 
             var url = octanePluginContext.spaceTable.options.resources.all;
@@ -444,6 +456,9 @@
                     rowModel.location = result.location;
                     rowModel.clientId = result.clientId;
                     rowModel.clientSecret = result.clientSecret;
+                    rowModel.discoveryUrl = result.discoveryUrl;
+                    rowModel.oidcClientId = result.oidcClientId;
+                    rowModel.oidcClientSecret = result.oidcClientSecret;
                     octanePluginContext.spaceCurrentRow.render();
                     reloadTable(octanePluginContext.workspaceTable);
                 } else {//new mode
@@ -809,8 +824,13 @@
             $("#location").val(model.location);
             $("#clientId").val(model.clientId);
             $("#clientSecret").val(model.clientSecret);
+            $('#oidcEnabled').prop('checked', !!model.oidcEnabled);
+            $("#discoveryUrl").val(model.discoveryUrl);
+            $("#oidcClientId").val(model.oidcClientId);
+            $("#oidcClientSecret").val(model.oidcClientSecret);
 
             $('#space-dialog-title').text("Edit");//set dialog title
+            $('#oidcEnabled').prop('checked', false);
         } else {//new item
             $("#name").val("");
             $("#location").val("");
@@ -822,6 +842,11 @@
         }
 
         AJS.dialog2("#space-dialog").show();
+        toggleOidcSection($('#oidcEnabled').is(':checked'));
+
+        $('#oidcEnabled').off('change').on('change', function(){
+            toggleOidcSection($('#oidcEnabled').is(':checked'));
+        });
     }
 
     var spaceErrorFlags = [];
@@ -979,6 +1004,33 @@
         el.removeClass(iconOkClass);
         el.addClass(iconFailedClass);
         el.attr("title", msg);
+    }
+
+    function toggleOidcSection(enabled) {
+        var discoveryGroup = $('#discoveryUrl').closest('.field-group');
+        var oidcClientIdGroup = $('#oidcClientId').closest('.field-group');
+        var oidcClientSecretGroup = $('#oidcClientSecret').closest('.field-group');
+
+        hideElement(discoveryGroup, !enabled);
+        hideElement(oidcClientIdGroup, !enabled);
+        hideElement(oidcClientSecretGroup, !enabled);
+
+        var $discovery = $('#discoveryUrl');
+        var $oidcId = $('#oidcClientId');
+        var $oidcSecret = $('#oidcClientSecret');
+        if (enabled) {
+            $discovery.addClass('required');
+            $oidcId.addClass('required');
+            $oidcSecret.addClass('required');
+        } else {
+            $discovery.removeClass('required');
+            $oidcId.removeClass('required');
+            $oidcSecret.removeClass('required');
+
+            $('#discoveryUrlError').text('');
+            $('#oidcClientIdError').text('');
+            $('#oidcClientSecretError').text('');
+        }
     }
 
 })(AJS.$ || jQuery);
