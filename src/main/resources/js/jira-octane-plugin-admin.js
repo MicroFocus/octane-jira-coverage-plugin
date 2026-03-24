@@ -289,9 +289,9 @@
             clientId: $("#clientId").val().trim(),
             clientSecret: $("#clientSecret").val().trim(),
             oidcEnabled: $("#oidcEnabled").is(":checked"),
-            discoveryUrl: $("#discoveryUrl").attr("value").trim(),
-            oidcClientId: $("#oidcClientId").attr("value").trim(),
-            oidcClientSecret: $("#oidcClientSecret").attr("value")
+            discoveryUrl: $("#discoveryUrl").val().trim(),
+            oidcClientId: $("#oidcClientId").val().trim(),
+            oidcClientSecret: $("#oidcClientSecret").val()
         };
 
         var isEditMode = !!octanePluginContext.spaceCurrentRow;
@@ -428,9 +428,9 @@
                 clientId: $("#clientId").val().trim(),
                 clientSecret: $("#clientSecret").val().trim(),
                 oidcEnabled: $("#oidcEnabled").is(":checked"),
-                discoveryUrl: $("#discoveryUrl").attr("value").trim(),
-                oidcClientId: $("#oidcClientId").attr("value").trim(),
-                oidcClientSecret: $("#oidcClientSecret").attr("value")
+                discoveryUrl: $("#discoveryUrl").val().trim(),
+                oidcClientId: $("#oidcClientId").val().trim(),
+                oidcClientSecret: $("#oidcClientSecret").val()
             };
 
             var url = octanePluginContext.spaceTable.options.resources.all;
