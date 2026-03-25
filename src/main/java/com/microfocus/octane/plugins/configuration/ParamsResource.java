@@ -29,33 +29,32 @@
 
 package com.microfocus.octane.plugins.configuration;
 
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import jakarta.inject.Named;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
 @Path("/")
-@Scanned
+@Named
 public class ParamsResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParamsResource.class);
 
-    @ComponentImport
     private final UserManager userManager;
 
     @Inject
-    public ParamsResource(UserManager userManager) {
+    public ParamsResource(@ComponentImport UserManager userManager) {
         this.userManager = userManager;
     }
 

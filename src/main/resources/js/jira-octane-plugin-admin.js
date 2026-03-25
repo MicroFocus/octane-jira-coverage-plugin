@@ -263,15 +263,15 @@
         }
 
         //validate
-        var nameValue = $("#name").attr("value").trim();
-        var locationValue = $("#location").attr("value").trim();
-        var clientIdValue = $("#clientId").attr("value").trim();
+        let nameValue = $("#name").val().trim();
+        let locationValue = $("#location").val().trim();
+        let clientIdValue = $("#clientId").val().trim();
 
-        var validationFailed = !validateMissingRequiredField(nameValue, "#nameError") ||
+        let validationFailed = !validateMissingRequiredField(nameValue, "#nameError") ||
             !validateConditionAndUpdateErrorField((nameValue.length <= 40), "Exceeds allowed length (40 characters)", "#nameError");
         validationFailed = !validateMissingRequiredField(locationValue, "#locationError") || validationFailed;
         validationFailed = !validateMissingRequiredField(clientIdValue, "#clientIdError") || validationFailed;
-        validationFailed = !validateMissingRequiredField($("#clientSecret").attr("value"), "#clientSecretError") || validationFailed;
+        validationFailed = !validateMissingRequiredField($("#clientSecret").val(), "#clientSecretError") || validationFailed;
 
         return !validationFailed;
     }
@@ -283,15 +283,15 @@
         }
 
         //build model
-        var modelForUpdate = {
-            name: $("#name").attr("value").trim(),
-            location: $("#location").attr("value").trim(),
-            clientId: $("#clientId").attr("value").trim(),
-            clientSecret: $("#clientSecret").attr("value"),
+        let modelForUpdate = {
+            name: $("#name").val().trim(),
+            location: $("#location").val().trim(),
+            clientId: $("#clientId").val().trim(),
+            clientSecret: $("#clientSecret").val().trim(),
             oidcEnabled: $("#oidcEnabled").is(":checked"),
-            discoveryUrl: $("#discoveryUrl").attr("value").trim(),
-            oidcClientId: $("#oidcClientId").attr("value").trim(),
-            oidcClientSecret: $("#oidcClientSecret").attr("value")
+            discoveryUrl: $("#discoveryUrl").val().trim(),
+            oidcClientId: $("#oidcClientId").val().trim(),
+            oidcClientSecret: $("#oidcClientSecret").val()
         };
 
         var isEditMode = !!octanePluginContext.spaceCurrentRow;
@@ -422,15 +422,15 @@
             var rowModel = editMode ? octanePluginContext.spaceCurrentRow.model.attributes : null;
 
             //build model
-            var modelForUpdate = {
-                name: $("#name").attr("value").trim(),
-                location: $("#location").attr("value").trim(),
-                clientId: $("#clientId").attr("value").trim(),
-                clientSecret: $("#clientSecret").attr("value"),
+            let modelForUpdate = {
+                name: $("#name").val().trim(),
+                location: $("#location").val().trim(),
+                clientId: $("#clientId").val().trim(),
+                clientSecret: $("#clientSecret").val().trim(),
                 oidcEnabled: $("#oidcEnabled").is(":checked"),
-                discoveryUrl: $("#discoveryUrl").attr("value").trim(),
-                oidcClientId: $("#oidcClientId").attr("value").trim(),
-                oidcClientSecret: $("#oidcClientSecret").attr("value")
+                discoveryUrl: $("#discoveryUrl").val().trim(),
+                oidcClientId: $("#oidcClientId").val().trim(),
+                oidcClientSecret: $("#oidcClientSecret").val()
             };
 
             var url = octanePluginContext.spaceTable.options.resources.all;
@@ -489,7 +489,7 @@
             $("#octaneEntityTypes").val("");//clear before in order to avoid saving not-consistent data
             var workspaceIds = $("#workspaceSelector").val();
             var spaceConfId = octanePluginContext.workspaceDialogData.spaceConf.id;
-            var udfName = $("#octaneUdf").attr("value");
+            let udfName = $("#octaneUdf").val();
             if (workspaceIds && udfName) {
                 $("#refreshOctaneEntityTypesSpinner").spin();
             } else {
@@ -579,9 +579,9 @@
             }
 
             //validate
-            var validationFailed = !validateMissingRequiredField($("#workspaceSelector").select2('data').length, "#workspaceSelectorError");
+            let validationFailed = !validateMissingRequiredField($("#workspaceSelector").select2('data').length, "#workspaceSelectorError");
             validationFailed = !validateMissingRequiredField($("#spaceConfSelector").select2('data'), "#spaceConfSelectorError") || validationFailed;
-            validationFailed = !validateMissingRequiredField($("#octaneUdf").attr("value"), "#octaneUdfError") || validationFailed;
+            validationFailed = !validateMissingRequiredField($("#octaneUdf").val(), "#octaneUdfError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#octaneEntityTypes").val(), "#octaneEntityTypesError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#jiraProjectsSelector").select2('data').length, "#jiraProjectsSelectorError") || validationFailed;
             validationFailed = !validateMissingRequiredField($("#jiraIssueTypesSelector").select2('data').length, "#jiraIssueTypesSelectorError") || validationFailed;
@@ -623,8 +623,8 @@
                 workspaces: $("#workspaceSelector").select2('data').map(ws => ws.id + " - " + ws.text),
                 spaceConfigId: $("#spaceConfSelector").select2('data').id,
                 spaceConfigName: $("#spaceConfSelector").select2('data').text,
-                octaneUdf: $("#octaneUdf").attr("value"),
-                octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").attr("value").split(", ") : [], //if empty value - send empty array
+                octaneUdf: $("#octaneUdf").val(),
+                octaneEntityTypes: ($("#octaneEntityTypes").val()) ? $("#octaneEntityTypes").val().split(", ") : [], //if empty value - send empty array
                 jiraIssueTypes: _.map($("#jiraIssueTypesSelector").select2('data'), function (item) {
                     return item.id;
                 }),//convert selected objects to array of strings

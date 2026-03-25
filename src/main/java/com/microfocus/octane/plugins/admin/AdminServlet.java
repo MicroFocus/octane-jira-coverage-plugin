@@ -29,35 +29,32 @@
 
 package com.microfocus.octane.plugins.admin;
 
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import jakarta.inject.Named;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.atlassian.templaterenderer.TemplateRenderer;
 
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 
-@Scanned
+@Named
 public class AdminServlet extends HttpServlet {
 
-    @ComponentImport
     private final UserManager userManager;
 
-    @ComponentImport
     private final LoginUriProvider loginUriProvider;
 
-    @ComponentImport
     private final TemplateRenderer renderer;
 
     @Inject
-    public AdminServlet(UserManager userManager, LoginUriProvider loginUriProvider, TemplateRenderer renderer) {
+    public AdminServlet(@ComponentImport UserManager userManager,@ComponentImport LoginUriProvider loginUriProvider,@ComponentImport TemplateRenderer renderer) {
         this.userManager = userManager;
         this.loginUriProvider = loginUriProvider;
         this.renderer = renderer;

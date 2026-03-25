@@ -30,7 +30,7 @@
 package com.microfocus.octane.plugins.admin;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import jakarta.inject.Named;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
@@ -43,20 +43,20 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
 @Path("/")
-@Scanned
+@Named
 public class ConfigResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigResource.class);
@@ -64,11 +64,10 @@ public class ConfigResource {
     @Context
     HttpServletRequest request;
 
-    @ComponentImport
     private final UserManager userManager;
 
     @Inject
-    public ConfigResource(UserManager userManager) {
+    public ConfigResource(@ComponentImport UserManager userManager) {
         this.userManager = userManager;
     }
 

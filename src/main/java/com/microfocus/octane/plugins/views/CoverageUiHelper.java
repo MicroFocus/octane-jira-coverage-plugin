@@ -51,11 +51,11 @@ import com.microfocus.octane.plugins.rest.entities.groups.GroupEntity;
 import com.microfocus.octane.plugins.rest.entities.groups.GroupEntityCollection;
 import com.microfocus.octane.plugins.rest.query.InQueryPhrase;
 import com.microfocus.octane.plugins.rest.query.QueryPhrase;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.constraints.NotNull;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
