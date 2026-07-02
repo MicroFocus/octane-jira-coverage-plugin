@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microfocus.octane.plugins</groupId>
     <artifactId>jira-octane-quality-insight-plugin</artifactId>
-    <version>26.2</version>
+    <version>26.3</version>
     <organization>
         <name>Open Text</name>
         <url>https://www.opentext.com/</url>
@@ -30,7 +30,7 @@
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
         <atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
 
-        <jira.version>11.3.1</jira.version>
+        <jira.version>11.3.7</jira.version>
         <jira.software.application.version>11.3.1</jira.software.application.version>
         <amps.version>9.12.1</amps.version>
 
