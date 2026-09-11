@@ -28,7 +28,7 @@
  ******************************************************************************/
 package com.microfocus.octane.plugins.configuration;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 
 public class OctaneServerVersion implements Comparable<OctaneServerVersion> {
 
