@@ -29,6 +29,7 @@
 
 package com.microfocus.octane.plugins.tools;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -81,7 +82,8 @@ public class JsonHelper {
 
     public static <T> T deserialize(String value, Class<T> valueType) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = new ObjectMapper()
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             T result = mapper.readValue(value, valueType);
             return result;
         } catch (IOException e) {

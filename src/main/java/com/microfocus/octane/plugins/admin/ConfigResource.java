@@ -50,6 +50,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -289,6 +290,85 @@ public class ConfigResource {
 
         ConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
         return Response.ok().build();
+    }
+
+    /** All admin-tunable parameters: definition (name, default, range, description) + current effective value. */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/parameters")
+    public Response getParameters() {
+        if (!hasPermission()) {
+            return Response.status(Status.FORBIDDEN).build();
+        }
+
+        return Response.ok(toParametersOutgoing()).build();
+    }
+
+    /**
+     * Saves parameter values, sent as a JSON object {"PARAMETER_NAME": value, ...}. Parameters not included
+     * keep their current value. All-or-nothing: if any entry is unknown or invalid, nothing is saved.
+     */
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/parameters")
+    public Response setParameters(final Map<String, Object> newValues) {
+        if (!hasPermission()) {
+            return Response.status(Status.FORBIDDEN).build();
+        }
+
+        if (newValues == null || newValues.isEmpty()) {
+            return Response.status(Status.CONFLICT).entity("No parameter values were provided.").build();
+        }
+
+        Map<PluginParameter, Integer> validated = new LinkedHashMap<>();
+        List<String> errors = new ArrayList<>();
+
+        newValues.forEach((name, rawValue) -> {
+            Optional<PluginParameter> parameter = PluginParameter.byName(name);
+
+            if (!parameter.isPresent()) {
+                errors.add("Unknown parameter: " + name + ".");
+                return;
+            }
+
+            Integer value = rawValue instanceof Number ? toStrictInteger((Number) rawValue) : null;
+            if (!parameter.get().isValid(value)) {
+                errors.add(String.format("%s must be a whole number from %,d to %,d.",
+                        name, parameter.get().getMinValue(), parameter.get().getMaxValue()));
+                return;
+            }
+            validated.put(parameter.get(), value);
+        });
+
+        if (!errors.isEmpty()) {
+            return Response.status(Status.CONFLICT).entity(String.join(" ", errors)).build();
+        }
+
+        ConfigurationManager.getInstance().saveParameterValues(validated);
+
+        return Response.ok(toParametersOutgoing()).build();
+    }
+
+    private static List<PluginParameterOutgoing> toParametersOutgoing() {
+        Map<String, Integer> values = ConfigurationManager.getInstance().getParameterValues();
+
+        return Arrays.stream(PluginParameter.values())
+                .map(p -> new PluginParameterOutgoing(p, values.get(p.name())))
+                .collect(Collectors.toList());
+    }
+
+    static Integer toStrictInteger(Number value) {
+        if (value instanceof Integer || value instanceof Short || value instanceof Byte) {
+            return value.intValue();
+        }
+        if (value instanceof Long || value instanceof BigInteger) {
+            BigInteger bigValue = value instanceof BigInteger ? (BigInteger) value : BigInteger.valueOf(value.longValue());
+            if (bigValue.bitLength() < Integer.SIZE) {
+                return bigValue.intValue();
+            }
+        }
+        return null;
     }
 
     @GET

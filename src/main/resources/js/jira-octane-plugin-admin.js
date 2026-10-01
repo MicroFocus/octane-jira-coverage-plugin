@@ -18,6 +18,7 @@
         configureWorkspaceDialog();
         configureWorkspaceTable();
         configureProxyDialog();
+        configureParameters();
     });
 
     function configureSpaceTable() {
@@ -215,6 +216,130 @@
             e.preventDefault();
             AJS.dialog2("#proxy-dialog").hide();
         });
+    }
+
+    // Generic "Parameters" section: rows, tooltips and input limits are all rendered from
+    // GET /parameters (whose single source of truth is the PluginParameter Java enum), so a new
+    // parameter needs no change in this file or in the template.
+    function configureParameters() {
+        var saveButton = $("#parameters-submit-button");
+        enableButton("#parameters-submit-button", false);
+
+        $.ajax({
+            url: octanePluginContext.octaneAdminBaseUrl + "parameters",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json"
+        }).done(function (parameters) {
+            renderParameterRows(parameters);
+            enableButton("#parameters-submit-button", true);
+        }).fail(function (request, status, error) {
+            setParametersStatus(request.responseText || "Failed to load parameters.", false);
+        });
+
+        // Validate while typing / when leaving the field, so the user sees the problem right away.
+        $("#parameters-table").on("input blur", ".parameter-value-input", function () {
+            validateParameterInput($(this));
+        });
+
+        saveButton.click(function (e) {
+            e.preventDefault();
+
+            var values = {};
+            var hasErrors = false;
+            $("#parameters-table .parameter-value-input").each(function () {
+                var inputEl = $(this);
+                var value = validateParameterInput(inputEl);
+                hasErrors = hasErrors || isNaN(value);
+                values[inputEl.attr("data-parameter-name")] = value;
+            });
+
+            if (hasErrors) {
+                $("#parameters-table .parameter-value-input--invalid").first().focus();
+                return;
+            }
+
+            $.ajax({
+                url: octanePluginContext.octaneAdminBaseUrl + "parameters",
+                type: "PUT",
+                data: JSON.stringify(values),
+                dataType: "json",
+                contentType: "application/json"
+            }).done(function (parameters) {
+                renderParameterRows(parameters);
+                setParametersStatus("Parameters are saved successfully", true);
+            }).fail(function (request, status, error) {
+                setParametersStatus(request.responseText, false);
+            });
+        });
+    }
+
+    // Built with jQuery .text()/.attr() (never HTML strings), so values are always escaped.
+    function renderParameterRows(parameters) {
+        var tableBody = $("#parameters-table-body").empty();
+
+        parameters.forEach(function (parameter) {
+            var inputId = "parameter-" + parameter.name;
+            var errorId = inputId + "-error";
+            var tooltip = parameter.description
+                + " Allowed values: " + parameter.minValue.toLocaleString("en-US") + " to " + parameter.maxValue.toLocaleString("en-US")
+                + ". Default: " + parameter.defaultValue.toLocaleString("en-US") + ".";
+
+            var nameCell = $("<td>").append($("<div class='parameter-name-cell'>").append(
+                $("<span class='aui-icon aui-icon-small aui-iconfont-info-circle parameter-tooltip'>").attr("title", tooltip),
+                $("<span class='parameter-name'>").text(parameter.name)
+            ));
+
+            var valueCell = $("<td>").append(
+                $("<input type='number' step='1' class='parameter-value-input'>").attr({
+                    id: inputId,
+                    min: parameter.minValue,
+                    max: parameter.maxValue,
+                    "data-parameter-name": parameter.name,
+                    "aria-label": parameter.name,
+                    "aria-describedby": errorId,
+                    "aria-invalid": "false"
+                }).val(parameter.value),
+                $("<div class='parameter-error' role='alert'>").attr("id", errorId)
+            );
+
+            tableBody.append($("<tr>").append(nameCell, valueCell));
+        });
+
+        // hover tooltips for the info icons, same pattern as #octane-possible-fields-tooltip
+        AJS.$("#parameters-table .parameter-tooltip").tooltip();
+    }
+
+    // Accepts only plain digit strings ("300"); anything else ("12abc", "1.5", "1e3", "", "-5") -> NaN.
+    // parseInt() would silently accept "12abc" as 12 and "1.5" as 1.
+    function parseStrictInteger(rawValue) {
+        var value = String(rawValue == null ? "" : rawValue).trim();
+        return /^\d{1,9}$/.test(value) ? Number(value) : NaN;
+    }
+
+    function validateParameterInput(inputEl) {
+        var min = Number(inputEl.attr("min"));
+        var max = Number(inputEl.attr("max"));
+        var rawValue = String(inputEl.val() == null ? "" : inputEl.val()).trim();
+        var isEmpty = rawValue === "" && !(inputEl[0].validity && inputEl[0].validity.badInput);
+        var value = parseStrictInteger(rawValue);
+
+        var errorMessage = null;
+        if (isEmpty) {
+            errorMessage = "A value is required.";
+        } else if (isNaN(value) || value < min || value > max) {
+            errorMessage = "Enter a whole number from " + min.toLocaleString("en-US") + " to " + max.toLocaleString("en-US") + ".";
+        }
+
+        setParameterInputError(inputEl, errorMessage);
+        return errorMessage ? NaN : value;
+    }
+
+    function setParameterInputError(inputEl, errorMessage) {
+        var hasError = !!errorMessage;
+        inputEl.toggleClass("parameter-value-input--invalid", hasError)
+            .attr("aria-invalid", hasError ? "true" : "false");
+        $("#" + inputEl.attr("aria-describedby")).text(hasError ? errorMessage : "");
     }
 
     function reloadPossibleJiraFields() {
@@ -851,6 +976,7 @@
     var spaceErrorFlags = [];
     var workspaceErrorFlags = [];
     var proxyErrorFlags = [];
+    var parametersErrorFlags = [];
 
     function enableWorkspaceSubmitButton(enable) {
         enableButton("#workspace-submit-button", enable);
@@ -872,6 +998,10 @@
 
     function setProxyStatus(statusText, isSuccess) {
         showStatusFlag(statusText, isSuccess, proxyErrorFlags);
+    }
+
+    function setParametersStatus(statusText, isSuccess) {
+        showStatusFlag(statusText, isSuccess, parametersErrorFlags);
     }
 
     function showSpaceStatus(statusText, isSuccess) {

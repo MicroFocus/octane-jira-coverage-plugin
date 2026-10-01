@@ -62,6 +62,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     private ClusterMessagingService clusterMessagingService;
 
     private ConfigurationCollection configuration;
+    private PluginParameters parameters;
 
     //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
 
@@ -157,6 +158,46 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         return getConfiguration().getProxy();
     }
 
+    public int getParameterValue(PluginParameter parameter) {
+        return getParameters().valueOf(parameter);
+    }
+
+    public Map<String, Integer> getParameterValues() {
+        return getParameters().effectiveValues();
+    }
+
+    /**
+     * Saves the given parameter values (already validated by the caller); parameters not included keep
+     * their current value. Persisted under its own key and broadcast to the other Data Center nodes.
+     */
+    public synchronized void saveParameterValues(Map<PluginParameter, Integer> newValues) {
+        PluginParameters updated = new PluginParameters();
+        updated.setValues(getParameters().getValues());
+        newValues.forEach(updated::put);
+
+        PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+        settings.put(PARAMETERS_KEY, JsonHelper.serialize(updated));
+        parameters = updated;
+        sendConfigurationChangedMessage();
+    }
+
+    private synchronized PluginParameters getParameters() {
+        if (parameters == null) {
+            PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
+            String paramsStr = readConfigurationForDataKey(settings, PARAMETERS_KEY);
+            PluginParameters loaded = new PluginParameters();
+            if (paramsStr != null) {
+                try {
+                    loaded = JsonHelper.deserialize(paramsStr, PluginParameters.class);
+                } catch (Exception e) {
+                    log.error("Failed to deserialize plugin parameters, using defaults : " + e.getMessage());
+                }
+            }
+            parameters = loaded;
+        }
+        return parameters;
+    }
+
     public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
         ProxyConfiguration proxy = getProxySettings();
         if (proxy == null) {
@@ -192,6 +233,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     public synchronized void clearConfiguration() {
         log.info("configuration is cleared");
         configuration = null;
+        parameters = null;
     }
 
     private ConfigurationCollection loadConfiguration() {

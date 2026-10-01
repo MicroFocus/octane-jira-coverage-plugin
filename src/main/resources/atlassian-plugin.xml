@@ -45,6 +45,7 @@
     <dependency>com.atlassian.auiplugin:ajs</dependency>
     <dependency>com.atlassian.auiplugin:aui-select2</dependency>
     <!--<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>-->
+    <resource type="download" name="octane-coverage-panel-cache.js" location="/js/octane-coverage-panel-cache.js"/>
     <resource type="download" name="jira-octane-plugin-coverage-panel.js" location="/js/jira-octane-plugin-coverage-panel.js"/>
     <resource type="download" name="jira-octane-plugin-coverage-panel.css" location="/css/jira-octane-plugin-coverage-panel.css"/>
   </web-resource>

@@ -89,35 +89,6 @@
     display: block;
 }
 
-#show-start-date-picker.filtered{
-    color: red;
-}
-
-#run-start-date-picker{
-    width: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
-#custom-datepicker-buttons{
-    padding: 4px;
-    margin-top: 4px;
-    background: #f4f5f7;
-    border-top: 1px solid #dfe1e5;
-}
-
-#custom-datepicker-close-button{
-    float: right;
-    display: inline-block;
-}
-
-#octaneDataReloadSpinner{
-    float: right;
-    margin-top: -15px;
-    margin-right: 46px;
-}
-
 .width--100 {
     width: 100%;
 }
@@ -128,5 +99,29 @@
 
 .opacity--50 {
     opacity: 50%;
+}
+
+#octane-workspaces-dropdown-section {
+    display: flex;
+    align-items: center;
+}
+
+#octane-workspaces-dropdown-section .select2-container {
+    flex: 1 1 auto;
+}
+
+#octaneDataReloadButton {
+    flex: none;
+    margin-left: 4px;
+    padding: 0 4px;
+}
+
+#octaneDataReloadButton .aui-icon.spin {
+    animation: octane-reload-spin 1s linear infinite;
+}
+
+@keyframes octane-reload-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 

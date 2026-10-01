@@ -27,45 +27,45 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.microfocus.octane.plugins.views;
-
-import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.config.properties.APKeys;
-import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
-import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
-import com.atlassian.jira.user.ApplicationUser;
-import com.microfocus.octane.plugins.configuration.ConfigurationManager;
-import com.microfocus.octane.plugins.tools.JsonHelper;
-import jakarta.inject.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.microfocus.octane.plugins.configuration;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Named
-public class TestCoverageWebPanel extends AbstractJiraContextProvider {
+public class PluginParameters {
 
-    private static final Logger log = LoggerFactory.getLogger(TestCoverageWebPanel.class);
+    private Map<String, Integer> values = new HashMap<>();
 
-    @Override
-    public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
-
-        Map<String, Object> contextMap = new HashMap<>();
-        String configUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL) + "/plugins/servlet/admin/octane";
-        contextMap.put("configUrl", configUrl);
-        contextMap.put("runGroups", CoverageUiHelper.getAllCoverageGroups());
-
-        Issue issue = (Issue) jiraHelper.getContextParams().get("issue");
-        contextMap.put("issueKey", issue.getKey());
-        contextMap.put("issueId", issue.getId());
-        contextMap.put("issueType", issue.getIssueType().getName());
-        contextMap.put("projectKey", jiraHelper.getProject().getKey());
-
-        contextMap.put("pluginParametersJson", JsonHelper.serialize(ConfigurationManager.getInstance().getParameterValues()));
-
-        return contextMap;
+    public PluginParameters() {
     }
 
+    public Map<String, Integer> getValues() {
+        return values;
+    }
+
+    public void setValues(Map<String, Integer> values) {
+        this.values = values == null ? new HashMap<>() : new HashMap<>(values);
+    }
+
+    public int valueOf(PluginParameter parameter) {
+        Integer value = values.get(parameter.name());
+        return parameter.isValid(value) ? value : parameter.getDefaultValue();
+    }
+
+    public void put(PluginParameter parameter, int value) {
+        values.put(parameter.name(), value);
+    }
+
+    /**
+     * Effective values of all known parameters (name -> value), in declaration order.
+     */
+    public Map<String, Integer> effectiveValues() {
+        Map<String, Integer> result = new LinkedHashMap<>();
+
+        for (PluginParameter parameter : PluginParameter.values()) {
+            result.put(parameter.name(), valueOf(parameter));
+        }
+        return result;
+    }
 }

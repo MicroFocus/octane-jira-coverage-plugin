@@ -11,11 +11,31 @@
 <h3 class="formtitle">Spaces</h3>
 <p><button id="show-space-dialog" class="aui-button aui-button-link">Create</button> a new Core Software Delivery Platform space configuration.</p>
 <table id="space-table"></table>
-</br>
+<br/>
 
 <h3 class="formtitle">Workspaces</h3>
 <p><button id="show-workspace-dialog" class="aui-button aui-button-link">Create</button> a new Core Software Delivery Platform workspace configuration.</p>
 <table id="workspace-table"></table>
+<br/>
+
+<h3 class="formtitle">Parameters</h3>
+<p>Advanced parameters that affect the plugin's behavior. Hover over the info icon next to a parameter for details
+    before changing its value.</p>
+<table id="parameters-table" class="aui">
+    <thead>
+    <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+    </tr>
+    </thead>
+    <tbody id="parameters-table-body">
+    </tbody>
+
+</table>
+<p>
+    <button id="parameters-submit-button" class="aui-button aui-button-primary">Save</button>
+</p>
+
 
 <section id="space-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer" data-aui-modal="true" role="dialog" aria-hidden="true">
     <header class="aui-dialog2-header">
