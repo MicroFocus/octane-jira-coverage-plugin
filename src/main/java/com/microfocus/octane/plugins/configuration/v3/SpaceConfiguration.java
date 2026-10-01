@@ -53,7 +53,7 @@ public class SpaceConfiguration {
     private String oidcClientSecret;
 
     @JsonIgnore
-    private RestConnector restConnector;
+    private volatile RestConnector restConnector;
 
     public SpaceConfiguration() {
     }
@@ -160,21 +160,40 @@ public class SpaceConfiguration {
         this.oidcClientSecret = oidcClientSecret;
     }
 
+    /**
+     * Returns the connector of this space, creating (and authenticating) it only once.
+     * The connector keeps the Octane session cookie / OIDC access token, so it must be reused:
+     * a new connector per call means a new sign-in (or, with OIDC, an unauthenticated request
+     * rejected with 401 + a token exchange + the retried request) for every single Octane call.
+     * It is dropped by clearRestConnector() when the configuration (e.g. proxy) changes, and the
+     * whole SpaceConfiguration is replaced when the space itself is edited.
+     */
     @JsonIgnore
     public RestConnector getRestConnector() {
-        if (restConnector == null) {
-            if (getOidcEnabled()) {
-                RestConnector rc = new RestConnector();
-                rc.setBaseUrl(getLocationParts().getBaseUrl());
-                rc.setCredentials(getClientId(), getClientSecret());
-                rc.setOidcConfiguration(getDiscoveryUrl(), getOidcClientId(), getOidcClientSecret(), getOidcEnabled());
-
-                return rc;
-            } else {
-                return OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
+        RestConnector rc = restConnector;
+        if (rc == null) {
+            synchronized (this) {
+                rc = restConnector;
+                if (rc == null) {
+                    rc = createRestConnector();
+                    restConnector = rc;
+                }
             }
         }
-        return restConnector;
+        return rc;
+    }
+
+    private RestConnector createRestConnector() {
+        if (Boolean.TRUE.equals(getOidcEnabled())) {
+            // the access token is obtained lazily, on the first 401 (see RestConnector)
+            RestConnector rc = new RestConnector();
+            rc.setBaseUrl(getLocationParts().getBaseUrl());
+            rc.setCredentials(getClientId(), getClientSecret());
+            rc.setOidcConfiguration(getDiscoveryUrl(), getOidcClientId(), getOidcClientSecret(), getOidcEnabled());
+            return rc;
+        }
+        // signs in immediately; throws (and nothing is cached) if the sign-in fails
+        return OctaneRestManager.getRestConnector(getLocationParts().getBaseUrl(), getClientId(), getClientSecret());
     }
 
     public void clearRestConnector() {
