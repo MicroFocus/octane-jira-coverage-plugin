@@ -2,9 +2,15 @@
     load(1);
 </script>
 
-<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey" issue-type="$issueType" class="ghx-container">
+<div id="octane-coverage-panel" issue-key="$issueKey" issue-id="$issueId" project-key="$projectKey" issue-type="$issueType"
+     data-plugin-parameters='$pluginParametersJson' class="ghx-container">
     <div id="octane-workspaces-dropdown-section">
         <input type="hidden" name="coverageWorkspaceSelector" id="coverageWorkspaceSelector" class="width--100"/>
+        <button type="button" id="octaneDataReloadButton" class="aui-button aui-button-subtle" aria-busy="false"
+                title="Refresh coverage data from Core Software Delivery Platform"
+                aria-label="Refresh coverage data from Core Software Delivery Platform">
+            <span class="aui-icon aui-icon-small aui-iconfont-refresh" aria-hidden="true"></span>
+        </button>
     </div>
     <div id="octane-entity-section" class="hidden">
         <ul class="item-details">
@@ -53,6 +59,9 @@
     </div>
     <div id="octane-exceeds-max-total-count-section" class="hidden" style="margin-top: 10px">
         <div>There are too many results to display (>2000). Please refine your filters.</div>
+    </div>
+    <div id="octane-error-section" class="hidden" style="margin-top: 10px">
+        <div>Could not load data from Core Software Delivery Platform. Use the refresh button to try again.</div>
     </div>
     <div id="octane-debug-section" class="hidden">
     </div>

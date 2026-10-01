@@ -78,4 +78,84 @@
     margin-left: 5px;
 }
 
+#parameters-table{
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+}
+
+#parameters-table th, #parameters-table td{
+    padding: 6px 12px;
+    vertical-align: middle;
+}
+
+#parameters-table td:first-child{
+    white-space: nowrap;
+}
+
+#parameters-table .parameter-name-cell{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#parameters-table .parameter-tooltip{
+    margin: 0;
+    vertical-align: middle;
+}
+
+#parameters-table .parameter-name{
+    font-family: monospace;
+    vertical-align: middle;
+}
+
+#parameters-table input.parameter-value-input{
+    display: inline-block !important;
+    box-sizing: border-box !important;
+    width: 80px !important;
+    max-width: 80px !important;
+    min-width: 80px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    padding: 2px 0 !important;
+    margin: 0 !important;
+    text-align: left !important;
+}
+
+#parameters-table input.parameter-value-input:hover,
+#parameters-table input.parameter-value-input:focus{
+    border: none !important;
+    border-bottom: 1px solid #c1c7d0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    outline: none !important;
+}
+
+.parameter-tooltip{
+    cursor: help;
+}
+
+/* Invalid parameter value: AUI error red underline (also while hovered / focused) + message below. */
+#parameters-table input.parameter-value-input.parameter-value-input--invalid,
+#parameters-table input.parameter-value-input.parameter-value-input--invalid:hover,
+#parameters-table input.parameter-value-input.parameter-value-input--invalid:focus{
+    border: none !important;
+    border-bottom: 2px solid #de350b !important;
+}
+
+#parameters-table .parameter-error{
+    color: #de350b;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+#parameters-table .parameter-error:empty{
+    display: none;
+}
+
+
+
 

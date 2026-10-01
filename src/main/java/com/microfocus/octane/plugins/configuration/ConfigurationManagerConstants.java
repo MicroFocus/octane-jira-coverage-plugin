@@ -36,6 +36,7 @@ public class ConfigurationManagerConstants {
     public static final String CONFIGURATION_KEY_V2 = PLUGIN_PREFIX + "configuration_v2";
     public static final String CONFIGURATION_KEY_V3 = PLUGIN_PREFIX + "configuration_v3";
     public static final String USER_FILTER_KEY = PLUGIN_PREFIX + "user.filter";
+    public static final String PARAMETERS_KEY = PLUGIN_PREFIX + "parameters";
 
     public static final String MESSAGE_CHANNEL = "OCTANE_CONFIG";
 
