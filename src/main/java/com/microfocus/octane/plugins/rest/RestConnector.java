@@ -50,6 +50,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microfocus.octane.plugins.configuration.PluginConstants.*;
 
@@ -62,7 +63,17 @@ public class RestConnector {
     public final static String HEADER_CONTENT_TYPE = "Content-Type";
     public final static String HEADER_AUTHORIZATION = "Authorization";
 
-    protected Map<String, String> cookies = new HashMap<>();
+    // The connector is shared by all Jira request threads of a space configuration -> thread-safe map.
+    protected volatile Map<String, String> cookies = new ConcurrentHashMap<>();
+
+    // Re-authentication (sign-in / OIDC token refresh) is done by one thread at a time. When many
+    // requests get a 401 together (e.g. the token expired), only the first one re-authenticates; the
+    // others just retry with the new session/token instead of each signing in again.
+    private final Object authLock = new Object();
+    private volatile long authGeneration = 0;           // incremented after every successful re-authentication
+    private long failedAuthGeneration = -1;              // guarded by authLock
+    private long failedAuthTime = 0;                     // guarded by authLock
+    private static final long AUTH_FAILURE_BACKOFF_MS = 5000;
 
     private String baseUrl;
     private String user;
@@ -112,7 +123,7 @@ public class RestConnector {
      * @param cookies the cookies to set
      */
     public void setCookies(Map<String, String> cookies) {
-        this.cookies = cookies;
+        this.cookies = cookies == null ? new ConcurrentHashMap<>() : new ConcurrentHashMap<>(cookies);
     }
 
     public Response httpPut(String url, String data, Map<String, String> headers) {
@@ -188,6 +199,7 @@ public class RestConnector {
         }
 
         long start = System.currentTimeMillis();
+        long authGenerationAtSend = authGeneration;
         String fullUrl = baseUrl + url;
         try {
 
@@ -236,27 +248,7 @@ public class RestConnector {
             if ((e.getResponse().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) ||
                     (e.getResponse().getStatusCode() == 0 && e.getResponse().getResponseData().equals("Error writing to server"))) {
                 if (!relogin) {
-                    boolean retryResult = false;
-                    try {
-                        if (oidcEnabled) {
-                            refreshAccessToken();
-                            retryResult = true;
-                            String msg = String.format("Received status %s. OIDC token refresh succeeded.", e.getResponse().getStatusCode());
-
-                            log.info(msg);
-                        } else {
-                            retryResult = login();
-                            String msg = String.format("Received status %s. Relogin succeeded.", e.getResponse().getStatusCode());
-
-                            log.info(msg);
-                        }
-                    } catch (IOException ex) {
-                        String msg = String.format("Received status %s. Refresh/login failed %s", e.getResponse().getStatusCode(), ex.getMessage());
-
-                        log.error(msg);
-                    }
-
-                    if (retryResult) {
+                    if (reauthenticate(e, authGenerationAtSend)) {
                         return doHttp(type, url, queryParams, data, headers, true);
                     }
                 }
@@ -267,6 +259,46 @@ public class RestConnector {
             String msg = String.format("%s %s:%s , total time %s ms, %s", "ERR", type, fullUrl, end - start, e.getMessage());
             log.error(msg);
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Re-authenticates after 'cause' (a 401) and returns whether the failed request should be retried.
+     * Single-flight: if another thread already re-authenticated after this request was sent, nothing is
+     * sent to Octane, the caller just retries with the new session/token. If a re-authentication has
+     * just failed, the others don't retry it for AUTH_FAILURE_BACKOFF_MS (e.g. Octane/IdP is down).
+     */
+    private boolean reauthenticate(RestStatusException cause, long authGenerationAtSend) {
+        int statusCode = cause.getResponse().getStatusCode();
+        synchronized (authLock) {
+            if (authGeneration != authGenerationAtSend) {
+                return true;
+            }
+            if (failedAuthGeneration == authGenerationAtSend && System.currentTimeMillis() - failedAuthTime < AUTH_FAILURE_BACKOFF_MS) {
+                return false;
+            }
+
+            boolean success = false;
+            try {
+                if (oidcEnabled) {
+                    refreshAccessToken();
+                    success = true;
+                    log.info(String.format("Received status %s. OIDC token refresh succeeded.", statusCode));
+                } else {
+                    success = login();
+                    log.info(String.format("Received status %s. Relogin %s.", statusCode, success ? "succeeded" : "failed"));
+                }
+            } catch (IOException ex) {
+                log.error(String.format("Received status %s. Refresh/login failed %s", statusCode, ex.getMessage()));
+            } finally {
+                if (success) {
+                    authGeneration++;
+                } else {
+                    failedAuthGeneration = authGenerationAtSend;
+                    failedAuthTime = System.currentTimeMillis();
+                }
+            }
+            return success;
         }
     }
 
@@ -405,7 +437,7 @@ public class RestConnector {
     }
 
     public void clearAll() {
-        cookies = new HashMap<>();
+        cookies = new ConcurrentHashMap<>();
     }
 
     /**
