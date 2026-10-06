@@ -29,20 +29,20 @@
 
 package com.microfocus.octane.plugins.admin;
 
-import com.microfocus.octane.plugins.configuration.PluginParameter;
+import com.microfocus.octane.plugins.configuration.ConfigurationParameter;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- * One row of the admin "Parameters" table: the parameter's definition (from {@link PluginParameter})
+ * One row of the admin "Parameters" table: the parameter's definition (from {@link ConfigurationParameter})
  * plus its current effective value. The admin page renders its rows, tooltips and input limits from
  * this, so nothing about a parameter is duplicated in the UI.
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class PluginParameterOutgoing {
+public class ConfigurationParameterDto {
 
     @XmlElement(name = "name")
     private String name;
@@ -62,10 +62,10 @@ public class PluginParameterOutgoing {
     @XmlElement(name = "description")
     private String description;
 
-    public PluginParameterOutgoing() {
+    public ConfigurationParameterDto() {
     }
 
-    public PluginParameterOutgoing(PluginParameter parameter, int value) {
+    public ConfigurationParameterDto(ConfigurationParameter parameter, int value) {
         this.name = parameter.name();
         this.value = value;
         this.defaultValue = parameter.getDefaultValue();

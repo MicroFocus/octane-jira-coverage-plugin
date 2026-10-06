@@ -45,10 +45,9 @@ var OctaneCoveragePanelCache = (function () {
     "use strict";
 
     var TTL_PARAMETER = "TEST_COVERAGE_CACHE_DURATION_IN_SECONDS";
-    var MAX_ISSUES_PARAMETER = "MAX_CACHED_ENTITIES_WITH_TEST_COVERAGE";
 
     var TTL_MS = 0;       // 0 = caching disabled (admin can set the duration to 0 on purpose)
-    var MAX_ISSUES = 1;   // max number of distinct issues tracked at once
+    var MAX_ISSUES = 50;  // developer-controlled maximum number of distinct issues tracked at once
 
     function configure(parameters) {
         if (!parameters) {
@@ -57,11 +56,6 @@ var OctaneCoveragePanelCache = (function () {
         var ttlSeconds = parameters[TTL_PARAMETER];
         if (Number.isInteger(ttlSeconds) && ttlSeconds >= 0) {
             TTL_MS = ttlSeconds * 1000;
-        }
-        var maxIssues = parameters[MAX_ISSUES_PARAMETER];
-        if (Number.isInteger(maxIssues) && maxIssues > 0) {
-            MAX_ISSUES = maxIssues;
-            evictIfNeeded();
         }
     }
 

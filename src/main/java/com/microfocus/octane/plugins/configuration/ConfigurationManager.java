@@ -33,7 +33,7 @@ import com.atlassian.jira.cluster.ClusterMessageConsumer;
 import com.atlassian.jira.cluster.ClusterMessagingService;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.microfocus.octane.plugins.admin.ProxyConfigurationOutgoing;
+import com.microfocus.octane.plugins.admin.ProxyConfigurationDto;
 import com.microfocus.octane.plugins.configuration.v2.upgrader.UpgraderFromV1ToV2;
 import com.microfocus.octane.plugins.configuration.v3.ConfigurationCollection;
 import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
@@ -62,7 +62,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     private ClusterMessagingService clusterMessagingService;
 
     private ConfigurationCollection configuration;
-    private PluginParameters parameters;
+    private ConfigurationParameterValues parameters;
 
     //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
 
@@ -158,20 +158,20 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         return getConfiguration().getProxy();
     }
 
-    public int getParameterValue(PluginParameter parameter) {
-        return getParameters().valueOf(parameter);
+    public int getParameterValue(ConfigurationParameter parameter) {
+        return getParameters().getValue(parameter);
     }
 
     public Map<String, Integer> getParameterValues() {
-        return getParameters().effectiveValues();
+        return getParameters().getEffectiveValues();
     }
 
     /**
      * Saves the given parameter values (already validated by the caller); parameters not included keep
      * their current value. Persisted under its own key and broadcast to the other Data Center nodes.
      */
-    public synchronized void saveParameterValues(Map<PluginParameter, Integer> newValues) {
-        PluginParameters updated = new PluginParameters();
+    public synchronized void saveParameterValues(Map<ConfigurationParameter, Integer> newValues) {
+        ConfigurationParameterValues updated = new ConfigurationParameterValues();
         updated.setValues(getParameters().getValues());
         newValues.forEach(updated::put);
 
@@ -181,14 +181,14 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         sendConfigurationChangedMessage();
     }
 
-    private synchronized PluginParameters getParameters() {
+    private synchronized ConfigurationParameterValues getParameters() {
         if (parameters == null) {
             PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
             String paramsStr = readConfigurationForDataKey(settings, PARAMETERS_KEY);
-            PluginParameters loaded = new PluginParameters();
+            ConfigurationParameterValues loaded = new ConfigurationParameterValues();
             if (paramsStr != null) {
                 try {
-                    loaded = JsonHelper.deserialize(paramsStr, PluginParameters.class);
+                    loaded = JsonHelper.deserialize(paramsStr, ConfigurationParameterValues.class);
                 } catch (Exception e) {
                     log.error("Failed to deserialize plugin parameters, using defaults : " + e.getMessage());
                 }
@@ -198,19 +198,19 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         return parameters;
     }
 
-    public void saveProxyConfiguration(ProxyConfigurationOutgoing proxyOutgoing) {
+    public void saveProxyConfiguration(ProxyConfigurationDto proxyDto) {
         ProxyConfiguration proxy = getProxySettings();
         if (proxy == null) {
             proxy = new ProxyConfiguration();
         }
 
-        String host = proxyOutgoing.getHost();
+        String host = proxyDto.getHost();
         Integer port = null;
-        if (StringUtils.isNotEmpty(proxyOutgoing.getHost()) && StringUtils.isNotEmpty(proxyOutgoing.getPort())) {
+        if (StringUtils.isNotEmpty(proxyDto.getHost()) && StringUtils.isNotEmpty(proxyDto.getPort())) {
             host = host.trim();
 
             try {
-                port = Integer.parseInt(proxyOutgoing.getPort());
+                port = Integer.parseInt(proxyDto.getPort());
             } catch (NumberFormatException e) {
                 //do nothing
             }
@@ -218,13 +218,13 @@ public class ConfigurationManager implements ClusterMessageConsumer {
 
         proxy.setHost(host);
         proxy.setPort(port);
-        proxy.setUsername(proxyOutgoing.getUsername());
+        proxy.setUsername(proxyDto.getUsername());
 
-        if (!proxyOutgoing.getPassword().equals(PluginConstants.PASSWORD_REPLACE)) {
-            proxy.setPassword(proxyOutgoing.getPassword());
+        if (!proxyDto.getPassword().equals(PluginConstants.PASSWORD_REPLACE)) {
+            proxy.setPassword(proxyDto.getPassword());
         }
 
-        proxy.setNonProxyHost(proxyOutgoing.getNonProxyHost());
+        proxy.setNonProxyHost(proxyDto.getNonProxyHost());
         getConfiguration().setProxy(proxy);
         persistConfiguration();
         getSpaceConfigurations().forEach(SpaceConfiguration::clearRestConnector);

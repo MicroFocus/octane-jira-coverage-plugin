@@ -36,7 +36,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SpaceConfigurationOutgoing {
+public class SpaceConfigurationDto {
 
     @XmlElement(name = "id")
     private String id;
@@ -69,7 +69,7 @@ public class SpaceConfigurationOutgoing {
         return id;
     }
 
-    public SpaceConfigurationOutgoing setId(String id) {
+    public SpaceConfigurationDto setId(String id) {
         this.id = id;
         return this;
     }
@@ -78,7 +78,7 @@ public class SpaceConfigurationOutgoing {
         return location;
     }
 
-    public SpaceConfigurationOutgoing setLocation(String location) {
+    public SpaceConfigurationDto setLocation(String location) {
         this.location = location;
         return this;
     }
@@ -87,7 +87,7 @@ public class SpaceConfigurationOutgoing {
         return clientId;
     }
 
-    public SpaceConfigurationOutgoing  setClientId(String clientId) {
+    public SpaceConfigurationDto  setClientId(String clientId) {
         this.clientId = clientId;
         return this;
     }
@@ -96,7 +96,7 @@ public class SpaceConfigurationOutgoing {
         return clientSecret;
     }
 
-    public SpaceConfigurationOutgoing  setClientSecret(String clientSecret) {
+    public SpaceConfigurationDto  setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
         return this;
     }
@@ -105,7 +105,7 @@ public class SpaceConfigurationOutgoing {
         return name;
     }
 
-    public SpaceConfigurationOutgoing setName(String name) {
+    public SpaceConfigurationDto setName(String name) {
         this.name = name;
         return this;
     }
@@ -114,7 +114,7 @@ public class SpaceConfigurationOutgoing {
         return oidcEnabled;
     }
 
-    public SpaceConfigurationOutgoing setOidcEnabled(Boolean oidcEnabled) {
+    public SpaceConfigurationDto setOidcEnabled(Boolean oidcEnabled) {
         this.oidcEnabled = oidcEnabled;
 
         return this;
@@ -124,7 +124,7 @@ public class SpaceConfigurationOutgoing {
         return discoveryUrl;
     }
 
-    public SpaceConfigurationOutgoing setDiscoveryUrl(String discoveryUrl) {
+    public SpaceConfigurationDto setDiscoveryUrl(String discoveryUrl) {
         this.discoveryUrl = discoveryUrl;
 
         return this;
@@ -134,7 +134,7 @@ public class SpaceConfigurationOutgoing {
         return oidcClientId;
     }
 
-    public SpaceConfigurationOutgoing setOidcClientId(String oidcClientId) {
+    public SpaceConfigurationDto setOidcClientId(String oidcClientId) {
         this.oidcClientId = oidcClientId;
 
         return this;
@@ -144,7 +144,7 @@ public class SpaceConfigurationOutgoing {
         return oidcClientSecret;
     }
 
-    public SpaceConfigurationOutgoing setOidcClientSecret(String oidcClientSecret) {
+    public SpaceConfigurationDto setOidcClientSecret(String oidcClientSecret) {
         this.oidcClientSecret = oidcClientSecret;
 
         return this;

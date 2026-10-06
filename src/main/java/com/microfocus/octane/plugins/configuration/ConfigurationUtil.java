@@ -31,8 +31,8 @@ package com.microfocus.octane.plugins.configuration;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.IssueConstant;
 import com.microfocus.octane.plugins.admin.KeyValueItem;
-import com.microfocus.octane.plugins.admin.SpaceConfigurationOutgoing;
-import com.microfocus.octane.plugins.admin.WorkspaceConfigurationOutgoing;
+import com.microfocus.octane.plugins.admin.SpaceConfigurationDto;
+import com.microfocus.octane.plugins.admin.WorkspaceConfigurationDto;
 import com.microfocus.octane.plugins.configuration.v3.JiraConfigGrouping;
 import com.microfocus.octane.plugins.configuration.v3.OctaneConfigGrouping;
 import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
@@ -115,7 +115,7 @@ public class ConfigurationUtil {
         return query_pairs;
     }
 
-    public static void validateName(SpaceConfigurationOutgoing sco) {
+    public static void validateName(SpaceConfigurationDto sco) {
         if (StringUtils.isEmpty(sco.getName().trim())) {
             throw new IllegalArgumentException("Space configuration name is required");
         }
@@ -125,7 +125,7 @@ public class ConfigurationUtil {
         }
     }
 
-    public static SpaceConfiguration validateRequiredAndConvertToInternal(SpaceConfigurationOutgoing sco, boolean isNew) {
+    public static SpaceConfiguration validateRequiredAndConvertToInternal(SpaceConfigurationDto sco, boolean isNew) {
 
         if (StringUtils.isEmpty(sco.getLocation().trim())) {
             throw new IllegalArgumentException("Location URL is required");
@@ -195,8 +195,8 @@ public class ConfigurationUtil {
                 oidcClientSecret);
     }
 
-    public static SpaceConfigurationOutgoing convertToOutgoing(SpaceConfiguration sc) {
-        return new SpaceConfigurationOutgoing()
+    public static SpaceConfigurationDto convertToDto(SpaceConfiguration sc) {
+        return new SpaceConfigurationDto()
                 .setId(sc.getId())
                 .setName(sc.getName())
                 .setLocation(sc.getLocation())
@@ -257,8 +257,8 @@ public class ConfigurationUtil {
         }
     }
 
-    public static WorkspaceConfigurationOutgoing convertToOutgoing(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name) {
-        return new WorkspaceConfigurationOutgoing(
+    public static WorkspaceConfigurationDto convertToDto(WorkspaceConfiguration wc, Map<String, String> spaceConfigurationId2Name) {
+        return new WorkspaceConfigurationDto(
                 wc.getId(),
                 wc.getSpaceConfigurationId(),
                 spaceConfigurationId2Name.get(wc.getSpaceConfigurationId()),
@@ -276,7 +276,7 @@ public class ConfigurationUtil {
                 wc.getJiraConfigGrouping().getProjectNames());
     }
 
-    public static WorkspaceConfiguration validateRequiredAndConvertToInternal(WorkspaceConfigurationOutgoing wco, boolean isNew) {
+    public static WorkspaceConfiguration validateRequiredAndConvertToInternal(WorkspaceConfigurationDto wco, boolean isNew) {
         //validation
 
         if (StringUtils.isEmpty(wco.getSpaceConfigId())) {
@@ -381,7 +381,7 @@ public class ConfigurationUtil {
         }
     }
 
-    private static void validateJiraProjectKey(WorkspaceConfigurationOutgoing wco) {
+    private static void validateJiraProjectKey(WorkspaceConfigurationDto wco) {
         Collection<KeyValueItem> validProjects = getValidProjectsMap();
 
         if (!validProjects.stream()
@@ -392,7 +392,7 @@ public class ConfigurationUtil {
         }
     }
 
-    private static void validateJiraIssuesList(WorkspaceConfigurationOutgoing wco) {
+    private static void validateJiraIssuesList(WorkspaceConfigurationDto wco) {
         if (!ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()
                 .stream()
                 .map(IssueConstant::getName)

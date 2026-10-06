@@ -37,7 +37,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ProxyConfigurationOutgoing {
+public class ProxyConfigurationDto {
 
     @XmlElement(name = "host")
     private String host;
@@ -54,15 +54,15 @@ public class ProxyConfigurationOutgoing {
     @XmlElement(name = "nonProxyHost")
     private String nonProxyHost;
 
-    public static ProxyConfigurationOutgoing create() {
-        return new ProxyConfigurationOutgoing();
+    public static ProxyConfigurationDto create() {
+        return new ProxyConfigurationDto();
     }
 
     public String getHost() {
         return host;
     }
 
-    public ProxyConfigurationOutgoing setHost(String host) {
+    public ProxyConfigurationDto setHost(String host) {
         this.host = host;
         return this;
     }
@@ -71,7 +71,7 @@ public class ProxyConfigurationOutgoing {
         return port;
     }
 
-    public ProxyConfigurationOutgoing setPort(String port) {
+    public ProxyConfigurationDto setPort(String port) {
         this.port = port;
         return this;
     }
@@ -80,7 +80,7 @@ public class ProxyConfigurationOutgoing {
         return username;
     }
 
-    public ProxyConfigurationOutgoing setUsername(String username) {
+    public ProxyConfigurationDto setUsername(String username) {
         this.username = username;
         return this;
     }
@@ -89,7 +89,7 @@ public class ProxyConfigurationOutgoing {
         return password;
     }
 
-    public ProxyConfigurationOutgoing setPassword(String password) {
+    public ProxyConfigurationDto setPassword(String password) {
         this.password = password;
         return this;
     }
@@ -103,7 +103,7 @@ public class ProxyConfigurationOutgoing {
         return nonProxyHost;
     }
 
-    public ProxyConfigurationOutgoing setNonProxyHost(String nonProxyHost) {
+    public ProxyConfigurationDto setNonProxyHost(String nonProxyHost) {
         this.nonProxyHost = nonProxyHost;
         return this;
     }

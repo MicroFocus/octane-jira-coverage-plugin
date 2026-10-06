@@ -33,11 +33,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PluginParameters {
+public class ConfigurationParameterValues {
 
     private Map<String, Integer> values = new HashMap<>();
 
-    public PluginParameters() {
+    public ConfigurationParameterValues() {
     }
 
     public Map<String, Integer> getValues() {
@@ -48,23 +48,23 @@ public class PluginParameters {
         this.values = values == null ? new HashMap<>() : new HashMap<>(values);
     }
 
-    public int valueOf(PluginParameter parameter) {
+    public int getValue(ConfigurationParameter parameter) {
         Integer value = values.get(parameter.name());
         return parameter.isValid(value) ? value : parameter.getDefaultValue();
     }
 
-    public void put(PluginParameter parameter, int value) {
+    public void put(ConfigurationParameter parameter, int value) {
         values.put(parameter.name(), value);
     }
 
     /**
      * Effective values of all known parameters (name -> value), in declaration order.
      */
-    public Map<String, Integer> effectiveValues() {
+    public Map<String, Integer> getEffectiveValues() {
         Map<String, Integer> result = new LinkedHashMap<>();
 
-        for (PluginParameter parameter : PluginParameter.values()) {
-            result.put(parameter.name(), valueOf(parameter));
+        for (ConfigurationParameter parameter : ConfigurationParameter.values()) {
+            result.put(parameter.name(), getValue(parameter));
         }
         return result;
     }
