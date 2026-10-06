@@ -37,7 +37,7 @@ import java.util.Set;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkspaceConfigurationOutgoing {
+public class WorkspaceConfigurationDto {
 
     @XmlElement(name = "id")
     private String id;
@@ -63,10 +63,10 @@ public class WorkspaceConfigurationOutgoing {
     @XmlElement(name = "jiraProjects")
     private Set<String> jiraProjects;
 
-    public WorkspaceConfigurationOutgoing() {
+    public WorkspaceConfigurationDto() {
     }
 
-    public WorkspaceConfigurationOutgoing(String id, String spaceConfigId, String spaceConfigName, Set<String> workspaces, String octaneUdf, Set<String> octaneEntityTypes, Set<String> jiraIssueTypes, Set<String> jiraProjects) {
+    public WorkspaceConfigurationDto(String id, String spaceConfigId, String spaceConfigName, Set<String> workspaces, String octaneUdf, Set<String> octaneEntityTypes, Set<String> jiraIssueTypes, Set<String> jiraProjects) {
         this.id = id;
         this.spaceConfigId = spaceConfigId;
         this.spaceConfigName = spaceConfigName;
@@ -77,7 +77,7 @@ public class WorkspaceConfigurationOutgoing {
         this.jiraProjects = jiraProjects;
     }
 
-    public WorkspaceConfigurationOutgoing(String id, String spaceConfigId, String spaceConfigName, Set<String> workspaces, String octaneUdf, Set<String> jiraIssueTypes, Set<String> jiraProjects) {
+    public WorkspaceConfigurationDto(String id, String spaceConfigId, String spaceConfigName, Set<String> workspaces, String octaneUdf, Set<String> jiraIssueTypes, Set<String> jiraProjects) {
         this.id = id;
         this.spaceConfigId = spaceConfigId;
         this.spaceConfigName = spaceConfigName;

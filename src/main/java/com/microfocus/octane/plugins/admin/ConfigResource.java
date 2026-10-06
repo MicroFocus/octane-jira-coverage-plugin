@@ -50,7 +50,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -111,8 +110,8 @@ public class ConfigResource {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
-        Collection<WorkspaceConfigurationOutgoing> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
-                .stream().map(wc -> ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name()))
+        Collection<WorkspaceConfigurationDto> result = ConfigurationManager.getInstance().getWorkspaceConfigurations()
+                .stream().map(wc -> ConfigurationUtil.convertToDto(wc, getSpaceConfigurationId2Name()))
                 //.sorted((h1, h2) -> h1.getWorkspace().getText().compareTo(h2.getWorkspace().getText()))
                 .collect(Collectors.toList());
 
@@ -129,7 +128,7 @@ public class ConfigResource {
         Optional<WorkspaceConfiguration> optResult = ConfigurationManager.getInstance().getWorkspaceConfigurationById(id, false);
 
         if (optResult.isPresent()) {
-            return Response.ok(ConfigurationUtil.convertToOutgoing(optResult.get(), getSpaceConfigurationId2Name())).build();
+            return Response.ok(ConfigurationUtil.convertToDto(optResult.get(), getSpaceConfigurationId2Name())).build();
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
@@ -187,7 +186,7 @@ public class ConfigResource {
 
     @POST
     @Path("/workspaces")
-    public Response addWorkspaceConfiguration(WorkspaceConfigurationOutgoing wco) {
+    public Response addWorkspaceConfiguration(WorkspaceConfigurationDto wco) {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -198,7 +197,7 @@ public class ConfigResource {
                 return Response.status(Response.Status.CONFLICT).entity("This configuration is identical to one that currently exists.").build();
             }
             wc = ConfigurationManager.getInstance().addWorkspaceConfiguration(wc);
-            WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(wc, getSpaceConfigurationId2Name());
+            WorkspaceConfigurationDto outputWco = ConfigurationUtil.convertToDto(wc, getSpaceConfigurationId2Name());
             return Response.ok(outputWco).build();
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
@@ -207,7 +206,7 @@ public class ConfigResource {
 
     @PUT
     @Path("/workspaces/{workspaceConfigurationId}")
-    public Response updateWorkspaceConfiguration(@PathParam("workspaceConfigurationId") String workspaceConfigurationId, WorkspaceConfigurationOutgoing wco) {
+    public Response updateWorkspaceConfiguration(@PathParam("workspaceConfigurationId") String workspaceConfigurationId, WorkspaceConfigurationDto wco) {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -216,7 +215,7 @@ public class ConfigResource {
             wco.setId(workspaceConfigurationId);
             WorkspaceConfiguration wc = ConfigurationUtil.validateRequiredAndConvertToInternal(wco, false);
             WorkspaceConfiguration updatedWc = ConfigurationManager.getInstance().updateWorkspaceConfiguration(wc);
-            WorkspaceConfigurationOutgoing outputWco = ConfigurationUtil.convertToOutgoing(updatedWc, getSpaceConfigurationId2Name());
+            WorkspaceConfigurationDto outputWco = ConfigurationUtil.convertToDto(updatedWc, getSpaceConfigurationId2Name());
             return Response.ok(outputWco).build();
         } catch (Exception e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
@@ -247,7 +246,7 @@ public class ConfigResource {
             return Response.status(Status.FORBIDDEN).build();
         }
 
-        ProxyConfigurationOutgoing outgoing = new ProxyConfigurationOutgoing();
+        ProxyConfigurationDto outgoing = new ProxyConfigurationDto();
         ProxyConfiguration config = ConfigurationManager.getInstance().getProxySettings();
         if (config != null) {
             outgoing.setHost(config.getHost());
@@ -270,15 +269,15 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/proxy")
-    public Response setProxy(final ProxyConfigurationOutgoing proxyOutgoing) {
+    public Response setProxy(final ProxyConfigurationDto proxyDto) {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
         Integer port = null;
-        if (StringUtils.isNotEmpty(proxyOutgoing.getHost())) {
+        if (StringUtils.isNotEmpty(proxyDto.getHost())) {
             try {
-                port = Integer.parseInt(proxyOutgoing.getPort());
+                port = Integer.parseInt(proxyDto.getPort());
                 if (!(port >= 0 && port <= 65535)) {
                     return Response.status(Status.CONFLICT).entity("Port must range from 0 to 65,535.").build();
                 }
@@ -288,7 +287,7 @@ public class ConfigResource {
             }
         }
 
-        ConfigurationManager.getInstance().saveProxyConfiguration(proxyOutgoing);
+        ConfigurationManager.getInstance().saveProxyConfiguration(proxyDto);
         return Response.ok().build();
     }
 
@@ -301,7 +300,7 @@ public class ConfigResource {
             return Response.status(Status.FORBIDDEN).build();
         }
 
-        return Response.ok(toParametersOutgoing()).build();
+        return Response.ok(toParameterDtos()).build();
     }
 
     /**
@@ -321,18 +320,18 @@ public class ConfigResource {
             return Response.status(Status.CONFLICT).entity("No parameter values were provided.").build();
         }
 
-        Map<PluginParameter, Integer> validated = new LinkedHashMap<>();
+        Map<ConfigurationParameter, Integer> validated = new LinkedHashMap<>();
         List<String> errors = new ArrayList<>();
 
         newValues.forEach((name, rawValue) -> {
-            Optional<PluginParameter> parameter = PluginParameter.byName(name);
+            Optional<ConfigurationParameter> parameter = ConfigurationParameter.getParameterByName(name);
 
             if (!parameter.isPresent()) {
                 errors.add("Unknown parameter: " + name + ".");
                 return;
             }
 
-            Integer value = rawValue instanceof Number ? toStrictInteger((Number) rawValue) : null;
+            Integer value = rawValue instanceof Integer ? (Integer) rawValue : null;
             if (!parameter.get().isValid(value)) {
                 errors.add(String.format("%s must be a whole number from %,d to %,d.",
                         name, parameter.get().getMinValue(), parameter.get().getMaxValue()));
@@ -347,28 +346,15 @@ public class ConfigResource {
 
         ConfigurationManager.getInstance().saveParameterValues(validated);
 
-        return Response.ok(toParametersOutgoing()).build();
+        return Response.ok(toParameterDtos()).build();
     }
 
-    private static List<PluginParameterOutgoing> toParametersOutgoing() {
+    private static List<ConfigurationParameterDto> toParameterDtos() {
         Map<String, Integer> values = ConfigurationManager.getInstance().getParameterValues();
 
-        return Arrays.stream(PluginParameter.values())
-                .map(p -> new PluginParameterOutgoing(p, values.get(p.name())))
+        return Arrays.stream(ConfigurationParameter.values())
+                .map(p -> new ConfigurationParameterDto(p, values.get(p.name())))
                 .collect(Collectors.toList());
-    }
-
-    static Integer toStrictInteger(Number value) {
-        if (value instanceof Integer || value instanceof Short || value instanceof Byte) {
-            return value.intValue();
-        }
-        if (value instanceof Long || value instanceof BigInteger) {
-            BigInteger bigValue = value instanceof BigInteger ? (BigInteger) value : BigInteger.valueOf(value.longValue());
-            if (bigValue.bitLength() < Integer.SIZE) {
-                return bigValue.intValue();
-            }
-        }
-        return null;
     }
 
     @GET
@@ -379,8 +365,8 @@ public class ConfigResource {
             return Response.status(Status.FORBIDDEN).build();
         }
 
-        List<SpaceConfigurationOutgoing> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
-                .stream().map(ConfigurationUtil::convertToOutgoing).collect(Collectors.toList());
+        List<SpaceConfigurationDto> outgoing = ConfigurationManager.getInstance().getSpaceConfigurations()
+                .stream().map(ConfigurationUtil::convertToDto).collect(Collectors.toList());
 
         return Response.ok(outgoing).build();
     }
@@ -389,7 +375,7 @@ public class ConfigResource {
     @Path("spaces")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addSpaceConfiguration(SpaceConfigurationOutgoing sco) {
+    public Response addSpaceConfiguration(SpaceConfigurationDto sco) {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -399,7 +385,7 @@ public class ConfigResource {
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, true);
             ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig, false);
             ConfigurationManager.getInstance().addSpaceConfiguration(spaceConfig);
-            return Response.ok(ConfigurationUtil.convertToOutgoing(spaceConfig)).build();
+            return Response.ok(ConfigurationUtil.convertToDto(spaceConfig)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.CONFLICT).entity("Failed to add configuration : " + e.getMessage()).build();
         }
@@ -409,7 +395,7 @@ public class ConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("spaces/{id}")
-    public Response updateSpaceConfiguration(@PathParam("id") String id, final SpaceConfigurationOutgoing sco) {
+    public Response updateSpaceConfiguration(@PathParam("id") String id, final SpaceConfigurationDto sco) {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
@@ -420,7 +406,7 @@ public class ConfigResource {
             SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(sco, false);
             ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig, false);
             SpaceConfiguration updated = ConfigurationManager.getInstance().updateSpaceConfiguration(spaceConfig);
-            return Response.ok(ConfigurationUtil.convertToOutgoing(updated)).build();
+            return Response.ok(ConfigurationUtil.convertToDto(updated)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Status.CONFLICT).entity("Failed to update configuration : " + e.getMessage()).build();
         }
@@ -446,14 +432,14 @@ public class ConfigResource {
     @Path("spaces/test-connection")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response testSpaceConfiguration(SpaceConfigurationOutgoing spaceConfigurationOutgoing) {
+    public Response testSpaceConfiguration(SpaceConfigurationDto spaceConfigurationDto) {
         if (!hasPermission()) {
             return Response.status(Status.FORBIDDEN).build();
         }
 
         try {
-            boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationOutgoing.getId());
-            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(spaceConfigurationOutgoing, isNewConfig);
+            boolean isNewConfig = StringUtils.isEmpty(spaceConfigurationDto.getId());
+            SpaceConfiguration spaceConfig = ConfigurationUtil.validateRequiredAndConvertToInternal(spaceConfigurationDto, isNewConfig);
             ConfigurationUtil.validateSpaceConfigurationConnectivity(spaceConfig);
             ConfigurationUtil.doSpaceConfigurationUniquenessValidation(spaceConfig, true);
             return Response.ok().build();

@@ -38,26 +38,29 @@ import java.util.Optional;
  * page rows, the REST validation, the persisted values and what the coverage panel receives.
  * <p>
  * Adding a parameter = adding one constant here, plus the code that actually uses the value.
+ * <p>
+ * Intentionally integer-only for now: every parameter introduced so far has been a bounded whole
+ * number, so this enum models that one real case instead of a speculative generic class hierarchy
+ * (e.g. a type registry covering String/Boolean/enum-of-choices) for types nothing currently needs.
+ * Each of those other types would want its own validation/UI story (allowed values vs. a numeric
+ * range, for example), so designing that abstraction now would mean guessing its shape rather than
+ * deriving it from a real second case. If/when a non-integer parameter is actually needed, revisit
+ * this as a deliberate refactor informed by that concrete requirement.
  */
-public enum PluginParameter {
+public enum ConfigurationParameter {
 
     TEST_COVERAGE_CACHE_DURATION_IN_SECONDS(300, 0, 86400,
             "How long (in seconds) coverage data already fetched from Core Software Delivery Platform is reused by the issue panel "
                     + "(e.g. when the panel is redrawn after the issue is saved, or when switching back to a workspace) before it is fetched again. "
                     + "Users can always force a fresh fetch with the panel's refresh button. "
-                    + "Set to 0 to disable caching: the panel then always shows up-to-date data, at the cost of more requests to Core Software Delivery Platform."),
-
-    MAX_CACHED_ENTITIES_WITH_TEST_COVERAGE(40, 1, 5000,
-            "Maximum number of distinct Jira issues whose coverage data each user's browser keeps cached at the same time "
-                    + "(per user, per browser tab - nothing is shared between users, and the cache is emptied on a full page reload). "
-                    + "Once the limit is reached, the data of the least recently viewed issue is discarded first.");
+                    + "Set to 0 to disable caching: the panel then always shows up-to-date data, at the cost of more requests to Core Software Delivery Platform.");
 
     private final int defaultValue;
     private final int minValue;
     private final int maxValue;
     private final String description;
 
-    PluginParameter(int defaultValue, int minValue, int maxValue, String description) {
+    ConfigurationParameter(int defaultValue, int minValue, int maxValue, String description) {
         this.defaultValue = defaultValue;
         this.minValue = minValue;
         this.maxValue = maxValue;
@@ -84,7 +87,7 @@ public enum PluginParameter {
         return value != null && value >= minValue && value <= maxValue;
     }
 
-    public static Optional<PluginParameter> byName(String name) {
+    public static Optional<ConfigurationParameter> getParameterByName(String name) {
         return Arrays.stream(values()).filter(p -> p.name().equals(name)).findFirst();
     }
 }
