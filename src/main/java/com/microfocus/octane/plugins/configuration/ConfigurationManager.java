@@ -34,6 +34,8 @@ import com.atlassian.jira.cluster.ClusterMessagingService;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.microfocus.octane.plugins.admin.ProxyConfigurationDto;
+import com.microfocus.octane.plugins.configuration.adminparameters.AdminParameterDefinition;
+import com.microfocus.octane.plugins.configuration.adminparameters.AdminParameterValues;
 import com.microfocus.octane.plugins.configuration.v2.upgrader.UpgraderFromV1ToV2;
 import com.microfocus.octane.plugins.configuration.v3.ConfigurationCollection;
 import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
@@ -62,7 +64,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     private ClusterMessagingService clusterMessagingService;
 
     private ConfigurationCollection configuration;
-    private ConfigurationParameterValues parameters;
+    private AdminParameterValues adminParameterValues;
 
     //public static final String DEFAULT_OCTANE_FIELD_UDF = "jira_key_udf";
 
@@ -158,44 +160,47 @@ public class ConfigurationManager implements ClusterMessageConsumer {
         return getConfiguration().getProxy();
     }
 
-    public int getParameterValue(ConfigurationParameter parameter) {
-        return getParameters().getValue(parameter);
+    public <T> T getParameterValue(AdminParameterDefinition<T> parameter) {
+        return getAdminParameterValues().getValue(parameter);
     }
 
-    public Map<String, Integer> getParameterValues() {
-        return getParameters().getEffectiveValues();
+    public Map<String, Object> getParameterValues() {
+        return getAdminParameterValues().getEffectiveValues();
     }
-
-    /**
-     * Saves the given parameter values (already validated by the caller); parameters not included keep
-     * their current value. Persisted under its own key and broadcast to the other Data Center nodes.
-     */
-    public synchronized void saveParameterValues(Map<ConfigurationParameter, Integer> newValues) {
-        ConfigurationParameterValues updated = new ConfigurationParameterValues();
-        updated.setValues(getParameters().getValues());
-        newValues.forEach(updated::put);
+    
+    public synchronized void saveParameterValues(Map<AdminParameterDefinition<?>, Object> newValues) {
+        AdminParameterValues updatedAdminParameterValues = new AdminParameterValues();
+        updatedAdminParameterValues.setValues(getAdminParameterValues().getValues());
+        newValues.forEach((parameter, value) -> putValidated(updatedAdminParameterValues, parameter, value));
 
         PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
-        settings.put(PARAMETERS_KEY, JsonHelper.serialize(updated));
-        parameters = updated;
+        settings.put(PARAMETERS_KEY, JsonHelper.serialize(updatedAdminParameterValues));
+        adminParameterValues = updatedAdminParameterValues;
         sendConfigurationChangedMessage();
     }
 
-    private synchronized ConfigurationParameterValues getParameters() {
-        if (parameters == null) {
+    // Captures the wildcard from AdminParameterDefinition<?> into a single type variable T, so the
+    // (already validated and converted) value can be put back with its proper type.
+    @SuppressWarnings("unchecked")
+    private static <T> void putValidated(AdminParameterValues values, AdminParameterDefinition<T> parameter, Object value) {
+        values.put(parameter, (T) value);
+    }
+
+    private synchronized AdminParameterValues getAdminParameterValues() {
+        if (adminParameterValues == null) {
             PluginSettings settings = pluginSettingsFactory.createGlobalSettings();
             String paramsStr = readConfigurationForDataKey(settings, PARAMETERS_KEY);
-            ConfigurationParameterValues loaded = new ConfigurationParameterValues();
+            AdminParameterValues loaded = new AdminParameterValues();
             if (paramsStr != null) {
                 try {
-                    loaded = JsonHelper.deserialize(paramsStr, ConfigurationParameterValues.class);
+                    loaded = JsonHelper.deserialize(paramsStr, AdminParameterValues.class);
                 } catch (Exception e) {
                     log.error("Failed to deserialize plugin parameters, using defaults : " + e.getMessage());
                 }
             }
-            parameters = loaded;
+            adminParameterValues = loaded;
         }
-        return parameters;
+        return adminParameterValues;
     }
 
     public void saveProxyConfiguration(ProxyConfigurationDto proxyDto) {
@@ -233,7 +238,7 @@ public class ConfigurationManager implements ClusterMessageConsumer {
     public synchronized void clearConfiguration() {
         log.info("configuration is cleared");
         configuration = null;
-        parameters = null;
+        adminParameterValues = null;
     }
 
     private ConfigurationCollection loadConfiguration() {

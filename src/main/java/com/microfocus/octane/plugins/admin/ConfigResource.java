@@ -35,6 +35,8 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.microfocus.octane.plugins.configuration.*;
+import com.microfocus.octane.plugins.configuration.adminparameters.AdminParameterCatalog;
+import com.microfocus.octane.plugins.configuration.adminparameters.AdminParameterDefinition;
 import com.microfocus.octane.plugins.configuration.v3.SpaceConfiguration;
 import com.microfocus.octane.plugins.configuration.v3.WorkspaceConfiguration;
 import com.microfocus.octane.plugins.descriptors.OctaneEntityTypeManager;
@@ -320,40 +322,39 @@ public class ConfigResource {
             return Response.status(Status.CONFLICT).entity("No parameter values were provided.").build();
         }
 
-        Map<ConfigurationParameter, Integer> validated = new LinkedHashMap<>();
+        Map<AdminParameterDefinition<?>, Object> validatedAdminParametersMap = new LinkedHashMap<>();
         List<String> errors = new ArrayList<>();
 
         newValues.forEach((name, rawValue) -> {
-            Optional<ConfigurationParameter> parameter = ConfigurationParameter.getParameterByName(name);
+            Optional<AdminParameterDefinition<?>> parameter = AdminParameterCatalog.getByName(name);
 
             if (!parameter.isPresent()) {
                 errors.add("Unknown parameter: " + name + ".");
                 return;
             }
 
-            Integer value = rawValue instanceof Integer ? (Integer) rawValue : null;
-            if (!parameter.get().isValid(value)) {
-                errors.add(String.format("%s must be a whole number from %,d to %,d.",
-                        name, parameter.get().getMinValue(), parameter.get().getMaxValue()));
+            Object value = parameter.get().validateAndConvert(rawValue);
+            if (value == null) {
+                errors.add("Invalid value for parameter: " + name + ".");
                 return;
             }
-            validated.put(parameter.get(), value);
+            validatedAdminParametersMap.put(parameter.get(), value);
         });
 
         if (!errors.isEmpty()) {
             return Response.status(Status.CONFLICT).entity(String.join(" ", errors)).build();
         }
 
-        ConfigurationManager.getInstance().saveParameterValues(validated);
+        ConfigurationManager.getInstance().saveParameterValues(validatedAdminParametersMap);
 
         return Response.ok(toParameterDtos()).build();
     }
 
-    private static List<ConfigurationParameterDto> toParameterDtos() {
-        Map<String, Integer> values = ConfigurationManager.getInstance().getParameterValues();
+    private static List<AdminParameterDto> toParameterDtos() {
+        Map<String, Object> values = ConfigurationManager.getInstance().getParameterValues();
 
-        return Arrays.stream(ConfigurationParameter.values())
-                .map(p -> new ConfigurationParameterDto(p, values.get(p.name())))
+        return AdminParameterCatalog.getAll().stream()
+                .map(p -> new AdminParameterDto(p, values.get(p.getName())))
                 .collect(Collectors.toList());
     }
 

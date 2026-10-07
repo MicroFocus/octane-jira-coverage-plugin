@@ -27,45 +27,50 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.microfocus.octane.plugins.configuration;
+package com.microfocus.octane.plugins.configuration.adminparameters;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+/**
+ * Definition and validation for one admin-tunable parameter. All available parameters are declared
+ * in {@link AdminParameterCatalog}.
+ *
+ * @param <T> the Java type of a value of this parameter
+ */
+public abstract class AdminParameterDefinition<T> {
 
-public class ConfigurationParameterValues {
+    private final String name;
+    private final T defaultValue;
+    private final String description;
 
-    private Map<String, Integer> values = new HashMap<>();
-
-    public ConfigurationParameterValues() {
+    protected AdminParameterDefinition(String name, T defaultValue, String description) {
+        this.name = name;
+        this.defaultValue = defaultValue;
+        this.description = description;
     }
 
-    public Map<String, Integer> getValues() {
-        return values;
+    public String getName() {
+        return name;
     }
 
-    public void setValues(Map<String, Integer> values) {
-        this.values = values == null ? new HashMap<>() : new HashMap<>(values);
+    public T getDefaultValue() {
+        return defaultValue;
     }
 
-    public int getValue(ConfigurationParameter parameter) {
-        Integer value = values.get(parameter.name());
-        return parameter.isValid(value) ? value : parameter.getDefaultValue();
+    public String getDescription() {
+        return description;
     }
 
-    public void put(ConfigurationParameter parameter, int value) {
-        values.put(parameter.name(), value);
-    }
+    public abstract int getMinValue();
+
+    public abstract int getMaxValue();
 
     /**
-     * Effective values of all known parameters (name -> value), in declaration order.
+     * Validates and converts an already-deserialized raw value (as produced by Jackson for a
+     * {@code Map<String, Object>}) to type {@code T}. Returns {@code null} if the value is missing,
+     * of the wrong Java type or out of the allowed range.
      */
-    public Map<String, Integer> getEffectiveValues() {
-        Map<String, Integer> result = new LinkedHashMap<>();
+    public abstract T validateAndConvert(Object rawValue);
 
-        for (ConfigurationParameter parameter : ConfigurationParameter.values()) {
-            result.put(parameter.name(), getValue(parameter));
-        }
-        return result;
+    public boolean isValid(Object rawValue) {
+        return validateAndConvert(rawValue) != null;
     }
 }
