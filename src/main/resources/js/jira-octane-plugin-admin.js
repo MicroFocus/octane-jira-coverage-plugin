@@ -219,8 +219,8 @@
     }
 
     // Generic "Parameters" section: rows, tooltips and input limits are all rendered from
-    // GET /parameters (whose single source of truth is the ConfigurationParameter Java enum), so a new
-    // parameter needs no change in this file or in the template.
+    // GET /parameters (defined by AdminParameterCatalog), so a new integer parameter needs no
+    // change in this file or in the template.
     function configureParameters() {
         var saveButton = $("#parameters-submit-button");
         enableButton("#parameters-submit-button", false);

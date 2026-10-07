@@ -29,29 +29,29 @@
 
 package com.microfocus.octane.plugins.admin;
 
-import com.microfocus.octane.plugins.configuration.ConfigurationParameter;
+import com.microfocus.octane.plugins.configuration.adminparameters.AdminParameterDefinition;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- * One row of the admin "Parameters" table: the parameter's definition (from {@link ConfigurationParameter})
+ * One row of the admin "Parameters" table: the parameter's definition (from {@link AdminParameterDefinition})
  * plus its current effective value. The admin page renders its rows, tooltips and input limits from
  * this, so nothing about a parameter is duplicated in the UI.
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ConfigurationParameterDto {
+public class AdminParameterDto {
 
     @XmlElement(name = "name")
     private String name;
 
     @XmlElement(name = "value")
-    private int value;
+    private Object value;
 
     @XmlElement(name = "defaultValue")
-    private int defaultValue;
+    private Object defaultValue;
 
     @XmlElement(name = "minValue")
     private int minValue;
@@ -62,11 +62,11 @@ public class ConfigurationParameterDto {
     @XmlElement(name = "description")
     private String description;
 
-    public ConfigurationParameterDto() {
+    public AdminParameterDto() {
     }
 
-    public ConfigurationParameterDto(ConfigurationParameter parameter, int value) {
-        this.name = parameter.name();
+    public AdminParameterDto(AdminParameterDefinition<?> parameter, Object value) {
+        this.name = parameter.getName();
         this.value = value;
         this.defaultValue = parameter.getDefaultValue();
         this.minValue = parameter.getMinValue();
@@ -78,11 +78,11 @@ public class ConfigurationParameterDto {
         return name;
     }
 
-    public int getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public int getDefaultValue() {
+    public Object getDefaultValue() {
         return defaultValue;
     }
 
